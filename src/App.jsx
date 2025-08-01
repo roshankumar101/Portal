@@ -34,10 +34,10 @@ function App() {
           
           <Header onLoginOpen={triggerTimelineAnimation}/>
           
-          {/* Banner - Photo display */}
+          
           <Banner/>
           
-          {/* WhyPw - Meteor gradient background */}
+          {/* WhyPw  */}
           <div className='relative overflow-hidden'
                style={{
                  background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
@@ -54,7 +54,7 @@ function App() {
             <WhyPw/>
           </div>
           
-          {/* OurPartners - Titan White background */}
+          {/* OurPartners */}
           <div className='bg-[#DBD7F9]'>
             <OurPartners/>
           </div>

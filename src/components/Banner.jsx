@@ -68,9 +68,9 @@ const Banner = () => {
   }, []);
 
   return (
-    <div className="w-full flex flex-row justify-around items-center px-1 pt-10 pb-0 bg-white">
+    <div className="w-full flex flex-row justify-around items-center px-1 pt-6 pb-0 bg-white">
       {/* First Photo - Left Side */}
-      <div className="h-screen hidden ps-5 sm:flex items-center">
+      <div className="h-screen hidden ps-10 sm:flex items-center">
         <div className="relative w-fit h-4/5 bg-white rounded-lg overflow-hidden">
           <img
             src={photoPdf1}
@@ -101,7 +101,7 @@ const Banner = () => {
       </div>
       
       {/* Second Photo - Right Side */}
-      <div className="h-screen hidden pr-5 sm:flex items-center">
+      <div className="h-screen hidden pr-10 sm:flex items-center">
         <div className="relative w-fit h-4/5 bg-white rounded-lg overflow-hidden">
           <img
             src={photoPdf2}

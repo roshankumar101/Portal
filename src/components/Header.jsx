@@ -136,8 +136,8 @@ function Header({ onLoginOpen }) {
   }, [displayed, typing, fullText]);
 
   return (
-    <div className='w-full fixed top-4 z-10' ref={headerRef}>
-        <div className='backdrop-blur-sm flex justify-between items-center px-12 py-4 mx-3 rounded-2xl bg-transparent border border-white/20 shadow-lg'>
+    <div className='w-full fixed top-1 z-10' ref={headerRef}>
+        <div className='backdrop-blur-xs flex justify-between items-center px-12 py-2 mx-3 rounded-xl bg-transparent border border-white/20 shadow-sm'>
             <div className='flex items-center gap-5'>
                 <a href="#">
                     <img 

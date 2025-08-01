@@ -97,14 +97,14 @@ const ResultsComponent = () => {
         
         {/* Language Logos in Circles */}
         <div className="flex justify-center items-center gap-6 mb-10 flex-wrap">
-          <img src={JavaLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={PythonLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={JSLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={ReactLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={NodeLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={SQLLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={MongoDbLogo} className='size-20 bg-black rounded-full animate-bounce'/>
-          <img src={AWSLogo} className='size-20 bg-black rounded-full animate-bounce'/>
+          <img src={JavaLogo} className='size-20 bg-black rounded-full'/>
+          <img src={PythonLogo} className='size-20 bg-black rounded-full'/>
+          <img src={JSLogo} className='size-20 bg-black rounded-full'/>
+          <img src={ReactLogo} className='size-20 bg-black rounded-full'/>
+          <img src={NodeLogo} className='size-20 bg-black rounded-full'/>
+          <img src={SQLLogo} className='size-20 bg-black rounded-full'/>
+          <img src={MongoDbLogo} className='size-20 bg-black rounded-full'/>
+          <img src={AWSLogo} className='size-20 bg-black rounded-full'/>
         </div>
       </div>
     </section>
@@ -117,7 +117,7 @@ export default ResultsComponent;
 // {languages.map((language, index) => (
 //             <div 
 //               key={index}
-//               className={`w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white text-xs font-medium shadow-lg transition-all duration-500 ease-out animate-bounce ${
+//               className={`w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white text-xs font-medium shadow-lg transition-all duration-500 ease-out ${
 //                 skillsVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
 //               }`}
 //               style={{ 

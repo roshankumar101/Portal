@@ -95,7 +95,7 @@ const PlacementRecords = () => {
       <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header with Show All button */}
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex  items-center mb-12">
             <div className="text-center flex-1">
               <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
                 Hear How They Cracked It
@@ -107,7 +107,7 @@ const PlacementRecords = () => {
             <div className="relative dropdown-container">
               <button
                 onClick={handleShowAll}
-                className="bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 text-sm"
+                className="bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 text-sm"
               >
                 <span>Show All</span>
                 <svg className={`w-4 h-4 transition-transform duration-300 ${showBatchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +198,7 @@ const StudentCard = ({ student, index }) => {
 
   return (
     <div
-      className="relative w-56 h-56 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100"
+      className="relative group w-56 h-56 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100"
       style={{
         animationDelay: `${index * 100}ms`,
         animation: 'slideInUp 0.6s ease-out forwards'
@@ -208,13 +208,12 @@ const StudentCard = ({ student, index }) => {
       <div className="absolute inset-0 bg-gradient-to-br from-[#1565C0]/5 to-[#1565C0]/10" />
       
       {/* Top Section with Profile */}
-      <div className="relative pt-4 pb-3">
+      <div className="relative pt-5 pb-1">
         <div className="flex justify-center">
           <div className="relative">
             <img
               src={student.profileImg}
-              alt={student.name}
-              className="w-12 h-12 rounded-full border-2 border-[#1565C0] shadow-sm object-cover cursor-pointer hover:border-[#1565C0]/70 transition-colors"
+              className="w-14 h-14 rounded-full border-2 border-[#1565C0] shadow-sm object-cover cursor-pointer hover:border-[#1565C0]/70 transition-colors"
               onClick={handleProfileClick}
             />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#1565C0] rounded-full border border-white flex items-center justify-center">
@@ -243,14 +242,14 @@ const StudentCard = ({ student, index }) => {
       </div>
 
       {/* Student Info */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-2">
         <h3 className="text-sm font-bold text-[#1565C0] text-center mb-2">
           {student.name}
         </h3>
         
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="text-center">
-            <p className="font-semibold text-gray-800 text-xs">{student.company}</p>
+            <p className="font-bold text-gray-800 text-sm">{student.company}</p>
           </div>
           
           <div className="text-center">
@@ -263,6 +262,15 @@ const StudentCard = ({ student, index }) => {
           
           <div className="text-center">
             <p className="font-medium text-gray-600 text-xs">{student.batch}</p>
+          </div>
+
+          <div className='flex justify-around mt-1 opacity-0 group-hover:opacity-100'>
+            <button className='bg-blue-100 w-8 h-8 rounded-full items-center'>
+              <img src="" alt="" />
+            </button>
+            <button className='bg-gray-200 w-8 h-8 rounded-full items-center'>
+              <img src="" alt="" />
+            </button>
           </div>
         </div>
       </div>

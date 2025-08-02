@@ -55,7 +55,7 @@ const OurPartners = () => {
   }, [paused]);
 
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
+    <section className="pt-15 pb-10 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
       <div className="text-center max-w-4xl mx-auto mb-12">
         <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
           Our Esteemed Hiring Partners
@@ -75,7 +75,7 @@ const OurPartners = () => {
           {duplicatedPartners.map((partner, index) => (
             <div 
               key={`${partner.id}-${index}`}
-              className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:-translate-y-1 hover:scale-105 hover:shadow-xl group"
+              className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:scale-105 hover:shadow-xl group"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
             >
@@ -83,7 +83,7 @@ const OurPartners = () => {
                 <img 
                   src={partner.logo} 
                   alt={partner.name}
-                  className="max-w-full max-h-full object-contain filter grayscale contrast-75 brightness-90 transition-all duration-300 ease-out"
+                  className="max-w-full max-h-full object-contain  contrast-75 brightness-90 transition-all duration-300 ease-out"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-blue-400  to-gray-600 flex flex-col items-center justify-center p-6 opacity-0 transition-opacity duration-300 ease-out text-white text-center group-hover:opacity-100">

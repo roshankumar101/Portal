@@ -22,6 +22,38 @@ function Header({ onLoginOpen }) {
   const [isBgBlack, setIsBgBlack] = useState(false);
   const headerRef = useRef(null);
 
+  // Scroll-based hide/show functionality
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState('up');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Determine scroll direction
+      if (currentScrollY > lastScrollY) {
+        setScrollDirection('down');
+      } else {
+        setScrollDirection('up');
+      }
+
+      // Hide header when scrolling down (after 50px from top)
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+      }
+      // Show header when scrolling up
+      else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   useEffect(() => {
     function detectBgColor() {
       const header = headerRef.current;
@@ -115,28 +147,21 @@ function Header({ onLoginOpen }) {
 
   useEffect(() => {
     let timeout;
-    if (typing) {
-      if (displayed.length < fullText.length) {
-        timeout = setTimeout(() => {
-          setDisplayed(fullText.slice(0, displayed.length + 1));
-        }, 90);
-      } else {
-        timeout = setTimeout(() => setTyping(false), 10000); // pause after typing
-      }
-    } else {
-      if (displayed.length > 0) {
-        timeout = setTimeout(() => {
-          setDisplayed(fullText.slice(0, displayed.length - 1));
-        }, 90);
-      } else {
-        timeout = setTimeout(() => setTyping(true), 700); // 1 sec pause 
-      }
+    if (typing && displayed.length < fullText.length) {
+      timeout = setTimeout(() => {
+        setDisplayed(fullText.slice(0, displayed.length + 1));
+      }, 90);
     }
     return () => clearTimeout(timeout);
   }, [displayed, typing, fullText]);
 
   return (
-    <div className='w-full fixed top-1 z-10' ref={headerRef}>
+    <div 
+      className={`w-full fixed top-1 z-10 transition-all duration-300 ease-in-out ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+      }`} 
+      ref={headerRef}
+    >
         <div className='backdrop-blur-xs flex justify-between items-center px-12 py-2 mx-3 rounded-xl bg-transparent border border-white/20 shadow-sm'>
             <div className='flex items-center gap-5'>
                 <a href="#">

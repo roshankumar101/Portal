@@ -9,7 +9,7 @@ import Preloader from './components/PreLoader'
 import OurPartners from './components/OurPartners'
 import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
-import FoundersSection from './components/founder'
+import RecruitersSection from './components/founder'
 import Records from './components/Records'
 
 function App() {
@@ -59,6 +59,11 @@ function App() {
             <OurPartners/>
           </div>
           
+          {/* Records - White background */}
+          <div className='bg-white'>
+            <Records/>
+          </div>
+          
           {/* PlacementTimeline - Meteor gradient background */}
           <div className='relative overflow-hidden'
                style={{
@@ -78,7 +83,7 @@ function App() {
           
           {/* FoundersSection - Titan White background */}
           <div className='bg-[#DBD7F9]'>
-            <FoundersSection/>
+            <RecruitersSection/>
           </div>
           
           {/* Footer - Meteor gradient background */}
@@ -97,8 +102,6 @@ function App() {
             </div>
             <PWIOIFooter/>
           </div>
-
-          <Records/>
         </main>
       )}
     </>

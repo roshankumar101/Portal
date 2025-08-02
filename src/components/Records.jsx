@@ -1,77 +1,270 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import LoginModal from './LoginModal';
 
 const PlacementRecords = () => {
-  // Sample data for 60 cards (3 rows of 20)
-  const cards = Array(60).fill({
-    name: "John Doe",
-    company: "Tech Corp",
-    role: "Software Engineer",
-    linkedin: "#",
-    email: "#",
-    profileImg: "https://via.placeholder.com/30",
-    companyLogo: "https://via.placeholder.com/30"
-  });
+  const [currentRow, setCurrentRow] = useState(0);
+  const [showBatchDropdown, setShowBatchDropdown] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState('');
+  const [isRotating, setIsRotating] = useState(true);
+
+  // Sample data for student records - multiple rows for rotation
+  const studentRecords = [
+    // Row 1
+    [
+      { name: "Priya Sharma", company: "Microsoft", role: "Software Engineer", package: "18 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/priya-sharma" },
+      { name: "Rahul Kumar", company: "Google", role: "Data Scientist", package: "22 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/rahul-kumar" },
+      { name: "Anjali Patel", company: "Amazon", role: "Product Manager", package: "20 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/anjali-patel" },
+      { name: "Vikram Singh", company: "Tesla", role: "ML Engineer", package: "25 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/vikram-singh" },
+      { name: "Meera Reddy", company: "Netflix", role: "Frontend Developer", package: "19 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/meera-reddy" },
+      { name: "Arjun Mehta", company: "Adobe", role: "UX Designer", package: "16 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/arjun-mehta" },
+      { name: "Zara Khan", company: "Intel", role: "Hardware Engineer", package: "17 LPA", batch: "2023-2027", profileImg: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/zara-khan" }
+    ],
+    // Row 2
+    [
+      { name: "Aditya Verma", company: "IBM", role: "Cloud Architect", package: "21 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/aditya-verma" },
+      { name: "Kavya Iyer", company: "Oracle", role: "Database Admin", package: "18 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/kavya-iyer" },
+      { name: "Rohan Desai", company: "Salesforce", role: "Business Analyst", package: "16 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/rohan-desai" },
+      { name: "Ishita Gupta", company: "Microsoft", role: "DevOps Engineer", package: "19 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/ishita-gupta" },
+      { name: "Shaurya Malhotra", company: "Google", role: "Backend Developer", package: "23 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/shaurya-malhotra" },
+      { name: "Aisha Rahman", company: "Amazon", role: "QA Engineer", package: "17 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/aisha-rahman" },
+      { name: "Dhruv Joshi", company: "Tesla", role: "Robotics Engineer", package: "24 LPA", batch: "2024-2028", profileImg: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/dhruv-joshi" }
+    ],
+    // Row 3
+    [
+      { name: "Neha Agarwal", company: "Netflix", role: "Content Strategist", package: "18 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/neha-agarwal" },
+      { name: "Kartik Nair", company: "Adobe", role: "Creative Director", package: "20 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/kartik-nair" },
+      { name: "Tanvi Kapoor", company: "Intel", role: "Research Scientist", package: "22 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/tanvi-kapoor" },
+      { name: "Aryan Bhatt", company: "IBM", role: "AI Engineer", package: "25 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/aryan-bhatt" },
+      { name: "Sanya Mehra", company: "Oracle", role: "Security Engineer", package: "19 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/sanya-mehra" },
+      { name: "Vedant Rao", company: "Salesforce", role: "Solution Architect", package: "21 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/vedant-rao" },
+      { name: "Mira Shah", company: "Microsoft", role: "Full Stack Developer", package: "20 LPA", batch: "2025-2029", profileImg: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face", linkedin: "https://linkedin.com/in/mira-shah" }
+    ]
+  ];
+
+  const batches = [
+    { id: '2023-2027', name: '2023-2027', students: 156 },
+    { id: '2024-2028', name: '2024-2028', students: 142 },
+    { id: '2025-2029', name: '2025-2029', students: 98 }
+  ];
+
+  // Auto-rotate cards every 4 seconds
+  useEffect(() => {
+    if (!isRotating) return;
+    
+    const interval = setInterval(() => {
+      setCurrentRow((prev) => (prev + 1) % studentRecords.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isRotating, studentRecords.length]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBatchDropdown && !event.target.closest('.dropdown-container')) {
+        setShowBatchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBatchDropdown]);
+
+  const handleShowAll = () => {
+    setShowBatchDropdown(!showBatchDropdown);
+  };
+
+  const handleBatchSelect = (batchId) => {
+    setSelectedBatch(batchId);
+    setShowBatchDropdown(false);
+    setShowLoginModal(true);
+  };
+
+  const handleCloseLoginModal = () => {
+    setShowLoginModal(false);
+    setSelectedBatch('');
+  };
+
+  const currentCards = studentRecords[currentRow];
 
   return (
-    <div className="px-20 py-6 text-center">
-      <h2 className="mb-8 text-2xl font-bold">Our placement records</h2>
-      
-      <div className="flex flex-col gap-3">
-        {/* Three rows of 20 cards each */}
-        {[0, 1, 2].map(row => (
-          <div key={`row-${row}`} className="flex flex-row overflow-x-auto gap-4 pb-2">
-            {cards.slice(row * 20, (row + 1) * 20).map((card, index) => (
-              <Card key={`card-${row}-${index}`} data={card} />
-            ))}
+    <>
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Header with Show All button */}
+          <div className="flex justify-between items-center mb-12">
+            <div className="text-center flex-1">
+              <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
+                Hear How They Cracked It
+              </h2>
+              <p className="text-xl text-gray-600 font-normal">
+                Success stories from our placed students
+              </p>
+            </div>
+            <div className="relative dropdown-container">
+              <button
+                onClick={handleShowAll}
+                className="bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 text-sm"
+              >
+                <span>Show All</span>
+                <svg className={`w-4 h-4 transition-transform duration-300 ${showBatchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Dropdown */}
+              {showBatchDropdown && (
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  {batches.map((batch) => (
+                    <button
+                      key={batch.id}
+                      onClick={() => handleBatchSelect(batch.id)}
+                      className="w-full px-4 py-3 text-left hover:bg-[#1565C0]/5 hover:border-l-4 hover:border-l-[#1565C0] transition-all duration-200 group"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-semibold text-gray-800 group-hover:text-[#1565C0]">
+                            Batch {batch.name}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {batch.students} students placed
+                          </p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-[#1565C0] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
+
+          {/* Rotating Cards Container */}
+          <div className="relative">
+            <div 
+              className="flex gap-6 justify-center transition-all duration-1000 ease-in-out"
+              onMouseEnter={() => setIsRotating(false)}
+              onMouseLeave={() => setIsRotating(true)}
+            >
+              {currentCards.map((student, index) => (
+                <StudentCard 
+                  key={`${currentRow}-${index}`} 
+                  student={student} 
+                  index={index}
+                />
+              ))}
+            </div>
+
+            {/* Rotation Indicators */}
+            <div className="flex justify-center mt-8 gap-2">
+              {studentRecords.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentRow(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentRow === index 
+                      ? 'bg-[#1565C0] scale-125' 
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={handleCloseLoginModal}
+      />
+    </>
   );
 };
 
-// Card component
-const Card = ({ data }) => {
+// Enhanced Student Card Component
+const StudentCard = ({ student, index }) => {
+  const [showLinkedIn, setShowLinkedIn] = useState(false);
+
+  const handleProfileClick = () => {
+    setShowLinkedIn(true);
+    setTimeout(() => setShowLinkedIn(false), 2000); // Hide after 2 seconds
+  };
+
   return (
-    <div className="relative w-[185px] h-[151px] border border-gray-300 rounded-lg p-2 flex flex-col overflow-hidden hover:shadow-md transition-shadow flex-shrink-0 group bg-gray-50">
-      {/* Brand logo - top right corner */}
-      <div className="absolute top-2 right-2">
-        <img 
-          src={data.companyLogo} 
-          alt="Company Logo" 
-          className="w-6 h-6"
-        />
-      </div>
+    <div
+      className="relative w-56 h-56 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100"
+      style={{
+        animationDelay: `${index * 100}ms`,
+        animation: 'slideInUp 0.6s ease-out forwards'
+      }}
+    >
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1565C0]/5 to-[#1565C0]/10" />
       
-      {/* Profile photo - centered at 20% from top */}
-      <div className="flex justify-center mb-3" style={{ marginTop: 'calc(20% - 20px)' }}>
-        <div className="flex flex-col items-center">
-          <img 
-            src={data.profileImg} 
-            alt="Profile" 
-            className="w-8 h-8 rounded-full"
-          />
+      {/* Top Section with Profile */}
+      <div className="relative pt-4 pb-3">
+        <div className="flex justify-center">
+          <div className="relative">
+            <img
+              src={student.profileImg}
+              alt={student.name}
+              className="w-12 h-12 rounded-full border-2 border-[#1565C0] shadow-sm object-cover cursor-pointer hover:border-[#1565C0]/70 transition-colors"
+              onClick={handleProfileClick}
+            />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#1565C0] rounded-full border border-white flex items-center justify-center">
+              <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            
+            {/* LinkedIn Icon Overlay */}
+            {showLinkedIn && (
+              <div className="absolute inset-0 bg-[#1565C0] rounded-full flex items-center justify-center animate-pulse">
+                <a 
+                  href={student.linkedin} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-blue-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      
-      {/* Name and company info */}
-      <div className="flex flex-col items-center gap-1 mb-1">
-        <div className="w-full text-sm font-medium truncate text-center">{data.name}</div>
-        <div className="w-full text-sm text-gray-600 truncate text-center">{data.company}</div>
-      </div>
-      
-      {/* LinkedIn and email logos (visible on card hover) */}
-      <div className="flex justify-between gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4 relative">
-        <a href={data.linkedin} className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 text-blue-600 hover:text-blue-800 shadow transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-          </svg>
-        </a>
-        <a href={`mailto:${data.email}`} className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:text-gray-800 shadow transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 12.713l-11.985-9.713h23.97l-11.985 9.713zm0 2.574l-12-9.725v15.438h24v-15.438l-12 9.725z"/>
-          </svg>
-        </a>
+
+      {/* Student Info */}
+      <div className="px-3 pb-3">
+        <h3 className="text-sm font-bold text-[#1565C0] text-center mb-2">
+          {student.name}
+        </h3>
+        
+        <div className="space-y-1">
+          <div className="text-center">
+            <p className="font-semibold text-gray-800 text-xs">{student.company}</p>
+          </div>
+          
+          <div className="text-center">
+            <p className="font-medium text-gray-700 text-xs">{student.role}</p>
+          </div>
+          
+          <div className="text-center">
+            <p className="font-bold text-[#1565C0] text-sm">{student.package}</p>
+          </div>
+          
+          <div className="text-center">
+            <p className="font-medium text-gray-600 text-xs">{student.batch}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

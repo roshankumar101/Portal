@@ -48,24 +48,24 @@ const Preloader = ({ onComplete }) => {
       <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-500 ease-in-out ${
         isHiding ? 'animate-fadeOut' : 'animate-fadeIn'
       }`}>
-        <div className="flex items-center justify-center gap-8">
-          {/* Lottie Animation on the left */}
+        <div className="flex items-center justify-center gap-8 px-15">
+          {/* Lottie Animation on the left - reduced by 20% */}
           <div className="flex items-center justify-center">
             <dotlottie-wc 
               src="https://lottie.host/6e821172-1003-4523-bf2d-96a5759519f9/SHkrOc6Yzm.lottie" 
               speed="1" 
-              style={{ width: '300px', height: '300px' }} 
+              style={{ width: '240px', height: '240px' }} 
               mode="forward" 
               loop 
               autoplay
             />
           </div>
           
-          {/* Logo on the right */}
+          {/* Logo on the right - reduced by 20% */}
           <img
             src={logo}
             alt="Brand Logo"
-            className="w-48 animate-fadeUp"
+            className="w-38 animate-fadeUp"
           />
         </div>
       </div>

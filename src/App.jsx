@@ -48,7 +48,7 @@ function App() {
           {/* WhyPw  */}
           <div className='relative overflow-hidden'
                style={{
-                 background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
+                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
                  backgroundSize: '400% 400%',
                  animation: 'meteorShower 8s ease-in-out infinite'
                }}>
@@ -72,10 +72,10 @@ function App() {
             <Records onLoginOpen={openModal}/>
           </div>
           
-          {/* PlacementTimeline - Meteor gradient background */}
+          {/* PlacementTimeline - Banner gradient background */}
           <div className='relative overflow-hidden'
                style={{
-                 background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
+                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
                  backgroundSize: '400% 400%',
                  animation: 'meteorShower 8s ease-in-out infinite'
                }}>
@@ -94,10 +94,10 @@ function App() {
             <RecruitersSection/>
           </div>
           
-          {/* Footer - Meteor gradient background */}
+          {/* Footer - Banner gradient background */}
           <div className='relative overflow-hidden'
                style={{
-                 background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%)',
+                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
                  backgroundSize: '400% 400%',
                  animation: 'meteorShower 8s ease-in-out infinite'
                }}>

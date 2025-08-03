@@ -1,8 +1,8 @@
 import React from 'react';
-import NewsImage1 from '../assets/NEWS.jpg';
-import NewsImage2 from '../assets/NEWS1.jpg';
-import NewsImage3 from '../assets/NEWS2.jpg';
-import NewsImage4 from '../assets/NEWS3.jpg';
+import NewsImage1 from '../assets/N5.jpg';
+import NewsImage2 from '../assets/N7.jpg';
+import NewsImage3 from '../assets/N6.jpg';
+import NewsImage4 from '../assets/N5.jpg';
 
 const RecruitersSection = () => {
   const newsImages = [

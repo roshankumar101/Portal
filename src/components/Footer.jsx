@@ -1,33 +1,46 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import brandLogo from '../assets/brand_logo.webp';
 
 const PWIOIFooter = () => {
-    const [isClient, setIsClient] = useState(false);
+    const [formData, setFormData] = useState({
+        company: '',
+        email: '',
+        phone: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
 
-        // Load Lottie script
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js';
-        script.type = 'module';
-        script.async = true;
-        document.head.appendChild(script);
 
-        return () => {
-            // Cleanup script if component unmounts
-            const existingScript = document.querySelector('script[src*="dotlottie-wc"]');
-            if (existingScript) {
-                existingScript.remove();
-            }
-        };
-    }, []);
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+        // Simulate form submission
+        setTimeout(() => {
+            console.log('Form submitted:', formData);
+            setFormData({
+                company: '',
+                email: '',
+                phone: ''
+            });
+            setIsSubmitting(false);
+            alert('Thank you for your message! We will get back to you soon.');
+        }, 1000);
+    };
 
     return (
-        <footer className="text-white py-5 relative overflow-hidden mt-10">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-5">
+        <footer className="text-white py-5 relative overflow-hidden mt-10" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>
+            <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-5 px-5">
                 {/* Brand & Social Media */}
-                <div className="flex flex-col items-start">
+                <div className="flex flex-col mt-4 items-start">
                     <img
                         src={brandLogo}
                         alt="PW IOI Logo"
@@ -67,7 +80,7 @@ const PWIOIFooter = () => {
                 </div>
 
                 {/* Quick Links */}
-                <div className="flex flex-col">
+                <div className="flex flex-col mt-4">
                     <h3 className="text-xl mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                         Quick Links
                     </h3>
@@ -86,7 +99,7 @@ const PWIOIFooter = () => {
                 </div>
 
                 {/* Contact Info */}
-                <div className="flex flex-col">
+                <div className="flex flex-col mt-4">
                     <h3 className="text-xl mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                         Contact Info
                     </h3>
@@ -119,6 +132,60 @@ const PWIOIFooter = () => {
                             </span>
                         </a>
                     </div>
+                </div>
+
+                {/* Contact Form */}
+                <div className="flex flex-col">
+                    <h3 className="text-4xl font-bold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
+                        Get In Touch
+                    </h3>
+                    <form onSubmit={handleSubmit} className="space-y-2">
+                        <div>
+                            <input
+                                type="text"
+                                name="company"
+                                value={formData.company}
+                                onChange={handleInputChange}
+                                placeholder="Company Name *"
+                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                required
+                            />
+                        </div>
+                        
+                        <div>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="Email Address *"
+                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <input
+                                type="tel"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                placeholder="Phone Number *"
+                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                required
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
+                            style={{ backgroundColor: '#00bfff' }}
+                        >
+                            {isSubmitting ? 'Sending...' : 'Send'}
+                        </button>
+                    </form>
                 </div>
             </div>
 

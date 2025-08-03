@@ -23,7 +23,7 @@ const WhyPw = () => {
   return (
     <section className="py-8 px-2 max-w-6xl mx-auto text-center font-sans">
       <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 relative z-2 inline-block after:block after:content-[''] after:absolute after:bottom-[-15px] after:left-1/2 after:-translate-x-1/2 after:w-24 after:h-1 after:bg-[#3949ab]">
-        Why Recruiters Keep Coming to Us ?
+        Why Do Recruiters Keep Coming Back to Us ?
       </h2>
 
       {/* Skills Section */}
@@ -35,7 +35,7 @@ const WhyPw = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-md text-sm font-semibold transition-all duration-300 ${
+                className={`px-10 py-2 rounded-md text-sm font-semibold transition-all duration-300 ${
                   activeTab === tab
                     ? 'bg-white text-gray-900 shadow-lg'
                     : 'text-white hover:bg-white/20'

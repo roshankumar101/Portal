@@ -23,7 +23,7 @@ const WhyPw = () => {
   return (
     <section className="py-8 px-2 max-w-6xl mx-auto text-center font-sans">
       <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 relative inline-block after:block after:content-[''] after:absolute after:bottom-[-15px] after:left-1/2 after:-translate-x-1/2 after:w-24 after:h-1 after:bg-[#3949ab]">
-        Why Choose PW IOI?
+        Why Recruiters Keep Coming to Us ?
       </h2>
 
       {/* Skills Section */}

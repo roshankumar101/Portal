@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import LoginModal from './LoginModal';
 
-const PlacementRecords = () => {
+const PlacementRecords = ({ onLoginOpen }) => {
   const [currentRow, setCurrentRow] = useState(0);
   const [showBatchDropdown, setShowBatchDropdown] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState('');
   const [isRotating, setIsRotating] = useState(true);
 
@@ -80,12 +78,7 @@ const PlacementRecords = () => {
   const handleBatchSelect = (batchId) => {
     setSelectedBatch(batchId);
     setShowBatchDropdown(false);
-    setShowLoginModal(true);
-  };
-
-  const handleCloseLoginModal = () => {
-    setShowLoginModal(false);
-    setSelectedBatch('');
+    onLoginOpen(); // Trigger the login modal
   };
 
   const currentCards = studentRecords[currentRow];
@@ -95,16 +88,16 @@ const PlacementRecords = () => {
       <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header with Show All button */}
-          <div className="flex  items-center mb-12">
-            <div className="text-center flex-1">
-              <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
-                Hear How They Cracked It
-              </h2>
-              <p className="text-xl text-gray-600 font-normal">
-                Success stories from our placed students
-              </p>
-            </div>
-            <div className="relative dropdown-container">
+          <div className="text-center mb-12 flex flex-col justify-center items-center lg:relative">
+            <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
+              Hear How They Cracked It
+            </h2>
+            <p className="text-xl text-gray-600 font-normal">
+              Success stories from our placed students
+            </p>
+            
+            {/* Show All button absolutely positioned */}
+            <div className="lg:absolute lg:top-1/4 lg:right-0 dropdown-container mt-5 lg:mt-0">
               <button
                 onClick={handleShowAll}
                 className="bg-white text-blue-900 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 font-medium py-2 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 text-sm"
@@ -117,12 +110,12 @@ const PlacementRecords = () => {
               
               {/* Dropdown */}
               {showBatchDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
                   {batches.map((batch) => (
                     <button
                       key={batch.id}
                       onClick={() => handleBatchSelect(batch.id)}
-                      className="w-full px-4 py-3 text-left hover:bg-[#1565C0]/5 hover:border-l-4 hover:border-l-[#1565C0] transition-all duration-200 group"
+                      className="w-full px-4 py-3 text-left hover:bg-[#1565C0]/5 hover:border-l-4 hover:border-l-[#1565C0] transition-all duration-100 group"
                     >
                       <div className="flex justify-between items-center">
                         <div>
@@ -179,23 +172,13 @@ const PlacementRecords = () => {
       </section>
 
       {/* Login Modal */}
-      <LoginModal 
-        isOpen={showLoginModal} 
-        onClose={handleCloseLoginModal}
-      />
+      {/* Login Modal */}
     </>
   );
 };
 
 // Enhanced Student Card Component
 const StudentCard = ({ student, index }) => {
-  const [showLinkedIn, setShowLinkedIn] = useState(false);
-
-  const handleProfileClick = () => {
-    setShowLinkedIn(true);
-    setTimeout(() => setShowLinkedIn(false), 2000); // Hide after 2 seconds
-  };
-
   return (
     <div
       className="relative group w-56 h-56 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100"
@@ -213,30 +196,13 @@ const StudentCard = ({ student, index }) => {
           <div className="relative">
             <img
               src={student.profileImg}
-              className="w-14 h-14 rounded-full border-2 border-[#1565C0] shadow-sm object-cover cursor-pointer hover:border-[#1565C0]/70 transition-colors"
-              onClick={handleProfileClick}
+              className="w-14 h-14 rounded-full border-2 border-[#1565C0] shadow-sm object-cover transition-colors"
             />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#1565C0] rounded-full border border-white flex items-center justify-center">
               <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
-            
-            {/* LinkedIn Icon Overlay */}
-            {showLinkedIn && (
-              <div className="absolute inset-0 bg-[#1565C0] rounded-full flex items-center justify-center animate-pulse">
-                <a 
-                  href={student.linkedin} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-white hover:text-blue-200 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                  </svg>
-                </a>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -265,12 +231,31 @@ const StudentCard = ({ student, index }) => {
           </div>
 
           <div className='flex justify-around mt-1 opacity-0 group-hover:opacity-100'>
-            <button className='bg-blue-100 w-8 h-8 rounded-full items-center'>
-              <img src="" alt="" />
-            </button>
-            <button className='bg-gray-200 w-8 h-8 rounded-full items-center'>
-              <img src="" alt="" />
-            </button>
+            {/* LinkedIn Link */}
+            <a 
+              href={student.linkedin} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className='relative bg-blue-200 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 overflow-hidden group/linkedin'
+              title="View LinkedIn Profile"
+            >
+              <div className="absolute inset-0 bg-blue-700 opacity-0 group-hover/linkedin:opacity-100 transition-opacity duration-300 rounded-full"></div>
+              <svg className="relative z-10 w-4 h-4 text-blue-600 group-hover/linkedin:text-white transition-colors duration-200" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+              </svg>
+            </a>
+
+            {/* Email Link */}
+            <a 
+              href={`mailto:${student.name.toLowerCase().replace(' ', '.')}@${student.company.toLowerCase()}.com`}
+              className='relative bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 overflow-hidden group/email'
+              title="Send Email"
+            >
+              <div className="absolute inset-0 bg-gray-700 opacity-0 group-hover/email:opacity-100 transition-opacity duration-300 rounded-full"></div>
+              <svg className="relative z-10 w-4 h-4 text-gray-600 group-hover/email:text-white transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+            </a>
           </div>
         </div>
       </div>

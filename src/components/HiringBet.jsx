@@ -11,11 +11,13 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   const getWordsBySelection = (selection) => {
     switch (selection) {
       case 'SOT': // Software Development
-        return ["framework", "API", "languages"];
+        return ["framework","tool", "API", "languages"];
       case 'SOM': // Software Management
-        return ["dashboard", "algorithm", "metric"];
+        return ["case study", "algorithm", "metric"];
       case 'SOH': // Software Healthcare
-        return ["EMR", "procedure", "protocols"];
+        return ["EMR", "procedure", "diagnosis", "treatment"];
+      default:
+        return ["framework","tool", "API", "languages"];
     }
   };
 
@@ -91,8 +93,8 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
     
     // Continuous slight rotation animation for "NAH!"
     gsap.to(nahElement, {
-      rotation: "+=5",
-      duration: 3,
+      rotation: "+=2",
+      duration: 2,
       repeat: -1,
       yoyo: true,
       ease: "sine.inOut"

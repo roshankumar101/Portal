@@ -1,17 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Login from './Login';
-import LoginModal from './LoginModal';
 import physicsWallahLogo from '../assets/physics-wallah-seeklogo.png';
 
 function Header({ onLoginOpen }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => {
-    setIsModalOpen(true);
     if (onLoginOpen) {
       onLoginOpen();
     }
   };
-  const closeModal = () => setIsModalOpen(false);
+
+  const scrollToPlacements = (e) => {
+    e.preventDefault();
+    
+    // Try to find the OurPartners section by ID first
+    let ourPartnersSection = document.getElementById('our-partners');
+    
+    // If not found by ID, try the class selector
+    if (!ourPartnersSection) {
+      ourPartnersSection = document.querySelector('.bg-[#DBD7F9]');
+    }
+    
+    // If still not found, try finding by component structure
+    if (!ourPartnersSection) {
+      const sections = document.querySelectorAll('div');
+      for (let section of sections) {
+        if (section.classList.contains('bg-[#DBD7F9]') && section.children.length > 0) {
+          ourPartnersSection = section;
+          break;
+        }
+      }
+    }
+    
+    // Scroll to the section if found
+    if (ourPartnersSection) {
+      ourPartnersSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    } else {
+      // Fallback: scroll to approximate position where OurPartners should be
+      const scrollPosition = window.innerHeight * 2; // Roughly where OurPartners is
+      window.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Typewriter effect
   const fullText = 'INSTITUTE OF INNOVATION';
@@ -25,19 +59,11 @@ function Header({ onLoginOpen }) {
   // Scroll-based hide/show functionality
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [scrollDirection, setScrollDirection] = useState('up');
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Determine scroll direction
-      if (currentScrollY > lastScrollY) {
-        setScrollDirection('down');
-      } else {
-        setScrollDirection('up');
-      }
-
       // Hide header when scrolling down (after 50px from top)
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
         setIsVisible(false);
@@ -157,7 +183,7 @@ function Header({ onLoginOpen }) {
 
   return (
     <div 
-      className={`w-full fixed top-1 z-10 transition-all duration-300 ease-in-out ${
+      className={`w-full fixed top-1 z-50 transition-all duration-300 ease-in-out ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
       }`} 
       ref={headerRef}
@@ -173,24 +199,54 @@ function Header({ onLoginOpen }) {
                       }`} 
                     />
                 </a>
-                <h1 className={`text-2xl font-bold font-serif hidden md:flex whitespace-nowrap transition-colors duration-300 ${
+                <h1 className={`text-2xl font-bold font-serif hidden lg:flex whitespace-nowrap transition-colors duration-300 ${
                   isBgBlack ? 'text-white' : 'text-black'
                 }`}>
                   {displayed}
                 </h1>
             </div>
-            <div>
+            
+            {/* Navigation Menu with Login Button */}
+            <nav className="flex items-center space-x-12">
+                <a 
+                  href="#calendar" 
+                  className={`text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group ${
+                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
+                  }`}
+                >
+                  Calendar
+                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                </a>
+                <a 
+                  href="#placements" 
+                  onClick={scrollToPlacements}
+                  className={`text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group ${
+                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
+                  }`}
+                >
+                  Placements
+                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                </a>
+                <a 
+                  href="#contact" 
+                  className={`text-base hidden md:flex text-nowrap font-medium transition-all duration-300 hover:scale-105 relative group ${
+                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
+                  }`}
+                >
+                  Contact Us
+                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                </a>
+                
                 <Login 
                   onClick={openModal} 
-                  className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 ${
+                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 ${
                     isBgBlack 
                       ? 'bg-white text-black hover:bg-gray-100 shadow-lg' 
                       : 'bg-black text-white hover:bg-gray-800 shadow-lg'
                   }`} 
                 />
-            </div>
+            </nav>
         </div>
-        <LoginModal isOpen={isModalOpen} onClose={closeModal} />
     </div>
   )
 }

@@ -27,7 +27,7 @@ const HealthcareSkills = () => {
             </div>
             <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
               <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">Zero-Cost Clinical Talent</strong><br />
+              <strong className="text-gray-800 font-bold text-lg underline underline-offset-2 decoration-3 decoration-purple-500">Zero-Cost Clinical Talent</strong><br />
               Hospitals access pre-credentialed graduates without recruitment fees or temp agency markups.
             </div>
             <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">

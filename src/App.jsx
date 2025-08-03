@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Header from './components/Header'
 import Banner from './components/Banner'
@@ -11,16 +9,26 @@ import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
+import LoginModal from './components/LoginModal'
 
 function App() {
-  const [count, setCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const triggerTimelineAnimation = () => {
     setTimelineAutoplay(true);
     // Reset after animation completes
     setTimeout(() => setTimelineAutoplay(false), 3500);
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+    triggerTimelineAnimation();
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
@@ -32,7 +40,7 @@ function App() {
           
           
           
-          <Header onLoginOpen={triggerTimelineAnimation}/>
+          <Header onLoginOpen={openModal}/>
           
           
           <Banner/>
@@ -55,13 +63,13 @@ function App() {
           </div>
           
           {/* OurPartners */}
-          <div className='bg-[#DBD7F9]'>
+          <div id="our-partners" className='bg-[#DBD7F9]'>
             <OurPartners/>
           </div>
           
           {/* Records - White background */}
           <div className='bg-white'>
-            <Records/>
+            <Records onLoginOpen={openModal}/>
           </div>
           
           {/* PlacementTimeline - Meteor gradient background */}
@@ -104,6 +112,9 @@ function App() {
           </div>
         </main>
       )}
+      
+      {/* LoginModal rendered at app level for proper centering */}
+      <LoginModal isOpen={isModalOpen} onClose={closeModal} />
     </>
   )
 }

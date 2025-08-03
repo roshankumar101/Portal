@@ -27,7 +27,7 @@ const SkillsDisplay = () => {
             </div>
             <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
               <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">No-Cost Hiring Policy</strong><br />
+              <strong className="text-gray-800 font-bold text-lg underline decoration-2 decoration-yellow-400">No-Cost Hiring Policy</strong><br />
               Zero placement fees—because talent should be <span className='block text-gray-700 underline font-semibold decoration-blue-800'> accessible, not transactional.</span> 
             </div>
             <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">

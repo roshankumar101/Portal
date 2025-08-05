@@ -1,329 +1,316 @@
 import React, { useEffect, useRef } from "react";
-import * as THREE from "three";
 import { gsap } from "gsap";
+import BannerImage1 from '../assets/BannerImg.jpg'
+import BannerImage2 from '../assets/IndiaMap.png'
+import '../index.css'
+import { TypeWriter, ScribbledText } from "./TextStyle";
 
-const imagePaths = [
-  "/assets/P1.jpg",
-  "/assets/P2.jpg",
-  "/assets/P3.jpg",
-  "/assets/P4.jpg",
-  "/assets/P5.jpg",
-];
+// Load Lottie web component
+if (typeof window !== 'undefined') {
+  const script = document.createElement('script');
+  script.src = 'https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js';
+  script.type = 'module';
+  if (!document.head.querySelector('script[src*="dotlottie-wc"]')) {
+    document.head.appendChild(script);
+  }
+}
 
-const BannerCarousel = () => {
+const Banner = () => {
   const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const statementRef = useRef(null);
+  const missionRef = useRef(null);
+  const subtitleRef = useRef(null);
+  const solutionsRef = useRef(null);
+  const mapRef = useRef(null);
+  const factsRef = useRef(null);
+  const sloganRef = useRef(null);
+
+  // Function to animate counting numbers
+  const startCounting = (elementId, start, end, duration, suffix = '') => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const increment = (end - start) / (duration / 16); // 60fps
+    let current = start;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= end) {
+        current = end;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current) + suffix;
+    }, 16);
+  };
 
   useEffect(() => {
     const container = containerRef.current;
-    const canvas = canvasRef.current;
-    const statementEl = statementRef.current;
+    const missionEl = missionRef.current;
+    const subtitleEl = subtitleRef.current;
+    const solutionsEl = solutionsRef.current;
+    const mapEl = mapRef.current;
+    const factsEl = factsRef.current;
+    const sloganEl = sloganRef.current;
 
-    // Scene setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      canvas.clientWidth / canvas.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(0, 0, 70);
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-    });
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // Resize handler
-    function resizeRenderer() {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      if (canvas.width !== width || canvas.height !== height) {
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-      }
-    }
-    resizeRenderer();
-    window.addEventListener("resize", resizeRenderer);
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    dirLight.position.set(30, 30, 40);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    scene.add(dirLight);
-
-    // Floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(200, 200),
-      new THREE.ShadowMaterial({ opacity: 0.1 })
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -20;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Carousel parameters
-    const radius = 30;
-    const totalCards = imagePaths.length;
-    const theta = (2 * Math.PI) / totalCards;
-
-    // Cards group
-    const group = new THREE.Group();
-    scene.add(group);
-
-    const loader = new THREE.TextureLoader();
-    const cards = [];
-
-    // Create cards with textures mapped
-    imagePaths.forEach((src, i) => {
-      const geometry = new THREE.PlaneGeometry(16, 9); // ratio 16:9
-      const texture = loader.load(src);
-      texture.minFilter = THREE.LinearFilter;
-      const material = new THREE.MeshStandardMaterial({
-        map: texture,
-        roughness: 0.7,
-        metalness: 0.3,
-        color: 0xffffff,
-        emissive: 0x000000,
-        emissiveIntensity: 0,
-      });
-
-      const card = new THREE.Mesh(geometry, material);
-      card.position.set(
-        radius * Math.sin(theta * i),
-        0,
-        radius * Math.cos(theta * i)
-      );
-      card.castShadow = true;
-      card.receiveShadow = true;
-
-      card.lookAt(new THREE.Vector3(0, 0, 0)); // face center/camera
-
-      group.add(card);
-      cards.push(card);
-    });
-
-    // Update spotlight: white glow on front card & scale up
-    function updateSpotlight(rotationY) {
-      let norm = rotationY % (2 * Math.PI);
-      if (norm < 0) norm += 2 * Math.PI;
-
-      let frontIndex = 0;
-      let minDiff = 2 * Math.PI;
-
-      for (let i = 0; i < totalCards; i++) {
-        let cardAngle = (theta * i + norm) % (2 * Math.PI);
-        let diff = Math.min(Math.abs(cardAngle), 2 * Math.PI - Math.abs(cardAngle));
-        if (diff < minDiff) {
-          minDiff = diff;
-          frontIndex = i;
-        }
-      }
-
-      cards.forEach((card, idx) => {
-        const mat = card.material;
-        if (idx === frontIndex) {
-          mat.color.set(0xffffff);
-          mat.emissive.set(0xffffff);
-          mat.emissiveIntensity = 0.6;
-          gsap.to(card.scale, { x: 1.1, y: 1.1, z: 1, duration: 0.3, ease: "power2.out" });
-        } else {
-          mat.color.set(0xdddddd);
-          mat.emissive.set(0x000000);
-          mat.emissiveIntensity = 0;
-          gsap.to(card.scale, { x: 1, y: 1, z: 1, duration: 0.3, ease: "power2.out" });
-        }
-      });
-    }
-
-    // User interaction variables
-    let isDragging = false;
-    let previousX = 0;
-    let rotationY = 0;
-    let velocity = 0;
-
-    function onPointerDown(e) {
-      isDragging = true;
-      previousX = e.clientX;
-    }
-
-    function onPointerMove(e) {
-      if (!isDragging) return;
-
-      const deltaX = e.clientX - previousX;
-      previousX = e.clientX;
-
-      velocity = deltaX * 0.01;
-      rotationY += velocity;
-    }
-
-    function onPointerUp() {
-      isDragging = false;
-    }
-
-    container.addEventListener("pointerdown", onPointerDown, { passive: true });
-    container.addEventListener("pointermove", onPointerMove, { passive: true });
-    container.addEventListener("pointerup", onPointerUp, { passive: true });
-    container.addEventListener("pointerleave", onPointerUp, { passive: true });
-
-    // Initial states
-    group.rotation.y = 0;
-    group.position.x = 0;
-    group.scale.set(1.3, 1.3, 1.3);
-
-    statementEl.style.opacity = "0";
-    statementEl.style.transform = "translateX(100px)";
+    // Set initial states - hide everything except main title initially
+    gsap.set([subtitleEl, solutionsEl, sloganEl], { opacity: 0, y: 30 });
+    gsap.set([mapEl, factsEl], { opacity: 0, y: 30 });
+    gsap.set(missionEl, { opacity: 1, y: 0 }); // Keep main title visible
 
     // Entrance animation timeline
     const entranceTl = gsap.timeline();
 
-    // small pause
-    entranceTl.to({}, { duration: 0.5 });
+    // Animate map first
+    entranceTl.to(mapEl, {
+      opacity: 1,
+      y: 0,
+      duration: 1,
+      ease: "power2.out"
+    });
 
-    // rotate 360deg in 4 seconds
-    entranceTl.to(
-      group.rotation,
-      {
-        y: "+=6.28319",
-        duration: 4,
-        ease: "power2.inOut",
-        onUpdate: () => {
-          updateSpotlight(group.rotation.y);
-        },
-      },
-      0
-    );
+    // Animate facts around the map
+    entranceTl.to(factsEl, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    }, "-=0.5");
 
-    // move right and scale down in 2 seconds
-    entranceTl.to(
-      group.position,
-      { x: window.innerWidth * 0.25, duration: 2, ease: "power3.inOut" },
-      "+=0.5"
-    );
-    entranceTl.to(
-      group.scale,
-      { x: 0.8, y: 0.8, z: 0.8, duration: 2, ease: "power3.inOut" },
-      "<"
-    );
+    // Calculate when TypeWriter will complete:
+    // delay: 2s + (5 chars × 0.2s charDelay) + (0.1s charDuration × 5) = 2 + 1 + 0.5 = 3.5s
+    const typewriterCompletionTime = 3.8; // Adding small buffer
 
-    // show statement faded in and slide in
-    entranceTl.to(
-      statementEl.style,
-      { opacity: 1, transform: "translateX(0)", duration: 1.5, ease: "power2.out" },
-      "<"
-    );
+    // Animate subtitle after TypeWriter completes
+    entranceTl.to(subtitleEl, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    }, typewriterCompletionTime);
 
-    // animation loop
-    function animate() {
-      resizeRenderer();
+    // Animate solutions section
+    entranceTl.to(solutionsEl, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    }, "-=0.3");
 
-      if (!isDragging) {
-        velocity *= 0.93;
-        rotationY += 0.003 + velocity;
-      } else {
-        velocity *= 0.93;
-        rotationY += velocity;
-      }
+    // Animate slogan
+    entranceTl.to(sloganEl, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    }, "-=0.5");
 
-      group.rotation.y = rotationY % (2 * Math.PI);
-      updateSpotlight(group.rotation.y);
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    // Cleanup on unmount
     return () => {
-      window.removeEventListener("resize", resizeRenderer);
-      container.removeEventListener("pointerdown", onPointerDown);
-      container.removeEventListener("pointermove", onPointerMove);
-      container.removeEventListener("pointerup", onPointerUp);
-      container.removeEventListener("pointerleave", onPointerUp);
-
-      // Dispose materials and textures to prevent memory leaks
-      cards.forEach(card => {
-        if (card.material) {
-          card.material.map?.dispose();
-          card.material.dispose();
-        }
-        card.geometry.dispose();
-        scene.remove(card);
-      });
-
-      renderer.dispose();
+      entranceTl.kill();
     };
   }, []);
 
   return (
-    <>
-      <style>{`
-        #container {
-          width: 100%;
-          height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          padding: 0 5vw;
-          box-sizing: border-box;
-          background: #121212;
-          user-select: none;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        #three-canvas {
-          width: 50vw;
-          height: 80vh;
-          display: block;
-        }
-        #statement {
-          color: white;
-          font-weight: 900;
-          font-size: 3.5rem;
-          max-width: 30vw;
-          margin-left: 5vw;
-          user-select: none;
-          opacity: 0;
-          transform: translateX(100px);
-          transition: opacity 1.5s ease, transform 1.5s ease;
-          align-self: center;
-          pointer-events: none;
-        }
-        #statement.visible {
-          opacity: 1;
-          transform: translateX(0);
-        }
+    <div
+      ref={containerRef}
+      className="relative w-full min-h-screen flex items-center justify-center px-8 py-12"
+    >
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-        @media (max-width: 1000px) {
-          #three-canvas {
-            width: 70vw;
-            height: 60vh;
-          }
-          #statement {
-            font-size: 2rem;
-            max-width: 40vw;
-            margin-left: 3vw;
-          }
-        }
-      `}</style>
+        {/* Left Section - India Map with Facts */}
+        <div className="relative w-full h-full">
+          {/* India Map */}
+          <div ref={mapRef} className="relative mb-8">
+            <img src={BannerImage2} alt="" width="1000" height="700" />
+          </div>
 
-      <div id="container" ref={containerRef} tabIndex={0} aria-label="3D interactive rotating image carousel with statement">
-        <canvas id="three-canvas" ref={canvasRef} aria-label="3D Carousel Canvas"></canvas>
-        <div id="statement" ref={statementRef} aria-live="polite" role="banner">
-          WE BUILD THOSE WHO GET IT DONE
+          {/* India Facts */}
+          <div ref={factsRef} className="absolute w-full inset-0 flex items-center justify-center">
+            <div className="grid grid-cols-2 gap-6 relative w-full max-w-md">
+              {/* Educated Unemployment */}
+              <div
+                className="group absolute top-10 left-10 p-4 transition-all duration-500 cursor-pointer transform hover:scale-105"
+                onMouseEnter={() => startCounting('unemployment', 0, 96.2, 2000, '')}
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-900 mb-1">
+                    <span id="unemployment">0</span><span className="text-lg">%</span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 opacity-80 group-hover:opacity-100 transition-opacity">
+                    Educated Unemployment
+                  </p>
+                </div>
+              </div>
+
+              {/* Massive Dropout */}
+              <div
+                className=" p-4 transition-all duration-500 cursor-pointer transform hover:scale-105"
+                onMouseEnter={() => startCounting('dropout', 0, 60, 1800, '')}
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600 mb-1">
+                    <span id="dropout">0</span><span className="text-lg">%</span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 opacity-80 group-hover:opacity-100 transition-opacity">
+                    Massive Dropout Rate
+                  </p>
+                </div>
+              </div>
+
+              {/* Upskilling Void */}
+              <div
+                className=" p-4  duration-500 cursor-pointer transform hover:scale-105"
+                onMouseEnter={() => startCounting('upskilling', 0, 75, 2200, '')}
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600 mb-1">
+                    <span id="upskilling">0</span><span className="text-lg">K+</span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 opacity-80 group-hover:opacity-100 transition-opacity">
+                    Upskilling Void
+                  </p>
+                </div>
+              </div>
+
+              {/* Access Deficiency */}
+              <div
+                className="group p-4 transition-all duration-500 cursor-pointer transform hover:scale-105"
+                onMouseEnter={() => startCounting('access', 0, 300, 2500, '')}
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600 mb-1">
+                    <span id="access">0</span><span className="text-lg">%</span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 opacity-80 group-hover:opacity-100 transition-opacity">
+                    Access Deficiency
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section - Mission and Solutions */}
+        <div className="space-y-20 -mt-10">
+          {/* Mission Statement */}
+          <div ref={missionRef} className="space-y-2">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+              Redefining Talent
+              <span className="text-blue-900"> Reimagining
+                <TypeWriter
+                  text={" INDIA"}
+                  className="text-5xl font-bold inline whitespace-nowrap transition-colors duration-300 text-blue-900"
+                  delay={1}
+                  charDelay={0.2}
+                  charDuration={0.1}
+                  cursor={false}
+                />
+              </span>
+            </h1>
+
+
+            {/* Subtitle - appears after TypeWriter completes */}
+            <div ref={subtitleRef}>
+              <h2 className="text-xl">
+                India doesn't need more degrees, It needs <span className="text-xl text-blue-800 font-semibold">Real Skills...</span>
+              </h2>
+            </div>
+          </div>
+          {/* Solutions */}
+          <div ref={solutionsRef} className="space-y-2">
+            <h2 className="text-2xl font-semibold text-gray-800">Two simple solutions:</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+              {/* Industry Relevant Skills */}
+              <div className="flex flex-col relative hover:bg-[#E5F4FE] rounded-md h-10 px-4 py-2 shadow-lg bg-white/50 hover:shadow-xl transition-all duration-400">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-3 h-3 bg-green-500 animate-pulse rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-gray-900">Industry Relevant Skills</h3>
+                </div>
+
+                {/* Lottie Animation */}
+                <div className="absolute top-0 left-1/3 -translate-x-1/2 z-10">
+                  <dotlottie-wc
+                    src="https://lottie.host/dca4880a-6889-4996-b44e-9321f9e4bfa6/GRjki1SfoF.lottie"
+                    speed="1"
+                    style={{ width: '120px', height: '120px', transform: 'rotate(150deg) scaleX(-1) scale(0.45)' }}
+                    mode="forward"
+
+                    autoplay
+                  ></dotlottie-wc>
+                </div>
+              </div>
+
+              {/* Passion Aligned Opportunities */}
+              <div className="flex flex-col relative hover:bg-[#E5F4FE] rounded-md h-10 px-4 py-2 shadow-lg bg-white/50 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <h3 className="text-lg font-semibold text-gray-900">Purposeful Placements</h3>
+
+                  <div className="absolute top-0 right-1/3 translate-x-1/2 z-10 delay-1000">
+                    <dotlottie-wc
+                      src="https://lottie.host/dca4880a-6889-4996-b44e-9321f9e4bfa6/GRjki1SfoF.lottie"
+                      speed="1"
+                      style={{ width: '120px', height: '120px', transform: 'rotate(210deg) scale(0.45)' }}
+                      mode="forward"
+                      autoplay
+                    ></dotlottie-wc>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Call to Action */}
+            <div className="flex flex-col sm:flex-row justify-around mt-8 text-center">
+              <div className="flex items-center">
+                <ScribbledText
+                  text="We Shape Brilliance"
+                  color="#1f2937"
+                  lineColor="#3b82f6"
+                  lineHeight="0.15rem"
+                  lineOffset="-2px"
+                  duration={0.6}
+                  delay={1.5}
+                  stagger={0.15}
+                  className="font-bold text-lg font-caveat italic cursive"
+                />
+              </div>
+              <div className="flex items-center end-0">
+                <ScribbledText
+                  text="You Spot it"
+                  color="#1f2937"
+                  lineColor="#3b82f6"
+                  lineHeight="0.15rem"
+                  lineOffset="-2px"
+                  duration={0.6}
+                  delay={4.0}
+                  stagger={0.15}
+                  className="font-bold text-lg font-caveat italic cursive"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Slogan */}
+          <div ref={sloganRef} className="pt-3 border-t border-gray-200">
+            <p className="text-sm font-bold text-gray-600 text-center relative">
+              Hiring from us is a common sense <span className="text-gray-700 font-italic underline">Don't believe us Scroll down</span>
+              <div className="absolute z-10 delay-1000">
+                <dotlottie-wc
+                  src="https://lottie.host/ae1d97bb-5c47-4831-9dcb-b722fa2b7aa2/HYheM2XgzN.lottie"
+                  speed="1"
+                  style={{ width: '100px', height: '100px' }}
+                  mode="forward"
+                  autoplay
+                ></dotlottie-wc>
+              </div>
+            </p>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default BannerCarousel;
+export default Banner;

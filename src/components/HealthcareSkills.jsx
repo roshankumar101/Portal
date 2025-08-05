@@ -9,7 +9,7 @@ const HealthcareSkills = () => {
           <div className="bg-blue-200 text-blue-800 p-6 font-bold text-2xl">
             Clinical & Technical Mastery
           </div>
-          <div className="p-6">
+          <div className="p-6 text-start">
             <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
               <span className="absolute left-0 text-gray-800 font-bold">•</span>
               <strong className="text-gray-800 font-bold text-lg">4 Years of Immersive Medical Training</strong><br />

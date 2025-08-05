@@ -12,8 +12,10 @@ import NetflixLogo from '../assets/Netflix-Logo.wine.svg';
 
 const OurPartners = () => {
   const [paused, setPaused] = useState(false);
-  const carouselRef = useRef(null);
-  const positionRef = useRef(0); // Persist position across renders
+  const carouselRef1 = useRef(null);
+  const carouselRef2 = useRef(null);
+  const positionRef1 = useRef(0); // Position for first row
+  const positionRef2 = useRef(0); // Position for second row - starts from right
   
   const partners = [
     { id: 1, name: 'Microsoft', logo: MicrosoftLogo, studentsPlaced: 142 },
@@ -28,21 +30,53 @@ const OurPartners = () => {
     { id: 10, name: 'Salesforce', logo: SalesforceLogo, studentsPlaced: 59 },
   ];
 
-  // Duplicate partners for infinite loop effect
-  const duplicatedPartners = [...partners, ...partners];
+  // Use all partners for both rows to ensure variety and always show at least 6 cards
+  const row1Partners = partners; // All 10 partners in row 1
+  const row2Partners = [...partners].reverse(); // All 10 partners in reverse order for row 2
+  
+  // Create enough duplicates for seamless infinite loop
+  const duplicatedRow1 = Array(10).fill(row1Partners).flat();
+  const duplicatedRow2 = Array(10).fill(row2Partners).flat();
 
   useEffect(() => {
-    const carousel = carouselRef.current;
+    const carousel1 = carouselRef1.current;
+    const carousel2 = carouselRef2.current;
     let animationFrameId;
-    const speed = 0.6; // pixels per frame (increased by 20%)
+    const speed1 = 0.6; // speed for both rows (same speed, different directions)
+    
+    // Initialize second row to start from the right side for opposite direction effect
+    if (carousel2 && positionRef2.current === 0) {
+      const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+      const oneSetWidth = 10 * cardWidthWithGap;
+      positionRef2.current = -oneSetWidth * 0.5; // Start from negative position for right-to-left
+    }
 
     const animate = () => {
-      if (!paused && carousel) {
-        positionRef.current -= speed;
-        if (positionRef.current <= -carousel.scrollWidth / 2) {
-          positionRef.current = 0;
+      if (!paused) {
+        if (carousel1) {
+          positionRef1.current -= speed1;
+          // Calculate one complete set width (10 cards × (192px + 24px gap) = 2160px)
+          const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+          const oneSetWidth = 10 * cardWidthWithGap;
+          
+          // Seamless reset when one full set has passed
+          if (positionRef1.current <= -oneSetWidth) {
+            positionRef1.current += oneSetWidth;
+          }
+          carousel1.style.transform = `translateX(${positionRef1.current}px)`;
         }
-        carousel.style.transform = `translateX(${positionRef.current}px)`;
+        if (carousel2) {
+          positionRef2.current += speed1; // Move in opposite direction (right to left)
+          // Calculate one complete set width (10 cards × (192px + 24px gap) = 2160px)
+          const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+          const oneSetWidth = 10 * cardWidthWithGap;
+          
+          // Seamless reset when one full set has passed (moving right to left)
+          if (positionRef2.current >= oneSetWidth) {
+            positionRef2.current -= oneSetWidth;
+          }
+          carousel2.style.transform = `translateX(${positionRef2.current}px)`;
+        }
       }
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -66,15 +100,16 @@ const OurPartners = () => {
       </div>
 
       <div className="w-full overflow-hidden relative py-4">
+      <div className="space-y-6">
         <div 
-          ref={carouselRef}
-          className="flex gap-8 w-max will-change-transform"
+          ref={carouselRef1}
+          className="flex gap-6 w-max will-change-transform"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          {duplicatedPartners.map((partner, index) => (
+          {duplicatedRow1.map((partner, index) => (
             <div 
-              key={`${partner.id}-${index}`}
+              key={`1-${partner.id}-${index}`}
               className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:scale-105 hover:shadow-xl group"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
@@ -102,6 +137,44 @@ const OurPartners = () => {
             </div>
           ))}
         </div>
+
+        <div 
+          ref={carouselRef2}
+          className="flex gap-6 w-max will-change-transform"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {duplicatedRow2.map((partner, index) => (
+            <div 
+              key={`2-${partner.id}-${index}`}
+              className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:scale-105 hover:shadow-xl group"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              <div className="w-4/5 h-4/5 flex items-center justify-center transition-all duration-300 ease-out z-10 group-hover:opacity-0">
+                <img 
+                  src={partner.logo} 
+                  alt={partner.name}
+                  className="max-w-full max-h-full object-contain  contrast-75 brightness-90 transition-all duration-300 ease-out"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-400  to-gray-600 flex flex-col items-center justify-center p-6 opacity-0 transition-opacity duration-300 ease-out text-white text-center group-hover:opacity-100">
+                <h3 className="text-lg font-semibold mb-2">
+                  {partner.name}
+                </h3>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold leading-none">
+                    {partner.studentsPlaced}+
+                  </span>
+                  <span className="text-sm opacity-90 mt-1">
+                    Students Placed
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       </div>
     </section>
   );

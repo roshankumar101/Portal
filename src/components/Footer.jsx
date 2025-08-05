@@ -38,7 +38,7 @@ const PWIOIFooter = () => {
 
     return (
         <footer className="text-white py-5 relative overflow-hidden mt-10" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>
-            <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-5 px-5">
+            <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-5 gap-5 px-5">
                 {/* Brand & Social Media */}
                 <div className="flex flex-col mt-4 items-start">
                     <img
@@ -47,10 +47,10 @@ const PWIOIFooter = () => {
                         className="w-44 mb-5 filter brightness-0 invert"
                     />
                     <div className="flex flex-col mt-10">
-                        <h3 className="text-xl mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
+                        <h3 className="text-xl text-gray-200 mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                             Connect With Us
                         </h3>
-                        <div className='flex gap-6'>
+                        <div className='flex gap-6 text-gray-300'>
                             {/* LinkedIn */}
                             <a href="https://linkedin.com/company/pw-ioi" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition-transform duration-200">
                                 <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -81,7 +81,7 @@ const PWIOIFooter = () => {
 
                 {/* Quick Links */}
                 <div className="flex flex-col mt-4">
-                    <h3 className="text-xl mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
+                    <h3 className="text-2xl text-gray-200 font-semibold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                         Quick Links
                     </h3>
                     <a href="#" className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0">
@@ -100,17 +100,17 @@ const PWIOIFooter = () => {
 
                 {/* Contact Info */}
                 <div className="flex flex-col mt-4">
-                    <h3 className="text-xl mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
+                    <h3 className="text-2xl text-gray-200 font-semibold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                         Contact Info
                     </h3>
                     <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-gray-400 group hover:text-white">
+                        <div className="flex items-center gap-3 text-gray-400 group hover:text-white cursor-pointer">
                             <svg className="w-5 h-5 group-hover:text-gray-200" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                             </svg>
                             <span>placement@pwioi.edu.in</span>
                         </div>
-                        <div className="flex items-center gap-3 text-gray-400 group hover:text-white">
+                        <div className="flex items-center gap-3 text-gray-400 group hover:text-white cursor-pointer">
                             <svg className="w-5 h-5 group-hover:text-green-400" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                             </svg>
@@ -135,9 +135,9 @@ const PWIOIFooter = () => {
                 </div>
 
                 {/* Contact Form */}
-                <div className="flex flex-col">
-                    <h3 className="text-4xl font-bold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
-                        Get In Touch
+                <div className="flex flex-col col-span-2 pl-10">
+                    <h3 className="text-4xl text-gray-400 font-bold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
+                        Get In<span className='text-gray-200'> Touch</span>
                     </h3>
                     <form onSubmit={handleSubmit} className="space-y-2">
                         <div>
@@ -147,8 +147,8 @@ const PWIOIFooter = () => {
                                 value={formData.company}
                                 onChange={handleInputChange}
                                 placeholder="Company Name *"
-                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                
                                 required
                             />
                         </div>
@@ -160,8 +160,8 @@ const PWIOIFooter = () => {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 placeholder="Email Address *"
-                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                
                                 required
                             />
                         </div>
@@ -172,16 +172,16 @@ const PWIOIFooter = () => {
                                 value={formData.phone}
                                 onChange={handleInputChange}
                                 placeholder="Phone Number *"
-                                className="w-full px-2 py-2 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                style={{ backgroundColor: 'rgba(26, 26, 58, 0.8)' }}
+                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
+                                
                                 required
                             />
                         </div>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
-                            style={{ backgroundColor: '#00bfff' }}
+                            className="w-full bg-blue-500 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform disabled:transform-none disabled:cursor-not-allowed"
+                            
                         >
                             {isSubmitting ? 'Sending...' : 'Send'}
                         </button>

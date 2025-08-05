@@ -103,13 +103,13 @@ const PlacementTimeline = () => {
   }, []);
 
   return (
-    <section className="py-24" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>
+    <section className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
             Your Placement Journey
           </h2>
-          <p className="text-lg md:text-xl text-gray-300 font-normal max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 font-normal max-w-2xl mx-auto">
             Follow the timeline to understand your placement process
           </p>
         </div>

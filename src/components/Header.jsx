@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Login from './Login';
 import physicsWallahLogo from '../assets/physics-wallah-seeklogo.png';
+import { TypeWriter } from './TextStyle';
 
 function Header({ onLoginOpen }) {
   const openModal = () => {
@@ -47,10 +48,6 @@ function Header({ onLoginOpen }) {
     }
   };
 
-  // Typewriter effect
-  const fullText = 'INSTITUTE OF INNOVATION';
-  const [displayed, setDisplayed] = useState('');
-  const [typing, setTyping] = useState(true);
 
   // Dynamic color based on background
   const [isBgBlack, setIsBgBlack] = useState(false);
@@ -171,15 +168,6 @@ function Header({ onLoginOpen }) {
     };
   }, []);
 
-  useEffect(() => {
-    let timeout;
-    if (typing && displayed.length < fullText.length) {
-      timeout = setTimeout(() => {
-        setDisplayed(fullText.slice(0, displayed.length + 1));
-      }, 90);
-    }
-    return () => clearTimeout(timeout);
-  }, [displayed, typing, fullText]);
 
   return (
     <div 
@@ -191,59 +179,42 @@ function Header({ onLoginOpen }) {
         <div className='backdrop-blur-xs flex justify-between items-center px-12 py-2 mx-3 rounded-xl bg-transparent border border-white/20 shadow-sm'>
             <div className='flex items-center gap-5'>
                 <a href="#">
-                    <img 
-                      src={physicsWallahLogo} 
-                      alt="Physics Wallah Logo" 
-                      className={`h-10 w-auto transition-all duration-300 ${
-                        isBgBlack ? 'filter brightness-0 invert' : ''
-                      }`} 
-                    />
+                                    <img 
+                  src={physicsWallahLogo} 
+                  alt="Physics Wallah Logo" 
+                  className="h-10 w-auto transition-all duration-300" 
+                />
                 </a>
-                <h1 className={`text-2xl font-bold font-serif hidden lg:flex whitespace-nowrap transition-colors duration-300 ${
-                  isBgBlack ? 'text-white' : 'text-black'
-                }`}>
-                  {displayed}
-                </h1>
             </div>
             
             {/* Navigation Menu with Login Button */}
             <nav className="flex items-center space-x-12">
                 <a 
                   href="#calendar" 
-                  className={`text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group ${
-                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
-                  }`}
+                  className="text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
                 >
                   Calendar
-                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                  <div className="absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>
                 </a>
                 <a 
                   href="#placements" 
                   onClick={scrollToPlacements}
-                  className={`text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group ${
-                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
-                  }`}
+                  className="text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
                 >
                   Placements
-                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                  <div className="absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>
                 </a>
                 <a 
                   href="#contact" 
-                  className={`text-base hidden md:flex text-nowrap font-medium transition-all duration-300 hover:scale-105 relative group ${
-                    isBgBlack ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-600'
-                  }`}
+                  className="text-base hidden md:flex text-nowrap font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
                 >
                   Contact Us
-                  <div className={`absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full`}></div>
+                  <div className="absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>
                 </a>
                 
                 <Login 
                   onClick={openModal} 
-                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 ${
-                    isBgBlack 
-                      ? 'bg-white text-black hover:bg-gray-100 shadow-lg' 
-                      : 'bg-black text-white hover:bg-gray-800 shadow-lg'
-                  }`} 
+                  className="px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 bg-black text-white hover:bg-gray-800 shadow-lg" 
                 />
             </nav>
         </div>

@@ -10,6 +10,7 @@ import PlacementTimeline from './components/PlacementTimeline'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
 import LoginModal from './components/LoginModal'
+import ScribbledText from './components/ScribbledText'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
@@ -36,80 +37,43 @@ function App() {
       {isLoading ? (
         <Preloader onComplete={() => setIsLoading(false)} />
       ) : (
-        <main className='w-full min-h-screen'>
-          
-          
-          
-          <Header onLoginOpen={openModal}/>
-          
-          
-          <Banner/>
-          
-          {/* WhyPw  */}
-          <div className='relative overflow-hidden'
-               style={{
-                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
-                 backgroundSize: '400% 400%',
-                 animation: 'meteorShower 8s ease-in-out infinite'
-               }}>
-            <div className="absolute inset-0 opacity-20">
-              {/* Shooting stars effect */}
-              <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full animate-ping"></div>
-              <div className="absolute top-20 right-1/3 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-              <div className="absolute top-32 left-2/3 w-1 h-1 bg-white rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
-              <div className="absolute top-40 right-1/4 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '3s'}}></div>
+                 <main className='w-full min-h-screen'>
+           <Header onLoginOpen={openModal}/>
+           
+           {/* Banner - Odd component #F2F0EA */}
+           <div className='bg-gradient-to-b from-[#F2F0EA] to-[#A8D5E5] to-80%'>
+             <Banner/>
+           </div>
+            
+           {/* WhyPw - Even component #A8D5E3 */}
+           <div className='bg-gradient-to-b from-[#A8D5EA] from-0% via-[#F2F0EA] via-45% to-[#f1f1ef] to-90%'>
+             <WhyPw/>
+           </div>
+            
+           {/* OurPartners - Odd component #F2F0EA */}
+           <div id="our-partners" className='bg-[#FFFEFD]'>
+             <OurPartners/>
+           </div>
+            
+           {/* Records - Even component #A8D5E3 */}
+           <div className='bg-[#F2F0D6]'>
+             <Records onLoginOpen={openModal}/>
+           </div>
+            
+          {/* PlacementTimeline - #A8D5E3 background */}
+            <div className='bg-gradient-to-b from-[#f1f1ef] from-10% to-[#A8D5E5] to-30%'>
+              <PlacementTimeline autoplay={timelineAutoplay}/>
             </div>
-            <WhyPw/>
-          </div>
-          
-          {/* OurPartners */}
-          <div id="our-partners" className='bg-[#DBD7F9]'>
-            <OurPartners/>
-          </div>
-          
-          {/* Records - White background */}
-          <div className='bg-white'>
-            <Records onLoginOpen={openModal}/>
-          </div>
-          
-          {/* PlacementTimeline - Banner gradient background */}
-          <div className='relative overflow-hidden'
-               style={{
-                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
-                 backgroundSize: '400% 400%',
-                 animation: 'meteorShower 8s ease-in-out infinite'
-               }}>
-            <div className="absolute inset-0 opacity-20">
-              {/* Shooting stars effect */}
-              <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full animate-ping"></div>
-              <div className="absolute top-20 right-1/3 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-              <div className="absolute top-32 left-2/3 w-1 h-1 bg-white rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
-              <div className="absolute top-40 right-1/4 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '3s'}}></div>
-            </div>
-            <PlacementTimeline autoplay={timelineAutoplay}/>
-          </div>
-          
-          {/* FoundersSection - Titan White background */}
-          <div className='bg-[#DBD7F9]'>
-            <RecruitersSection/>
-          </div>
-          
-          {/* Footer - Banner gradient background */}
-          <div className='relative overflow-hidden'
-               style={{
-                 background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)',
-                 backgroundSize: '400% 400%',
-                 animation: 'meteorShower 8s ease-in-out infinite'
-               }}>
-            <div className="absolute inset-0 opacity-20">
-              {/* Shooting stars effect */}
-              <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full animate-ping"></div>
-              <div className="absolute top-20 right-1/3 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-              <div className="absolute top-32 left-2/3 w-1 h-1 bg-white rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
-              <div className="absolute top-40 right-1/4 w-1 h-1 bg-silver rounded-full animate-ping" style={{animationDelay: '3s'}}></div>
-            </div>
-            <PWIOIFooter/>
-          </div>
+            
+           {/* FoundersSection - Even component #A8D5E3 */}
+           <div className='bg-[#F2F0D6]'>
+             <RecruitersSection/>
+           </div>
+            
+           {/* Footer - Odd component #F2F0EA */}
+           <div>
+             <PWIOIFooter/>
+           </div>
         </main>
       )}
       

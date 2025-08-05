@@ -1,75 +1,245 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const SkillsDisplay = () => {
+  const hardSkillsRef = useRef(null);
+  const softSkillsRef = useRef(null);
+  const hardSkillItemsRef = useRef([]);
+  const softSkillItemsRef = useRef([]);
+
+  useEffect(() => {
+    // Set initial states
+    gsap.set([hardSkillsRef.current, softSkillsRef.current], {
+      opacity: 0,
+      y: 50
+    });
+    
+    gsap.set([...hardSkillItemsRef.current, ...softSkillItemsRef.current], {
+      opacity: 0,
+      y: 30
+    });
+
+    // Animate columns on scroll
+    gsap.to([hardSkillsRef.current, softSkillsRef.current], {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.2,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: hardSkillsRef.current,
+        start: "top 80%",
+        toggleActions: "play none none reverse"
+      }
+    });
+
+    // Animate skill items with stagger
+    gsap.to([...hardSkillItemsRef.current, ...softSkillItemsRef.current], {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: hardSkillsRef.current,
+        start: "top 70%",
+        toggleActions: "play none none reverse"
+      }
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
+
+  const addToHardSkillsRef = (el, index) => {
+    if (el && !hardSkillItemsRef.current.includes(el)) {
+      hardSkillItemsRef.current[index] = el;
+    }
+  };
+
+  const addToSoftSkillsRef = (el, index) => {
+    if (el && !softSkillItemsRef.current.includes(el)) {
+      softSkillItemsRef.current[index] = el;
+    }
+  };
+
   return (
-    <div className="flex gap-8 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-8">
+    <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
       {/* Hard Skills Column */}
-      <div className="flex-1 min-w-[300px]">
-        <div className="bg-gray-50 rounded-xl shadow-lg overflow-hidden mb-6 h-full">
-          <div className="bg-blue-200 text-blue-800 p-6 font-bold text-2xl">
-            Hard Skills They've Mastered
+      <div ref={hardSkillsRef} className="flex-1 min-w-[300px] border border-gray-700 rounded-xl p-5">
+        <div className="mb-6 h-full">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-primary mb-2">Hard Skills They've Mastered</h3>
+            <div className="w-16 h-1 bg-highlight mx-auto rounded-full"></div>
           </div>
-          <div className="p-6">
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">4 Years of Immersive Training</strong><br />
-              Mentored by industry experts with real-world simulations, not just textbook learning.
+          
+          <div className="space-y-8 text-start text-sm">
+            <div 
+              ref={(el) => addToHardSkillsRef(el, 0)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">4 Years of Immersive Training</h4>
+                  <p className="text-secondary/70">
+                    Mentored by industry experts with real-world simulations, not just textbook learning.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">Worked on Real-Time Projects</strong><br />
-              From hackathons to live deployments—they've built, failed, and delivered under pressure.
+
+            <div 
+              ref={(el) => addToHardSkillsRef(el, 1)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">Worked on Real-Time Projects</h4>
+                  <p className="text-secondary/70">
+                    From hackathons to live deployments—they've built, failed, and delivered under pressure.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">Business Acumen Included</strong><br />
-              Students gain exposure to business strategy, finance, and stakeholder management beyond core skills.
+
+            <div 
+              ref={(el) => addToHardSkillsRef(el, 2)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">Business Acumen Included</h4>
+                  <p className="text-secondary/70d">
+                    Students gain exposure to business strategy, finance, and stakeholder management beyond core skills.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg underline underline-offset-2 decoration-3 decoration-purple-500">No-Cost Hiring Policy</strong><br />
-              Zero placement fees—because talent should be <span className='block text-gray-700 underline font-semibold decoration-blue-800'> accessible, not transactional.</span> 
+
+            <div 
+              ref={(el) => addToHardSkillsRef(el, 3)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold mb-1 underline decoration-2 inline-block">
+                    No-Cost Hiring Policy
+                  </h4>
+                  <p className="text-secondary/70">
+                    Zero placement fees—because talent should be <span className="text-primary font-semibold">accessible, not transactional.</span>
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">Play-and-Plug Resources</strong><br />
-              Trained on industry tools so they're productive from Day 1, not just "familiar."
+
+            <div 
+              ref={(el) => addToHardSkillsRef(el, 4)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">Play-and-Plug Resources</h4>
+                  <p className="text-secondary/70">
+                    Trained on industry tools so they're "productive" from Day 1, not just "familiar."
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Soft Skills Column */}
-      <div className="flex-1 min-w-[300px]">
-        <div className="bg-gray-50 rounded-xl shadow-lg overflow-hidden mb-6 h-full">
-          <div className="bg-purple-200 text-purple-800 p-6 font-bold text-2xl">
-            What Employers Really Remember
+      <div ref={softSkillsRef} className="flex-1 min-w-[300px] p-5">
+        <div className="mb-6 h-full">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-secondary mb-2">What Employers Really Remember</h3>
+            <div className="w-16 h-1 bg-highlight mx-auto rounded-full"></div>
           </div>
-          <div className="p-6">
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">CRISIS POISE UNDER PRESSURE</strong><br />
-              Maintain clarity of thought and communication during system outages- reducing resolution time by an average of 40%.
+          
+          <div className="space-y-6 text-start">
+            <div 
+              ref={(el) => addToSoftSkillsRef(el, 0)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">CALM IN CHAOS</h4>
+                  <p className="text-secondary/70 leading-relaxed">
+                    They are trained to think, speak and resolve crisis calmly 40% faster than industry norm.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">CROSS-FUNCTIONAL DIPLOMACY</strong><br />
-              Capacity to translate complex technical concepts for executives, clients, and team members - eliminating communication gaps that delay projects.
+
+            <div 
+              ref={(el) => addToSoftSkillsRef(el, 1)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">FLUENT IN GEEK AND EXEC</h4>
+                  <p className="text-secondary/70 leading-relaxed">
+                    Breaks down tech-speak into plain English - because great ideas shouldn't get lost in translation.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">SOLUTION-ORIENTED OWNERSHIP</strong><br />
-              Pattern of identifying risks proactively and presenting validated solutions rather than just problems.
+
+            <div 
+              ref={(el) => addToSoftSkillsRef(el, 2)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">SOLUTION-ORIENTED OWNERSHIP</h4>
+                  <p className="text-secondary/70 leading-relaxed">
+                    Pattern of identifying risks proactively and presenting validated solutions rather than just problems.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">TEAM AMPLIFICATION</strong><br />
-              Elevate team performance through knowledge sharing, emotional intelligence, and collaborative problem-solving.
+
+            <div 
+              ref={(el) => addToSoftSkillsRef(el, 3)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">SOLUTIONS OVER EXCUSES</h4>
+                  <p className="text-secondary/70 leading-relaxed">
+                    Take accountability - doesn't just report problems. They are used to taking charge, they don't blink when it fires, they extinguish it.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mb-5 pl-6 relative text-gray-600 leading-relaxed">
-              <span className="absolute left-0 text-gray-800 font-bold">•</span>
-              <strong className="text-gray-800 font-bold text-lg">ADAPTIVE LEARNING AGILITY</strong><br />
-              Master new methodologies and tools 50% faster than industry benchmarks, future-proofing your talent investment.
+
+            <div 
+              ref={(el) => addToSoftSkillsRef(el, 4)}
+              className="group transition-all duration-300 hover:translate-x-2"
+            >
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <h4 className="text-lg font-semibold text-secondary mb-1">LEARN FAST AND STAY RELEVANT</h4>
+                  <p className="text-secondary/70 leading-relaxed">
+                    Not spoon-fed, they pick up new tech 50% faster than the industry average. Plug them into a new tool and get surprised - we promise, try it!
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -78,4 +248,4 @@ const SkillsDisplay = () => {
   );
 };
 
-export default SkillsDisplay; 
+export default SkillsDisplay;

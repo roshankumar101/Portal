@@ -11,7 +11,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   const getWordsBySelection = (selection) => {
     switch (selection) {
       case 'SOT': // Software Development
-        return ["framework","tool", "API", "languages"];
+        return ["framework","tool", "API", "library"];
       case 'SOM': // Software Management
         return ["case study", "algorithm", "metric"];
       case 'SOH': // Software Healthcare
@@ -108,7 +108,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   }, [userSelection]); // Add userSelection as dependency
 
   return (
-    <div className="max-w-4xl mx-auto my-12 text-center text-gray-200">
+    <div className="max-w-4xl mx-auto my-12 text-center text-black">
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight mb-2">
         <span className="font-bold relative inline-block">Do we bet they know every</span>
         <div ref={techLineRef} className="flex items-center">
@@ -123,7 +123,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
           </div>
           <span 
             ref={nahRef}
-            className="font-black rotate-1 text-blue-600 drop-shadow-lg inline-block ml-3"
+            className="font-black rotate-1 text-blue-900 drop-shadow-lg inline-block ml-3"
           >
             : NAH !
           </span>
@@ -132,7 +132,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight">
         <span className="font-bold relative inline-block">but they're</span>
-        <span className="font-black text-4xl bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+        <span className="font-black text-4xl bg-gradient-to-r from-blue-800 to-blue-950 bg-clip-text text-transparent">
           passionate learners
         </span>
       </div>

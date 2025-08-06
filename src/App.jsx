@@ -41,12 +41,12 @@ function App() {
            <Header onLoginOpen={openModal}/>
            
            {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-gradient-to-b from-[#F2F0EA] to-[#A8D5E5] to-80%'>
+           <div className='bg-[#f7f7f5]'>
              <Banner/>
            </div>
             
            {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-gradient-to-b from-[#A8D5EA] from-0% via-[#F2F0EA] via-45% to-[#f1f1ef] to-90%'>
+           <div className='bg-[#f1f1ef]'>
              <WhyPw/>
            </div>
             
@@ -61,7 +61,7 @@ function App() {
            </div>
             
           {/* PlacementTimeline - #A8D5E3 background */}
-            <div className='bg-gradient-to-b from-[#f1f1ef] from-10% to-[#A8D5E5] to-30%'>
+            <div className='bg-[#f1f1ef]'>
               <PlacementTimeline autoplay={timelineAutoplay}/>
             </div>
             

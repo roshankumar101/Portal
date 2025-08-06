@@ -72,7 +72,7 @@ const SkillsDisplay = () => {
       {/* Hard Skills Column */}
       <div ref={hardSkillsRef} className="flex-1 min-w-[300px] border border-gray-700 rounded-xl p-5">
         <div className="mb-6 h-full">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold text-primary mb-2">Hard Skills They've Mastered</h3>
             <div className="w-16 h-1 bg-highlight mx-auto rounded-full"></div>
           </div>
@@ -159,9 +159,9 @@ const SkillsDisplay = () => {
       </div>
 
       {/* Soft Skills Column */}
-      <div ref={softSkillsRef} className="flex-1 min-w-[300px] p-5">
+      <div ref={softSkillsRef} className="flex-1 min-w-[300px] border border-gray-700 rounded-xl p-5">
         <div className="mb-6 h-full">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold text-secondary mb-2">What Employers Really Remember</h3>
             <div className="w-16 h-1 bg-highlight mx-auto rounded-full"></div>
           </div>
@@ -175,7 +175,7 @@ const SkillsDisplay = () => {
                 <div className="w-2 h-2 bg-highlight rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-secondary mb-1">CALM IN CHAOS</h4>
-                  <p className="text-secondary/70 leading-relaxed">
+                  <p className="text-secondary/70">
                     They are trained to think, speak and resolve crisis calmly 40% faster than industry norm.
                   </p>
                 </div>

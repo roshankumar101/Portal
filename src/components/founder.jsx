@@ -22,8 +22,9 @@ const TestimonialGallery = () => {
 
   const breakpointColumnsObj = {
     default: 3,
-    1100: 2,
-    700: 1
+    1200: 3,
+    900: 2,
+    600: 1
   };
 
   const testimonialItems = [
@@ -84,20 +85,20 @@ const TestimonialGallery = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Student Success Stories</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 text-gray-800">Student Success Stories</h1>
       
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="w-full md:w-2/3">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="w-full lg:w-2/3">
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="flex w-auto -ml-4"
-            columnClassName="pl-4 bg-clip-padding"
+            className="flex w-auto -ml-2 sm:-ml-4"
+            columnClassName="pl-2 sm:pl-4 bg-clip-padding"
           >
             {testimonialItems.map(item => (
               <div 
                 key={item.id} 
-                className={`mb-4 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 ${aspectClasses[item.aspect]}`}
+                className={`mb-2 sm:mb-4 rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 ${aspectClasses[item.aspect]}`}
               >
                 <div className="relative w-full h-full group">
                   <img 
@@ -107,11 +108,11 @@ const TestimonialGallery = () => {
                   />
                   
                   {!item.imageOnly && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 sm:p-6 active:opacity-100">
                       <div className="text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                        <p className="italic mb-3">"{item.quote}"</p>
-                        <p className="font-semibold">{item.author}</p>
-                        <p className="text-sm opacity-90">{item.role}</p>
+                        <p className="italic mb-2 sm:mb-3 text-sm sm:text-base leading-relaxed">"{item.quote}"</p>
+                        <p className="font-semibold text-sm sm:text-base">{item.author}</p>
+                        <p className="text-xs sm:text-sm opacity-90">{item.role}</p>
                       </div>
                     </div>
                   )}
@@ -121,15 +122,15 @@ const TestimonialGallery = () => {
           </Masonry>
         </div>
         
-        <div className="w-full md:w-1/3">
-          <div className="bg-gray-50 p-8 rounded-xl shadow-sm sticky top-4">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-700">Let's Collaborate and Build</h2>
+        <div className="w-full lg:w-1/3">
+          <div className="bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-sm lg:sticky lg:top-4">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gray-700">Let's Collaborate and Build</h2>
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
                 name="name"
                 placeholder="Company's Name"
-                className="w-full p-3 border border-gray-200 rounded-md mb-4 focus:border-indigo-500 focus:outline-none"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -139,7 +140,7 @@ const TestimonialGallery = () => {
                 type="number"
                 name="company"
                 placeholder="Contact Number"
-                className="w-full p-3 border border-gray-200 rounded-md mb-4 focus:border-indigo-500 focus:outline-none"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
                 value={formData.company}
                 onChange={handleChange}
                 required
@@ -149,7 +150,7 @@ const TestimonialGallery = () => {
                 type="email"
                 name="email"
                 placeholder="Email Address"
-                className="w-full p-3 border border-gray-200 rounded-md mb-4 focus:border-indigo-500 focus:outline-none"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -158,8 +159,8 @@ const TestimonialGallery = () => {
               <textarea
                 name="message"
                 placeholder="Your recruitment needs"
-                rows={4}
-                className="w-full p-3 border border-gray-200 rounded-md mb-4 focus:border-indigo-500 focus:outline-none"
+                rows={3}
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base sm:rows-4"
                 value={formData.message}
                 onChange={handleChange}
                 required
@@ -167,7 +168,7 @@ const TestimonialGallery = () => {
               
               <button 
                 type="submit" 
-                className="w-full bg-indigo-500 text-white py-3 px-6 rounded-md hover:bg-indigo-600 transition-colors"
+                className="w-full bg-indigo-500 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md hover:bg-indigo-600 transition-colors text-sm sm:text-base font-medium"
               >
                 Contact Placement Team
               </button>

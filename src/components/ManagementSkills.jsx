@@ -70,9 +70,9 @@ const ManagementSkills = () => {
   return (
     <div className="flex gap-8 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-8">
       {/* Hard Skills Column - Business Focus */}
-      <div ref={businessFocusRef} className="flex-1 min-w-[320px]">
+      <div ref={businessFocusRef} className="flex-1 min-w-[320px] border border-gray-700 rounded-xl p-5">
         <div className="mb-6 h-full">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold text-secondary mb-2">Strategic Business Competencies</h3>
             <div className="w-16 h-1 bg-primary mx-auto rounded-full"></div>
           </div>
@@ -83,7 +83,6 @@ const ManagementSkills = () => {
               className="group transition-all duration-300 hover:translate-x-2"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-800 mb-1">4 Years of Immersive Business Training</h4>
                   <p className="text-gray-600 leading-relaxed">
@@ -98,7 +97,6 @@ const ManagementSkills = () => {
               className="group transition-all duration-300 hover:translate-x-2"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-800 mb-1">Real-World Business Projects</h4>
                   <p className="text-gray-600 leading-relaxed">
@@ -113,7 +111,6 @@ const ManagementSkills = () => {
               className="group transition-all duration-300 hover:translate-x-2"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-800 mb-1">Executive-Level Business Acumen</h4>
                   <p className="text-gray-600 leading-relaxed">
@@ -128,7 +125,6 @@ const ManagementSkills = () => {
               className="group transition-all duration-300 hover:translate-x-2"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-800 mb-1 border-b-2 border-purple-500 pb-1 inline-block">
                     Zero-Cost Talent Pipeline
@@ -145,7 +141,6 @@ const ManagementSkills = () => {
               className="group transition-all duration-300 hover:translate-x-2"
             >
               <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-800 mb-1">Boardroom-Ready Graduates</h4>
                   <p className="text-gray-600 leading-relaxed">

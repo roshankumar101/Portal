@@ -97,7 +97,7 @@ const PlacementTimeline = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check on initial render
+    handleScroll(); 
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -120,7 +120,7 @@ const PlacementTimeline = () => {
           
           {/* Progressive fill line */}
           <div 
-            className="absolute left-1/2 w-2 bg-blue-600 blur-xs transform -translate-x-1/2 transition-all duration-300 ease-out"
+            className="absolute left-1/2 w-2 bg-blue-800 blur-xs transform -translate-x-1/2 transition-all duration-300 ease-out"
             style={{
               height: `${lineProgress}%`,
               top: 0

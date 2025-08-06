@@ -9,7 +9,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        caveat: ['Caveat', 'cursive'],
+        heading: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Caveat', 'cursive'],
       },
       colors: {
         'primary': 'oklch(60% .118 184.704)',

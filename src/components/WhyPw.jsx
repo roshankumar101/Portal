@@ -34,15 +34,15 @@ const WhyPw = () => {
       <div className="transition-all duration-1000 z-2 ease-out opacity-100 translate-y-0">
         {/* Minimal Navbar */}
         <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="bg-black/20 backdrop-blur-sm border border-white/20 rounded-lg p-1 flex gap-1 sm:gap-2 lg:gap-3 w-full sm:w-auto max-w-sm sm:max-w-none">
+          <div className="bg-transparent backdrop-blur-sm border-1 border-gray-700 rounded-lg p-1 flex gap-1 sm:gap-2 lg:gap-3 w-full sm:w-auto max-w-sm sm:max-w-none">
             {['SOT', 'SOM', 'SOH'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 sm:px-6 lg:px-10 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-700 flex-1 sm:flex-initial ${
+                className={`px-3 sm:px-5 lg:px-8 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-700 flex-1 sm:flex-initial ${
                   activeTab === tab
-                    ? 'bg-white/80 text-black font-bold shadow-lg'
-                    : 'text-white hover:bg-black/30 hover:text-black'
+                    ? 'bg-black/80 text-white font-bold shadow-lg'
+                    : 'text-black bg-black/5 hover:bg-black/30 hover:text-black'
                 }`}
               >
                 {tab}

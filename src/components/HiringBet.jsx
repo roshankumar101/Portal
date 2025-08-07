@@ -93,7 +93,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
     
     // Continuous slight rotation animation for "NAH!"
     gsap.to(nahElement, {
-      rotation: "+=2",
+      rotation: "+=0",
       duration: 2,
       repeat: -1,
       yoyo: true,
@@ -123,7 +123,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
           </div>
           <span 
             ref={nahRef}
-            className="font-black rotate-1 text-blue-900 drop-shadow-lg inline-block ml-3"
+            className="font-black rotate-1 text-blue-800 inline-block ml-3"
           >
             : NAH !
           </span>
@@ -132,7 +132,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight">
         <span className="font-bold relative inline-block">but they're</span>
-        <span className="font-black text-4xl bg-gradient-to-r from-blue-800 to-blue-950 bg-clip-text text-transparent">
+        <span className="font-bold text-4xl text-blue-900 bg-clip-text">
           passionate learners
         </span>
       </div>

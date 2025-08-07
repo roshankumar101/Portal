@@ -181,7 +181,7 @@ function Header({ onLoginOpen }) {
             <img
               src={brandLogo}
               alt="PW IOI Logo"
-              className="w-40"
+              className="w-30 md:w-35 lg:w-40"
             />
           </a>
         </div>

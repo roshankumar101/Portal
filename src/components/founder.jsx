@@ -86,13 +86,13 @@ const TestimonialGallery = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 text-gray-800">Student Success Stories</h1>
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 lg:mb-10 text-gray-800">Student Success Stories</h1>
       
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="w-full lg:w-2/3">
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="flex w-auto -ml-2 sm:-ml-4"
+            className="flex w-auto sm:-ml-4"
             columnClassName="pl-2 sm:pl-4 bg-clip-padding"
           >
             {testimonialItems.map(item => (
@@ -137,7 +137,7 @@ const TestimonialGallery = () => {
               />
               
               <input
-                type="number"
+                type="text"
                 name="company"
                 placeholder="Contact Number"
                 className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"

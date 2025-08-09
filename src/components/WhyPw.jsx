@@ -34,7 +34,7 @@ const WhyPw = () => {
       <div className="transition-all duration-1000 z-2 ease-out opacity-100 translate-y-0">
         {/* Minimal Navbar */}
         <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="bg-transparent backdrop-blur-sm border-1 border-gray-700 rounded-lg p-1 flex gap-1 sm:gap-2 lg:gap-3 w-full sm:w-auto max-w-sm sm:max-w-none">
+          <div className="bg-[#e9edef] backdrop-blur-sm border-1 border-gray-700 rounded-lg p-1 flex gap-1 sm:gap-2 lg:gap-3 w-full sm:w-auto max-w-sm sm:max-w-none">
             {['SOT', 'SOM', 'SOH'].map((tab) => (
               <button
                 key={tab}
@@ -42,7 +42,7 @@ const WhyPw = () => {
                 className={`px-3 sm:px-5 lg:px-8 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-700 flex-1 sm:flex-initial ${
                   activeTab === tab
                     ? 'bg-black/80 text-white font-bold shadow-lg'
-                    : 'text-black bg-black/5 hover:bg-black/30 hover:text-black'
+                    : 'text-black bg-black/10 hover:bg-black/30 hover:text-black'
                 }`}
               >
                 {tab}

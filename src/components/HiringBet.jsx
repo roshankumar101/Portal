@@ -110,9 +110,9 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   return (
     <div className="max-w-4xl mx-auto my-12 text-center text-black">
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight mb-2">
-        <span className="font-bold relative inline-block">Do we bet they know every</span>
+        <span className="font-semibold relative inline-block">Do we bet they know every</span>
         <div ref={techLineRef} className="flex items-center">
-          <div className="font-bold -rotate-1 relative inline-block w-[190px] text-center">
+          <div className="font-bold -rotate-1 relative inline-block w-fit text-center">
             <span ref={techWordRef}>
               {getWordsBySelection(userSelection)[0]}
             </span>
@@ -123,7 +123,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
           </div>
           <span 
             ref={nahRef}
-            className="font-black rotate-1 text-blue-800 inline-block ml-3"
+            className="font-black rotate-1 text-blue-800 inline-block ml-4"
           >
             : NAH !
           </span>

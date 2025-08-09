@@ -51,14 +51,14 @@ const TestimonialGallery = () => {
       quote: 'Working with them is like having a recruitment cheat code every role gets filled with that perfect candidate ',
       author: 'Priya Patel',
       role: 'Data Analyst',
-      aspect: 'landscape' // 3:2
+      aspect: 'square' // 1:1
     },
     {
       id: 4,
       img: 'https://placehold.co/600x600/f97316/white?text=Team',
       alt: 'Team working',
       imageOnly: true,
-      aspect: 'square' 
+      aspect: 'portrait' 
     },
     {
       id: 5,
@@ -67,14 +67,14 @@ const TestimonialGallery = () => {
       quote: 'Hiring from them has always been suspiciously easy—like they\'ve cracked some secret hiring algorithm the rest of us are still decoding ',
       author: 'David Kim',
       role: 'Marketing Specialist',
-      aspect: 'portrait'
+      aspect: 'square'
     },
     {
       id: 6,
       img: 'https://placehold.co/600x400/10b981/white?text=Campus',
       alt: 'Campus building',
       imageOnly: true,
-      aspect: 'landscape' 
+      aspect: 'portrait' 
     }
   ];
 
@@ -122,15 +122,15 @@ const TestimonialGallery = () => {
           </Masonry>
         </div>
         
-        <div className="w-full lg:w-1/3">
-          <div className="bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-sm lg:sticky lg:top-4">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gray-700">Let's Collaborate and Build</h2>
+        <div className="w-full lg:w-1/3  mb-2 sm:mb-3 lg:mb-5">
+          <div className="sticky top-[10%] bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-md">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-700">Let's Collaborate and Build</h2>
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
                 name="name"
                 placeholder="Company's Name"
-                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-2 sm:mb-3 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -140,7 +140,7 @@ const TestimonialGallery = () => {
                 type="text"
                 name="company"
                 placeholder="Contact Number"
-                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-2 sm:mb-3 focus:border-indigo-500 focus:outline-none text-sm sm:text-base"
                 value={formData.company}
                 onChange={handleChange}
                 required
@@ -160,7 +160,7 @@ const TestimonialGallery = () => {
                 name="message"
                 placeholder="Your recruitment needs"
                 rows={3}
-                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-3 sm:mb-4 focus:border-indigo-500 focus:outline-none text-sm sm:text-base sm:rows-4"
+                className="w-full p-2 sm:p-3 border border-gray-200 rounded-md mb-4 sm:mb-5 focus:border-indigo-500 focus:outline-none text-sm sm:text-base sm:rows-4"
                 value={formData.message}
                 onChange={handleChange}
                 required

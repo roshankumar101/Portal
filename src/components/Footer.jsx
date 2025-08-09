@@ -38,9 +38,9 @@ const PWIOIFooter = () => {
 
     return (
         <footer className="text-white py-5 relative overflow-hidden mt-10" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>
-            <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-5 gap-5 px-5">
+            <div className="max-w-6xl pl-[12%] grid grid-cols-1 lg:grid-cols-3 gap-5 px-5">
                 {/* Brand & Social Media */}
-                <div className="flex flex-col mt-4 items-start">
+                <div className="flex flex-col mt-6 items-start">
                     <img
                         src={brandLogo}
                         alt="PW IOI Logo"
@@ -135,58 +135,7 @@ const PWIOIFooter = () => {
                 </div>
 
                 {/* Contact Form */}
-                <div className="flex flex-col col-span-2 pl-10">
-                    <h3 className="text-4xl text-gray-400 font-bold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
-                        Get In<span className='text-gray-200'> Touch</span>
-                    </h3>
-                    <form onSubmit={handleSubmit} className="space-y-2">
-                        <div>
-                            <input
-                                type="text"
-                                name="company"
-                                value={formData.company}
-                                onChange={handleInputChange}
-                                placeholder="Company Name *"
-                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                
-                                required
-                            />
-                        </div>
-                        
-                        <div>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder="Email Address *"
-                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                
-                                required
-                            />
-                        </div>
-                        <div>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder="Phone Number *"
-                                className="w-full px-2 bg-black/30 py-2 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all duration-300"
-                                
-                                required
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full bg-blue-500 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform disabled:transform-none disabled:cursor-not-allowed"
-                            
-                        >
-                            {isSubmitting ? 'Sending...' : 'Send'}
-                        </button>
-                    </form>
-                </div>
+                
             </div>
 
             <div className="text-center mt-10 pt-5 border-t border-white/30 text-gray-400 text-sm">

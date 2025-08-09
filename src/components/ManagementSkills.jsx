@@ -125,7 +125,7 @@ const ManagementSkills = () => {
             >
               <div className="flex items-start">
                 <div>
-                  <h4 className="text-lg font-semibold mb-1 underline decoration-1 underline-offset-2">
+                  <h4 className="text-lg font-semibold mb-1 underline decoration-2 underline-offset-1">
                     Zero-Cost Talent Pipeline
                   </h4>
                   <p className="text-gray-700">

@@ -46,7 +46,7 @@ const OurPartners = () => {
     
     // Initialize second row to start from the right side for opposite direction effect
     if (carousel2 && positionRef2.current === 0) {
-      const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+      const cardWidthWithGap = 196 + 24; // w-48 + gap-6
       const oneSetWidth = 10 * cardWidthWithGap;
       positionRef2.current = -oneSetWidth * 0.5; // Start from negative position for right-to-left
     }

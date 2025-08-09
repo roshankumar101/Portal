@@ -70,7 +70,7 @@ const SkillsDisplay = () => {
   return (
     <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
       {/* Hard Skills Column */}
-      <div ref={hardSkillsRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={hardSkillsRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl p-5">
         <div className="mb-6 h-full">
           <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold mb-4">Hard Skills They've Mastered</h3>
@@ -153,7 +153,7 @@ const SkillsDisplay = () => {
       </div>
 
       {/* Soft Skills Column */}
-      <div ref={softSkillsRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={softSkillsRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl p-5">
         <div className="mb-6 h-full">
           <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold mb-4">What Employers Really Remember</h3>

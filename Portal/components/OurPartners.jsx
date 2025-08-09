@@ -1,0 +1,183 @@
+import React, { useState, useEffect, useRef } from 'react';
+import MicrosoftLogo from '../assets/Microsoft-Logo.wine.svg';
+import GoogleLogo from '../assets/Google-Logo.wine.svg';
+import AmazonLogo from '../assets/Amazon_(company)-Logo.wine.svg';
+import IntelLogo from '../assets/Intel-Logo.wine.svg';
+import IBMLogo from '../assets/IBM-Logo.wine.svg';
+import OracleLogo from '../assets/Oracle_Corporation-Logo.wine.svg';
+import SalesforceLogo from '../assets/Salesforce.com-Logo.wine.svg';
+import AdobeLogo from '../assets/Adobe_Inc.-Logo.wine.svg';
+import TeslaLogo from '../assets/Tesla,_Inc.-Logo.wine.svg';
+import NetflixLogo from '../assets/Netflix-Logo.wine.svg';
+
+const OurPartners = () => {
+  const [paused, setPaused] = useState(false);
+  const carouselRef1 = useRef(null);
+  const carouselRef2 = useRef(null);
+  const positionRef1 = useRef(0); // Position for first row
+  const positionRef2 = useRef(0); // Position for second row - starts from right
+  
+  const partners = [
+    { id: 1, name: 'Microsoft', logo: MicrosoftLogo, studentsPlaced: 142 },
+    { id: 2, name: 'Google', logo: GoogleLogo, studentsPlaced: 98 },
+    { id: 3, name: 'Amazon', logo: AmazonLogo, studentsPlaced: 156 },
+    { id: 4, name: 'Tesla', logo: TeslaLogo, studentsPlaced: 63 },
+    { id: 5, name: 'Netflix', logo: NetflixLogo, studentsPlaced: 42 },
+    { id: 6, name: 'Adobe', logo: AdobeLogo, studentsPlaced: 87 },
+    { id: 7, name: 'Intel', logo: IntelLogo, studentsPlaced: 105 },
+    { id: 8, name: 'IBM', logo: IBMLogo, studentsPlaced: 121 },
+    { id: 9, name: 'Oracle', logo: OracleLogo, studentsPlaced: 76 },
+    { id: 10, name: 'Salesforce', logo: SalesforceLogo, studentsPlaced: 59 },
+  ];
+
+  // Use all partners for both rows to ensure variety and always show at least 6 cards
+  const row1Partners = partners; // All 10 partners in row 1
+  const row2Partners = [...partners].reverse(); // All 10 partners in reverse order for row 2
+  
+  // Create enough duplicates for seamless infinite loop
+  const duplicatedRow1 = Array(10).fill(row1Partners).flat();
+  const duplicatedRow2 = Array(10).fill(row2Partners).flat();
+
+  useEffect(() => {
+    const carousel1 = carouselRef1.current;
+    const carousel2 = carouselRef2.current;
+    let animationFrameId;
+    const speed1 = 0.6; // speed for both rows (same speed, different directions)
+    
+    // Initialize second row to start from the right side for opposite direction effect
+    if (carousel2 && positionRef2.current === 0) {
+      const cardWidthWithGap = 196 + 24; // w-48 + gap-6
+      const oneSetWidth = 10 * cardWidthWithGap;
+      positionRef2.current = -oneSetWidth * 0.5; // Start from negative position for right-to-left
+    }
+
+    const animate = () => {
+      if (!paused) {
+        if (carousel1) {
+          positionRef1.current -= speed1;
+          // Calculate one complete set width (10 cards × (192px + 24px gap) = 2160px)
+          const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+          const oneSetWidth = 10 * cardWidthWithGap;
+          
+          // Seamless reset when one full set has passed
+          if (positionRef1.current <= -oneSetWidth) {
+            positionRef1.current += oneSetWidth;
+          }
+          carousel1.style.transform = `translateX(${positionRef1.current}px)`;
+        }
+        if (carousel2) {
+          positionRef2.current += speed1; // Move in opposite direction (right to left)
+          // Calculate one complete set width (10 cards × (192px + 24px gap) = 2160px)
+          const cardWidthWithGap = 192 + 24; // w-48 + gap-6
+          const oneSetWidth = 10 * cardWidthWithGap;
+          
+          // Seamless reset when one full set has passed (moving right to left)
+          if (positionRef2.current >= oneSetWidth) {
+            positionRef2.current -= oneSetWidth;
+          }
+          carousel2.style.transform = `translateX(${positionRef2.current}px)`;
+        }
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [paused]);
+
+  return (
+    <section className="pt-15 pb-10 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
+      <div className="text-center max-w-4xl mx-auto mb-12">
+        <h2 className="text-4xl font-bold text-blue-900 mb-4 tracking-tight">
+          Our Esteemed Hiring Partners
+        </h2>
+        <p className="text-xl text-gray-600 font-normal">
+          Where talent meets opportunity
+        </p>
+      </div>
+
+      <div className="w-full overflow-hidden relative py-4">
+      <div className="space-y-6">
+        <div 
+          ref={carouselRef1}
+          className="flex gap-6 w-max will-change-transform"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {duplicatedRow1.map((partner, index) => (
+            <div 
+              key={`1-${partner.id}-${index}`}
+              className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:scale-105 hover:shadow-xl group"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              <div className="w-4/5 h-4/5 flex items-center justify-center transition-all duration-300 ease-out z-10 group-hover:opacity-0">
+                <img 
+                  src={partner.logo} 
+                  alt={partner.name}
+                  className="max-w-full max-h-full object-contain  contrast-75 brightness-90 transition-all duration-300 ease-out"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-400  to-gray-600 flex flex-col items-center justify-center p-6 opacity-0 transition-opacity duration-300 ease-out text-white text-center group-hover:opacity-100">
+                <h3 className="text-lg font-semibold mb-2">
+                  {partner.name}
+                </h3>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold leading-none">
+                    {partner.studentsPlaced}+
+                  </span>
+                  <span className="text-sm opacity-90 mt-1">
+                    Students Placed
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div 
+          ref={carouselRef2}
+          className="flex gap-6 w-max will-change-transform"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {duplicatedRow2.map((partner, index) => (
+            <div 
+              key={`2-${partner.id}-${index}`}
+              className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:transform hover:scale-105 hover:shadow-xl group"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              <div className="w-4/5 h-4/5 flex items-center justify-center transition-all duration-300 ease-out z-10 group-hover:opacity-0">
+                <img 
+                  src={partner.logo} 
+                  alt={partner.name}
+                  className="max-w-full max-h-full object-contain  contrast-75 brightness-90 transition-all duration-300 ease-out"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-400  to-gray-600 flex flex-col items-center justify-center p-6 opacity-0 transition-opacity duration-300 ease-out text-white text-center group-hover:opacity-100">
+                <h3 className="text-lg font-semibold mb-2">
+                  {partner.name}
+                </h3>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold leading-none">
+                    {partner.studentsPlaced}+
+                  </span>
+                  <span className="text-sm opacity-90 mt-1">
+                    Students Placed
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      </div>
+    </section>
+  );
+};
+
+export default OurPartners;

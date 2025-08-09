@@ -70,7 +70,7 @@ const ManagementSkills = () => {
   return (
     <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
       {/* Hard Skills Column - Business Focus */}
-      <div ref={businessFocusRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={businessFocusRef} className="flex-1 min-w-[300px] border bg-[#e9edef] border-gray-700 rounded-xl p-5">
         <div className="mb-6 h-full">
           <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold mb-4">Strategic Business Competencies</h3>
@@ -153,13 +153,13 @@ const ManagementSkills = () => {
       </div>
 
       {/* Soft Skills Column - Leadership Focus */}
-      <div ref={leadershipFocusRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={leadershipFocusRef} className="flex-1 min-w-[300px] border bg-[#e9edef] border-gray-700 rounded-xl p-5">
         <div className="mb-6 h-full">
           <div className="text-center mb-8 border-b-1">
             <h3 className="text-2xl font-bold mb-4">Leadership Differentiators</h3>
           </div>
           
-          <div className="space-y-7 text-start text-sm px-6">
+          <div className="space-y-8 text-start text-sm px-6">
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 0)}
               className="group transition-all duration-300 hover:translate-x-2"

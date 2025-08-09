@@ -9,8 +9,6 @@ import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
-import AdminSlider from './components/CareerService'
-import PlacementFAQ from './components/FAQs'
 import LoginModal from './components/LoginModal'
 import ScribbledText from './components/ScribbledText'
 
@@ -43,12 +41,12 @@ function App() {
            <Header onLoginOpen={openModal}/>
            
            {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-[#dac49a]'>
+           <div className='bg-[#f8f5e1]'>
              <Banner/>
            </div>
             
            {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-[#ede9e3]'>
+           <div className='bg-[#f1f1ef]'>
              <WhyPw/>
            </div>
             
@@ -66,21 +64,11 @@ function App() {
             <div className='bg-[#f1f1ef]'>
               <PlacementTimeline autoplay={timelineAutoplay}/>
             </div>
-
-
-           <div className='bg-[#f1f1ef] py-10'>
-             <AdminSlider/>
-           </div>
             
            {/* FoundersSection - Even component #A8D5E3 */}
            <div className='bg-[#F2F0D6]'>
              <RecruitersSection/>
            </div>
-
-           <div className='bg-[#f1f1ef]'>
-             <PlacementFAQ/>
-           </div>
-           
             
            {/* Footer - Odd component #F2F0EA */}
            <div>

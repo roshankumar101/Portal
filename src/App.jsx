@@ -41,7 +41,7 @@ function App() {
            <Header onLoginOpen={openModal}/>
            
            {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-[#f7f7f5]'>
+           <div className='bg-[#f8f5e1]'>
              <Banner/>
            </div>
             

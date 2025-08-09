@@ -2,9 +2,9 @@ import React from 'react';
 
 const HealthcareSkills = () => {
   return (
-    <div className="flex gap-8 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-8">
+    <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
       {/* Clinical Competencies Column */}
-      <div className="flex-1 min-w-[320px]">
+      <div className="flex-1 min-w-[300px]">
         <div className="bg-gray-50 rounded-xl shadow-lg overflow-hidden mb-6 h-full">
           <div className="bg-blue-200 text-blue-800 p-6 font-bold text-2xl">
             Clinical & Technical Mastery
@@ -39,7 +39,7 @@ const HealthcareSkills = () => {
         </div>
       </div>
 
-      {/* Bedside Excellence Column */}
+      {/* Beside Excellence Column */}
       <div className="flex-1 min-w-[320px]">
         <div className="bg-gray-50 rounded-xl shadow-lg overflow-hidden mb-6 h-full">
           <div className="bg-purple-200 text-purple-800 p-6 font-bold text-2xl">

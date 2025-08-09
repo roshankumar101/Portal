@@ -181,7 +181,7 @@ function Header({ onLoginOpen }) {
             <img
               src={brandLogo}
               alt="PW IOI Logo"
-              className="w-40"
+              className="w-30 md:w-35 lg:w-40"
             />
           </a>
         </div>
@@ -190,7 +190,7 @@ function Header({ onLoginOpen }) {
         <nav className="flex items-center space-x-3 sm:space-x-6 lg:space-x-12">
           <a
             href="#calendar"
-            className="text-sm lg:text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
+            className="text-sm lg:text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-700"
           >
             Calendar
             <div className="absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>
@@ -198,14 +198,14 @@ function Header({ onLoginOpen }) {
           <a
             href="#placements"
             onClick={scrollToPlacements}
-            className="text-sm lg:text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
+            className="text-sm lg:text-base hidden md:flex font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-700"
           >
             Placements
             <div className="absolute hidden md:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>
           </a>
           <a
             href="#contact"
-            className="text-sm lg:text-base hidden lg:flex text-nowrap font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-600"
+            className="text-sm lg:text-base hidden lg:flex text-nowrap font-medium transition-all duration-300 hover:scale-105 relative group text-black hover:text-gray-700"
           >
             Contact Us
             <div className="absolute hidden lg:flex bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 ease-out group-hover:w-full"></div>

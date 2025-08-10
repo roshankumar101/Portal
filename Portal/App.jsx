@@ -10,12 +10,13 @@ import PlacementTimeline from './components/PlacementTimeline'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
 import LoginModal from './components/LoginModal'
-import ScribbledText from './components/ScribbledText'
+
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [loginType, setLoginType] = useState('Student')
 
   const triggerTimelineAnimation = () => {
     setTimelineAutoplay(true);
@@ -23,13 +24,28 @@ function App() {
     setTimeout(() => setTimelineAutoplay(false), 3500);
   };
 
-  const openModal = () => {
+  const openModal = (type = 'Student') => {
+    setLoginType(type);
     setIsModalOpen(true);
     triggerTimelineAnimation();
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact-form');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+      // Focus on company name input after scroll
+      setTimeout(() => {
+        const companyInput = document.querySelector('input[name="name"]');
+        if (companyInput) {
+          companyInput.focus();
+        }
+      }, 1000); // Wait for scroll to complete
+    }
   };
 
   return (
@@ -72,13 +88,13 @@ function App() {
             
            {/* Footer - Odd component #F2F0EA */}
            <div>
-             <PWIOIFooter/>
+             <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact}/>
            </div>
         </main>
       )}
       
       {/* LoginModal rendered at app level for proper centering */}
-      <LoginModal isOpen={isModalOpen} onClose={closeModal} />
+      <LoginModal isOpen={isModalOpen} onClose={closeModal} defaultRole={loginType} />
     </>
   )
 }

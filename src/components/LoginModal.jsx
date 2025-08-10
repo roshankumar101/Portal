@@ -1,13 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { gsap } from 'gsap';
 
-function LoginModal({ isOpen, onClose }) {
-  const [role, setRole] = useState('Student');
+function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
+  const [role, setRole] = useState(defaultRole);
   const [animKey, setAnimKey] = useState('Student');
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   const modalRef = useRef(null);
   const backdropRef = useRef(null);
+
+  // Update role when defaultRole changes and modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setRole(defaultRole);
+    }
+  }, [isOpen, defaultRole]);
 
   useEffect(() => {
     if (isOpen && !shouldRender) {

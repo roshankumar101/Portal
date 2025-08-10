@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import brandLogo from '../assets/brand_logo.webp';
 
-const PWIOIFooter = () => {
+const PWIOIFooter = ({ onLoginOpen, onContactTeam }) => {
     const [formData, setFormData] = useState({
         company: '',
         email: '',
@@ -84,18 +84,27 @@ const PWIOIFooter = () => {
                     <h3 className="text-2xl text-gray-200 font-semibold mb-5 relative inline-block after:content-[''] after:absolute after:bottom-[-8px] after:left-0 after:w-12 after:h-0.5 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full">
                         Quick Links
                     </h3>
-                    <a href="#" className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0">
+                    <button 
+                        onClick={() => onLoginOpen && onLoginOpen('Recruiter')} 
+                        className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
+                    >
                         Recruiter Login
-                    </a>
-                    <a href="#" className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0">
+                    </button>
+                    <button 
+                        onClick={() => onLoginOpen && onLoginOpen('Student')} 
+                        className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
+                    >
                         Student Login
-                    </a>
+                    </button>
                     <a href="#" className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0">
                         Placement Policy
                     </a>
-                    <a href="#" className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0">
+                    <button 
+                        onClick={() => onContactTeam && onContactTeam()} 
+                        className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
+                    >
                         Contact Team
-                    </a>
+                    </button>
                 </div>
 
                 {/* Contact Info */}

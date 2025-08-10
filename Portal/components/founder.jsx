@@ -123,7 +123,7 @@ const TestimonialGallery = () => {
         </div>
         
         <div className="w-full lg:w-1/3  mb-2 sm:mb-3 lg:mb-5">
-          <div className="sticky top-[10%] bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-md">
+          <div id="contact-form" className="sticky top-[10%] bg-gray-50 p-4 sm:p-6 lg:p-8 rounded-lg sm:rounded-xl shadow-md">
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-700">Let's Collaborate and Build</h2>
             <form onSubmit={handleSubmit}>
               <input

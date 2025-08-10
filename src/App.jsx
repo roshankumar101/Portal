@@ -12,12 +12,13 @@ import Records from './components/Records'
 import AdminSlider from './components/CareerService'
 import PlacementFAQ from './components/FAQs'
 import LoginModal from './components/LoginModal'
-import ScribbledText from './components/ScribbledText'
+
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [loginType, setLoginType] = useState('Student')
 
   const triggerTimelineAnimation = () => {
     setTimelineAutoplay(true);
@@ -25,13 +26,28 @@ function App() {
     setTimeout(() => setTimelineAutoplay(false), 3500);
   };
 
-  const openModal = () => {
+  const openModal = (type = 'Student') => {
+    setLoginType(type);
     setIsModalOpen(true);
     triggerTimelineAnimation();
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact-form');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+      // Focus on company name input after scroll
+      setTimeout(() => {
+        const companyInput = document.querySelector('input[name="name"]');
+        if (companyInput) {
+          companyInput.focus();
+        }
+      }, 1000); // Wait for scroll to complete
+    }
   };
 
   return (
@@ -43,7 +59,7 @@ function App() {
            <Header onLoginOpen={openModal}/>
            
            {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-[#dac49a]'>
+           <div className='bg-[#FFEECE]'>
              <Banner/>
            </div>
             
@@ -68,29 +84,29 @@ function App() {
             </div>
 
 
-           <div className='bg-[#f1f1ef] py-10'>
+           <div className='bg-[#FFEECE] py-10'>
              <AdminSlider/>
            </div>
             
            {/* FoundersSection - Even component #A8D5E3 */}
-           <div className='bg-[#F2F0D6]'>
+           <div className='bg-[#FFEEC4]'>
              <RecruitersSection/>
            </div>
 
-           <div className='bg-[#f1f1ef]'>
+           <div className='bg-[#FFEECE]'>
              <PlacementFAQ/>
            </div>
            
             
            {/* Footer - Odd component #F2F0EA */}
            <div>
-             <PWIOIFooter/>
+             <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact}/>
            </div>
         </main>
       )}
       
       {/* LoginModal rendered at app level for proper centering */}
-      <LoginModal isOpen={isModalOpen} onClose={closeModal} />
+      <LoginModal isOpen={isModalOpen} onClose={closeModal} defaultRole={loginType} />
     </>
   )
 }

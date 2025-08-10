@@ -78,7 +78,7 @@ const HealthcareSkills = () => {
           <div className="space-y-8 text-start text-sm px-6">
             <div
               ref={(el) => addToClinicalSkillsRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 bg-red-200"
             >
               <div className="flex items-start">
                 <div>
@@ -89,7 +89,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -100,7 +100,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -111,7 +111,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -122,7 +122,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -144,7 +144,7 @@ const HealthcareSkills = () => {
           <div className="space-y-7 text-start text-sm px-6">
             <div
               ref={(el) => addToBesideExcellenceRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -155,7 +155,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:pl-1"
             >
               <div className="flex items-start">
                 <div>
@@ -166,7 +166,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -177,7 +177,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>
@@ -188,7 +188,7 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import BannerImage1 from '../assets/IndiaMap.png'
+import BannerImage1 from '../assets/IndiaMapBlend.png'
 import '../index.css'
 import { TypeWriter, ScribbledText } from "./TextStyle";
 import { rotate } from "three/tsl";
@@ -117,17 +117,17 @@ const Banner = () => {
       ref={containerRef}
       className="relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-12"
     >
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4 lg:gap-8 items-center">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-2 items-center">
 
         {/* Left Section - India Map with Facts */}
         <div className="relative w-full h-full order-1">
           {/* India Map */}
-          <div ref={mapRef} className="relative pt-10 lg:pt-2 lg:px-5 w-[75%] lg:w-[85%] mb-4">
-            <img className="absolute left-5 -top-10" style={{ transform: 'rotateX(20deg) rotateY(-5deg) rotateZ(5deg)' }} src={BannerImage1} />
+          <div ref={mapRef} className="relative left-0 pt-10 lg:pt-2 mb-4">
+            <img className="absolute w-[75%] lg:w-[85%]" style={{ transform: 'rotateX(20deg) rotateY(-5deg) rotateZ(5deg)' }} src={BannerImage1} />
           </div>
 
           {/* India Facts */}
-          <div className="absolute -right-10 top-[0%] w-full h-full">
+          <div className="absolute w-full h-full">
             <div className="relative w-full h-full">
               <div className="absolute right-[10%] top-[5%] space-y-2 w-1/2">
                 <p className="text-sm font-semibold">70% Students lack Industry relevant Skills</p>

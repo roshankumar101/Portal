@@ -46,13 +46,12 @@ export default function PlacementFAQ() {
       }}
     >
       <h2
-        className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center"
-        style={{ color: "var(--chart-5)" }}
+        className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800"
       >
-        Placement Portal – Frequently Asked Questions
+        Placement Portal - Frequently Asked Questions
       </h2>
 
-      <div className="w-full w-full space-y-4 px-15">
+      <div className="w-full  space-y-2 px-15">
         {faqData.map((item, index) => (
           <div
             key={index}
@@ -61,7 +60,7 @@ export default function PlacementFAQ() {
           >
             <button
               onClick={() => toggleFAQ(index)}
-              className="w-full flex justify-between items-center px-4 sm:px-6 py-4 sm:py-5 text-left font-medium text-base sm:text-lg transition-colors duration-200"
+              className="w-full flex justify-between items-center px-4 sm:px-6 py-4 sm:py-5 text-left font-semibold sm:text-lg transition-colors duration-300"
               style={{
                 backgroundColor: "var(--chart-4)",
                 color: "#000",
@@ -69,16 +68,16 @@ export default function PlacementFAQ() {
             >
               {item.question}
               <span className="ml-4 text-xl sm:text-2xl">
-                {activeIndex === index ? "✕" : "+"}
+                {activeIndex === index ? "x" : "+"}
               </span>
             </button>
             <div
-              className={`overflow-hidden transition-all duration-300 ${
+              className={`overflow-hidden transition-all duration-700 ${
                 activeIndex === index ? "max-h-40" : "max-h-0"
               }`}
               style={{ backgroundColor: "white" }}
             >
-              <div className="px-4 sm:px-6 py-4 text-gray-700 text-sm sm:text-base">
+              <div className="px-4 sm:px-6 py-4 text-gray-700 text-sm sm:text-base transition-all duration-700">
                 {item.answer}
               </div>
             </div>

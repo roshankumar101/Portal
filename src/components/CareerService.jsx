@@ -8,6 +8,9 @@ export default function AdminSlider() {
     { name: "Kaiful", image: CS1 },
     { name: "Saurabh", image: CS2 },
     { name: "Vikas", image: CS3 },
+    { name: "Kaiful", image: CS1 },
+    { name: "Saurabh", image: CS2 },
+    { name: "Vikas", image: CS3 },
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,7 +19,7 @@ export default function AdminSlider() {
   useEffect(() => {
     const timer = setInterval(() => {
       nextSlide();
-    }, 3000);
+    }, 7000);
     return () => clearInterval(timer);
   }, []);
 

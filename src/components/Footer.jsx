@@ -52,6 +52,7 @@ const PWIOIFooter = ({ onLoginOpen, onContactTeam }) => {
                         alt="PW IOI Logo"
                         className="w-44 mb-5 filter brightness-0 invert"
                     />
+                    <p className="text-gray-300">Empowering students with career opportunities and industry connections since 2010.</p>
                 </div>
 
                 {/* Social Media */}

@@ -133,7 +133,8 @@ const Banner = () => {
               <p className="absolute right-[6%] top-[8%] text-sm font-semibold">70% Students lack Industry relevant Skills</p>
               <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[18%] -top-[22%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(273, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1820)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1820"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
               <p className="absolute right-[2%] top-[18%] w-1/2 text-sm font-semibold">40% Students forced to choose the wrong career path</p>
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[25%] -top-[30%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(284, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1829)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1829"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>              <p className="absolute -left-[8%] top-[15%] w-1/4 text-sm font-semibold">70% Students lack Industry relevant Skills</p>
+              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[25%] -top-[30%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(284, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1829)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1829"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+              <p className="absolute -left-[8%] top-[15%] w-1/4 text-sm font-semibold">70% Students lack Industry relevant Skills</p>
               <p className="absolute right-[4%] bottom-[27%] w-1/2 text-sm font-semibold">29% population in 20's but lack industry exposure</p>
               <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[17%] top-[10%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(351, 400, 400)"><path d="M350.5 350.5Q447.5 370.5 449.5 449.5 " marker-end="url(#SvgjsMarker2041)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2041"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
               <p className="absolute -left-[8%] bottom-[10%] w-1/4 text-sm font-semibold">40% Students forced to choose the wrong career path</p>
@@ -150,7 +151,7 @@ const Banner = () => {
           <div ref={missionRef} className="text-center lg:text-left relative">
             <h1 className="text-3xl md:text-4xl lg:text-[2.8rem] font-bold text-gray-900 leading-tight">
               <span className="text-5xl">On</span> a mission to change the
-              <span className="text-blue-900"> Skilling landscape</span> of India
+              <span className="text-blue-900"> Skilling landscape</span> of <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_25%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]"> India</span>
             </h1>
 
             <div className="absolute w-[70%] right-0 top-[30%]">
@@ -173,8 +174,8 @@ const Banner = () => {
 
 
               {/* Industry Relevant Skills */}
-              <div className="flex flex-col items-center relative hover:bg-[#E5F4FE] rounded-md h-8 sm:h-10 px-3 sm:px-6 py-1.5 sm:py-2 shadow-md bg-white/80 hover:shadow-lg transition-all duration-300">
-                <div className="mb-2 sm:mb-3">
+              <div className="flex flex-col items-center relative rounded-md h-8 sm:h-10 px-3 sm:px-6 py-1.5 sm:py-2 shadow-md bg-white/90 hover:shadow-lg transition-all duration-300">
+                <div className="mb-2 sm:mb-3 ">
                   <h3 className="text-sm sm:text-base lg:text-lg font-bold text-black">Precision Learning</h3>
                   <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[160%] -left-[28%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
@@ -183,7 +184,7 @@ const Banner = () => {
               </div>
 
               {/* Passion Aligned Opportunities */}
-              <div className="flex flex-col items-center relative hover:bg-[#E5F4FE] rounded-md h-8 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2 shadow-md bg-white/80 hover:shadow-lg transition-all duration-300">
+              <div className="flex flex-col items-center relative rounded-md h-8 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2 shadow-md bg-white/90 hover:shadow-lg transition-all duration-300">
                 <div>
                   <h3 className="text-sm sm:text-base lg:text-lg font-bold text-black">Excellence Network</h3>
                   <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[160%] -right-[28%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.32556815445715676,0.9455185755993167,-0.9455185755993167,0.32556815445715676,658.980168456864,-108.43469202258939)"><path d="M347.5 347.5Q446.5 365.5 452.5 452.5 " marker-end="url(#SvgjsMarker2056)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2056"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>

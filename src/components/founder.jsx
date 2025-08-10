@@ -153,7 +153,7 @@ export default function TestimonialSection() {
 
       {/* Right: Contact Form */}
       <div className="w-full lg:w-1/3">
-        <div className="sticky top-[10%] bg-gray-50 p-6 rounded-lg shadow-md">
+        <div className="sticky top-[10%] bg-gray-100 p-6 rounded-xl shadow-md">
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">
             Let's Collaborate and Build
           </h2>
@@ -162,7 +162,7 @@ export default function TestimonialSection() {
               type="text"
               name="name"
               placeholder="Company's Name"
-              className="w-full p-3 border border-gray-200 rounded-md mb-3 focus:border-indigo-500"
+              className="w-full p-3 border border-gray-400 rounded-md mb-3 focus:border-indigo-500"
               value={formData.name}
               onChange={handleChange}
               required
@@ -171,7 +171,7 @@ export default function TestimonialSection() {
               type="text"
               name="company"
               placeholder="Contact Number"
-              className="w-full p-3 border border-gray-200 rounded-md mb-3 focus:border-indigo-500"
+              className="w-full p-3 border border-gray-400 rounded-md mb-3 focus:border-indigo-500"
               value={formData.company}
               onChange={handleChange}
               required
@@ -180,7 +180,7 @@ export default function TestimonialSection() {
               type="email"
               name="email"
               placeholder="Email Address"
-              className="w-full p-3 border border-gray-200 rounded-md mb-3 focus:border-indigo-500"
+              className="w-full p-3 border border-gray-400 rounded-md mb-3 focus:border-indigo-500"
               value={formData.email}
               onChange={handleChange}
               required
@@ -189,7 +189,7 @@ export default function TestimonialSection() {
               name="message"
               placeholder="Your recruitment needs"
               rows={4}
-              className="w-full p-3 border border-gray-200 rounded-md mb-4 focus:border-indigo-500"
+              className="w-full p-3 border border-gray-400 rounded-md mb-4 focus:border-indigo-500"
               value={formData.message}
               onChange={handleChange}
               required

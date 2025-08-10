@@ -66,7 +66,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       gsap.to(underline, { 
         scaleX: 1,
         height: "100%",
-        opacity: 0.2,
+        opacity: 0.4,
         duration: 0.3
       });
       gsap.to(nahElement, {
@@ -95,7 +95,6 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
     gsap.to(nahElement, {
       rotation: "+=0",
       duration: 2,
-      repeat: -1,
       yoyo: true,
       ease: "sine.inOut"
     });
@@ -112,7 +111,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight mb-2">
         <span className="font-semibold relative inline-block">Do we bet they know every</span>
         <div ref={techLineRef} className="flex items-center">
-          <div className="font-bold -rotate-1 relative inline-block w-fit text-center">
+          <div className="font-bold -rotate-1 px-1 relative inline-block w-fit text-center">
             <span ref={techWordRef}>
               {getWordsBySelection(userSelection)[0]}
             </span>

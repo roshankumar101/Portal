@@ -35,11 +35,15 @@ const PARTNERS_PER_SET = ORIGINAL_PARTNERS.length;
 const DUPLICATION = 3;  // Duplicate enough sets for seamless loop
 
 const OurPartners = () => {
-  const [paused, setPaused] = useState(false);
+  const [pausedRow1, setPausedRow1] = useState(false);
+  const [pausedRow2, setPausedRow2] = useState(false);
   const carouselRef1 = useRef(null);
   const carouselRef2 = useRef(null);
   const positionRef1 = useRef(0);
   const positionRef2 = useRef(0);
+  const pausedRow1Ref = useRef(false);
+  const pausedRow2Ref = useRef(false);
+  const animationRef = useRef(null);
 
   // Duplicated arrays for seamless animation
   const duplicatedRow1 = Array(DUPLICATION).fill(ORIGINAL_PARTNERS).flat();
@@ -50,63 +54,93 @@ const OurPartners = () => {
   const cardWidthWithGap = CARD_WIDTH + GAP_WIDTH;
   const oneSetWidth = PARTNERS_PER_SET * cardWidthWithGap;
 
+  // Update refs when state changes
+  useEffect(() => {
+    pausedRow1Ref.current = pausedRow1;
+  }, [pausedRow1]);
+
+  useEffect(() => {
+    pausedRow2Ref.current = pausedRow2;
+  }, [pausedRow2]);
+
   useEffect(() => {
     const carousel1 = carouselRef1.current;
     const carousel2 = carouselRef2.current;
-    let animationFrameId;
     const speed = 0.6;
 
-    // Always initialize starting positions cleanly
-    if (carousel1) {
+    // Initialize starting positions only once
+    if (carousel1 && positionRef1.current === 0) {
       positionRef1.current = 0;
     }
-    if (carousel2) {
+    if (carousel2 && positionRef2.current === 0) {
       positionRef2.current = -oneSetWidth; // Start from negative full set width for continuous right->left
     }
 
     const animate = () => {
-      if (!paused) {
-        if (carousel1) {
-          positionRef1.current -= speed;
-          if (positionRef1.current <= -oneSetWidth) {
-            positionRef1.current += oneSetWidth;
-          }
-          carousel1.style.transform = `translateX(${positionRef1.current}px)`;
+      // Row 1 animation - only moves if not paused (using ref to avoid stale closure)
+      if (!pausedRow1Ref.current && carousel1) {
+        positionRef1.current -= speed;
+        if (positionRef1.current <= -oneSetWidth) {
+          positionRef1.current += oneSetWidth;
         }
-        if (carousel2) {
-          positionRef2.current += speed;
-          if (positionRef2.current >= 0) {
-            positionRef2.current -= oneSetWidth;
-          }
-          carousel2.style.transform = `translateX(${positionRef2.current}px)`;
-        }
+        carousel1.style.transform = `translateX(${positionRef1.current}px)`;
       }
-      animationFrameId = requestAnimationFrame(animate);
+      
+      // Row 2 animation - only moves if not paused (using ref to avoid stale closure)
+      if (!pausedRow2Ref.current && carousel2) {
+        positionRef2.current += speed;
+        if (positionRef2.current >= 0) {
+          positionRef2.current -= oneSetWidth;
+        }
+        carousel2.style.transform = `translateX(${positionRef2.current}px)`;
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrameId);
-    // oneSetWidth as a dependency if dynamic; here it's constant so omitted
-  }, [paused]);
+    animationRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []); // Run only once on mount
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <section className="pt-15 pb-10 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
-      {/* ... heading */}
+    <section className="pt-15 pb-10 overflow-hidden relative">
+      {/* Section Heading */}
+      <div className="text-center mb-16">
+        <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          Our <span className="text-blue-900">Partners</span>
+        </h2>
+        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          Leading companies trust us to deliver exceptional talent
+        </p>
+      </div>
+      
       <div className="w-full overflow-hidden relative py-4">
         <div className="space-y-6">
           {/* Row 1 */}
           <div
             ref={carouselRef1}
             className="flex gap-6 w-max will-change-transform"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
+            onMouseEnter={() => setPausedRow1(true)}
+            onMouseLeave={() => setPausedRow1(false)}
           >
             {duplicatedRow1.map((partner, index) => (
               <div
                 key={`1-${partner.id}-${index}`}
                 className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl group"
-                onMouseEnter={() => setPaused(true)}
-                onMouseLeave={() => setPaused(false)}
               >
                 <div className="w-4/5 h-4/5 flex items-center justify-center transition-all duration-300 ease-out z-10 group-hover:opacity-0">
                   <img
@@ -133,15 +167,13 @@ const OurPartners = () => {
           <div
             ref={carouselRef2}
             className="flex gap-6 w-max will-change-transform"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
+            onMouseEnter={() => setPausedRow2(true)}
+            onMouseLeave={() => setPausedRow2(false)}
           >
             {duplicatedRow2.map((partner, index) => (
               <div
                 key={`2-${partner.id}-${index}`}
                 className="w-48 h-28 bg-white rounded-xl shadow-lg flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-all duration-300 ease-out hover:scale-105 hover:shadow-xl group"
-                onMouseEnter={() => setPaused(true)}
-                onMouseLeave={() => setPaused(false)}
               >
                 <div className="w-4/5 h-4/5 flex items-center justify-center transition-all duration-300 ease-out z-10 group-hover:opacity-0">
                   <img

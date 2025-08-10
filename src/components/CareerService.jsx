@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { IconChevronLeft, IconChevronRight  } from "@tabler/icons-react";
 import CS1 from '../assets/CS1.webp'
 import CS2 from '../assets/CS2.webp'
 import CS3 from '../assets/CS3.webp'
+
+
 
 export default function AdminSlider() {
   const admins = [
@@ -74,13 +77,13 @@ export default function AdminSlider() {
             onClick={prevSlide}
             className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition"
           >
-            ◀
+            <IconChevronLeft />
           </button>
           <button
             onClick={nextSlide}
             className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition"
           >
-            ▶
+            <IconChevronRight />
           </button>
         </div>
       </div>

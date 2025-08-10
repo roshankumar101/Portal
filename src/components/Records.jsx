@@ -85,7 +85,7 @@ const PlacementRecords = ({ onLoginOpen }) => {
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
+      <section className="py-15 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6">
           {/* Header with Show All button */}
           <div className="text-center mb-12 flex flex-col justify-center items-center lg:relative">

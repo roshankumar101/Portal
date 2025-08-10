@@ -41,7 +41,7 @@ const WhyPw = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 sm:px-5 lg:px-8 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-semibold transition-all duration-700 flex-1 sm:flex-initial ${
                   activeTab === tab
-                    ? 'bg-white text-black font-bold'
+                    ? 'bg-white/80 text-black font-bold'
                     : 'text-black bg-black/10 hover:bg-black/30 hover:text-black'
                 }`}
               >

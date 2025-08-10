@@ -70,19 +70,22 @@ const ManagementSkills = () => {
   return (
     <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
       {/* Hard Skills Column - Business Focus */}
-      <div ref={businessFocusRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={businessFocusRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          <div className="text-center mb-8 border-b-1">
-            <h3 className="text-2xl font-bold mb-4">Strategic Business Competencies</h3>
+          {/* Colorful Header */}
+          <div className="text-center w-full bg-[#fec89a] mb-8 py-6 px-4 relative overflow-hidden">
+            <h3 className="text-2xl font-bold text-white relative z-10">
+              Strategic Business Competencies
+            </h3>
           </div>
           
           <div className="space-y-8 text-start text-sm px-6">
             <div 
               ref={(el) => addToBusinessSkillsRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">4 Years of Immersive Business Training</h4>
                   <p className="text-gray-700">
                     Mentored by C-suite executives with live corporate simulations and case challenges, not theoretical classroom learning.
@@ -93,10 +96,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToBusinessSkillsRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Real-World Business Projects</h4>
                   <p className="text-gray-700">
                     From startup incubators to Fortune 500 consulting projects—developed market-ready solutions under real deadlines.
@@ -107,10 +110,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToBusinessSkillsRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Executive-Level Business Acumen</h4>
                   <p className="text-gray-700">
                     Mastery of financial modeling, competitive analysis, and stakeholder management at par with MBA graduates.
@@ -121,12 +124,12 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToBusinessSkillsRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
-                  <h4 className="text-lg font-semibold mb-1 underline decoration-2 underline-offset-1">
-                    Zero-Cost Talent Pipeline
+                <div className="hover:translate-x-2 duration-300">
+                  <h4 className="text-lg font-semibold mb-1">
+                    <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]">Zero-Cost Talent Pipeline</span>
                   </h4>
                   <p className="text-gray-700">
                     Our corporate partners access pre-vetted business talent without recruitment fees or hidden costs.
@@ -137,10 +140,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToBusinessSkillsRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Boardroom-Ready Graduates</h4>
                   <p className="text-gray-700">
                     Trained on Bloomberg Terminals, Salesforce, and Tableau with certified proficiency in enterprise platforms.
@@ -153,19 +156,22 @@ const ManagementSkills = () => {
       </div>
 
       {/* Soft Skills Column - Leadership Focus */}
-      <div ref={leadershipFocusRef} className="flex-1 min-w-[300px] bg-white/90 shadow-md rounded-xl p-5">
+      <div ref={leadershipFocusRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          <div className="text-center mb-8 border-b-1">
-            <h3 className="text-2xl font-bold mb-4">Leadership Differentiators</h3>
+          {/* Colorful Header */}
+          <div className="text-center w-full bg-[#ffb4a2] mb-8 py-6 px-4 relative overflow-hidden">
+            <h3 className="text-2xl font-bold text-white relative z-10">
+              Leadership Differentiators
+            </h3>
           </div>
           
           <div className="space-y-7 text-start text-sm px-6">
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">CRISIS LEADERSHIP</h4>
                   <p className="text-gray-700">
                     <em className="text-gray-600">83% of graduates successfully lead teams through high-pressure scenarios</em> - from investor negotiations to operational disruptions.
@@ -176,10 +182,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">C-SUITE COMMUNICATION</h4>
                   <p className="text-gray-700">
                     Proven ability to distill complex data into executive briefings that drive decision-making at the highest levels.
@@ -190,10 +196,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">ENTREPRENEURIAL MINDSET</h4>
                   <p className="text-gray-700">
                     <em className="text-gray-600">42% reduce time-to-market</em> by identifying opportunities and mobilizing resources ahead of competitors.
@@ -204,10 +210,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">CULTURAL ARCHITECT</h4>
                   <p className="text-gray-700">
                     Certified in organizational design with demonstrated ability to transform team dynamics and engagement metrics.
@@ -218,10 +224,10 @@ const ManagementSkills = () => {
 
             <div 
               ref={(el) => addToLeadershipSkillsRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2"
+              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className="hover:translate-x-2 duration-300">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">ADAPTIVE INTELLIGENCE</h4>
                   <p className="text-gray-700">
                     <em className="text-gray-600">67% faster promotion trajectory</em> due to rapid mastery of emerging business technologies and methodologies.

@@ -59,27 +59,27 @@ function App() {
            <Header onLoginOpen={openModal}/>
            
            {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-[#FFEECE]'>
+           <div className='bg-gradient-to-b from-gray-50 to-[#FFEECE]'>
              <Banner/>
            </div>
             
            {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-[#f8edd9]'>
+           <div className='bg-[#FFEECE]'>
              <WhyPw/>
            </div>
             
            {/* OurPartners - Odd component #F2F0EA */}
-           <div id="our-partners" className='bg-[#FFFEFD]'>
+           <div id="our-partners" className='bg-[#FFEECE]'>
              <OurPartners/>
            </div>
             
            {/* Records - Even component #A8D5E3 */}
-           <div className='bg-[#F2F0D6]'>
+           <div className='bg-[#FFEECE]'>
              <Records onLoginOpen={openModal}/>
            </div>
             
           {/* PlacementTimeline - #A8D5E3 background */}
-            <div className='bg-[#f1f1ef]'>
+            <div className='bg-[#FFEECE]'>
               <PlacementTimeline autoplay={timelineAutoplay}/>
             </div>
 
@@ -89,7 +89,7 @@ function App() {
            </div>
             
            {/* FoundersSection - Even component #A8D5E3 */}
-           <div className='bg-[#FFEEC4]'>
+           <div className='bg-[#FFEECE]'>
              <RecruitersSection/>
            </div>
 

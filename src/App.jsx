@@ -12,6 +12,7 @@ import Records from './components/Records'
 import AdminSlider from './components/CareerService'
 import PlacementFAQ from './components/FAQs'
 import LoginModal from './components/LoginModal'
+import cursor from './components/cursor'
 
 
 function App() {

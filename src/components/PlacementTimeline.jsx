@@ -1,289 +1,230 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Check, Clock, FileText, Users, Award, Briefcase, MessageSquare } from 'lucide-react';
+"use client";
 
-const timelineData = [
-  {
-    id: 1,
-    title: 'Application Submitted',
-    description: 'Your application has been received and is under review',
-    icon: <FileText className="w-6 h-6" />,
-    status: 'completed'
-  },
-  {
-    id: 2,
-    title: 'Initial Screening',
-    description: 'HR team reviews your profile and qualifications',
-    icon: <Clock className="w-6 h-6" />,
-    status: 'completed'
-  },
-  {
-    id: 3,
-    title: 'Technical Assessment',
-    description: 'Complete coding challenges and technical evaluations',
-    icon: <Award className="w-6 h-6" />,
-    status: 'current'
-  },
-  {
-    id: 4,
-    title: 'Team Interview',
-    description: 'Meet with potential team members and discuss collaboration',
-    icon: <Users className="w-6 h-6" />,
-    status: 'upcoming'
-  },
-  {
-    id: 5,
-    title: 'Final Interview',
-    description: 'Discussion with leadership team about role expectations',
-    icon: <MessageSquare className="w-6 h-6" />,
-    status: 'upcoming'
-  },
-  {
-    id: 6,
-    title: 'Offer Extended',
-    description: 'Congratulations! Join our amazing team',
-    icon: <Briefcase className="w-6 h-6" />,
-    status: 'upcoming'
-  }
-];
+import React, { useEffect, useRef, useState } from "react";
+import { useScroll, useTransform, motion } from "motion/react";
 
-const PlacementTimeline = ({ autoplay = false }) => {
-  const [activeStep, setActiveStep] = useState(0);
-  const [lineSegments, setLineSegments] = useState([]);
-  const timelineRef = useRef(null);
-  const stepRefs = useRef([]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!timelineRef.current) return;
-
-      const timelineRect = timelineRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const centerY = windowHeight / 2;
-
-      let newActiveStep = 0;
-      let newLineSegments = [];
-
-      stepRefs.current.forEach((stepRef, index) => {
-        if (!stepRef) return;
-
-        const stepRect = stepRef.getBoundingClientRect();
-        const stepCenterY = stepRect.top + stepRect.height / 2;
-        const distanceFromCenter = Math.abs(stepCenterY - centerY);
-
-        // Determine active step based on proximity to center
-        if (stepCenterY <= centerY + 100) {
-          newActiveStep = Math.max(newActiveStep, index);
-        }
-
-        // Calculate line segment progress for each step
-        if (index < timelineData.length - 1) {
-          const nextStepRef = stepRefs.current[index + 1];
-          if (nextStepRef) {
-            const nextStepRect = nextStepRef.getBoundingClientRect();
-            const currentStepBottom = stepRect.top + stepRect.height / 2;
-            const nextStepTop = nextStepRect.top + nextStepRect.height / 2;
-            const segmentHeight = nextStepTop - currentStepBottom;
-
-            let progress = 0;
-            
-            if (currentStepBottom <= centerY) {
-              const scrolledDistance = centerY - currentStepBottom;
-              progress = Math.min(1, Math.max(0, scrolledDistance / segmentHeight));
-            }
-
-            newLineSegments[index] = progress;
-          }
-        }
-      });
-
-      setActiveStep(newActiveStep);
-      setLineSegments(newLineSegments);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial calculation
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const getStepOpacity = (index) => {
-    const distance = Math.abs(index - activeStep);
-    if (distance === 0) return 1;
-    if (distance === 1) return 0.8;
-    if (distance === 2) return 0.6;
-    return 0.4;
-  };
-
-  const getStepScale = (index) => {
-    return index <= activeStep ? 1 : 0.9;
-  };
-
-  const getIconColor = (status, index) => {
-    const isActive = index <= activeStep;
-    
-    if (!isActive) return 'text-gray-400 dark:text-gray-600';
-    
-    switch (status) {
-      case 'completed':
-        return 'text-green-600 dark:text-green-400';
-      case 'current':
-        return 'text-blue-600 dark:text-blue-400';
-      default:
-        return 'text-purple-600 dark:text-purple-400';
-    }
-  };
-
-  const getBorderColor = (status, index) => {
-    const isActive = index <= activeStep;
-    
-    if (!isActive) return 'border-gray-300 dark:border-gray-700';
-    
-    switch (status) {
-      case 'completed':
-        return 'border-green-500 dark:border-green-400';
-      case 'current':
-        return 'border-blue-500 dark:border-blue-400';
-      default:
-        return 'border-purple-500 dark:border-purple-400';
-    }
-  };
-
-  const getBackgroundColor = (status, index) => {
-    const isActive = index <= activeStep;
-    
-    if (!isActive) return 'bg-gray-100 dark:bg-gray-800';
-    
-    switch (status) {
-      case 'completed':
-        return 'bg-green-50 dark:bg-green-900/20';
-      case 'current':
-        return 'bg-blue-50 dark:bg-blue-900/20';
-      default:
-        return 'bg-purple-50 dark:bg-purple-900/20';
-    }
-  };
+export default function TimelineDemo() {
+  const data = [
+    {
+      title: "Step 1",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Profile Registration & Setup
+          </h4>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Create your comprehensive placement portal account with academic credentials, personal information, and career preferences. Complete your professional profile to establish your digital presence within the placement ecosystem.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "Step 2",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Resume Upload & Documentation
+          </h4>
+          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Upload your professionally crafted resume and supporting documents including academic transcripts, certificates, and project portfolios. Ensure all documentation meets industry standards and placement requirements.
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
+            <li>Academic transcripts and degree certificates</li>
+            <li>Professional resume in multiple formats</li>
+            <li>Project documentation and portfolio</li>
+            <li>Skill certification and training records</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      title: "Step 3",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Job Opportunity Discovery
+          </h4>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Browse and analyze available job descriptions posted by recruiters and companies. Review role requirements, compensation packages, and company profiles to identify suitable opportunities aligned with your career objectives.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "Step 4",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Application Submission Process
+          </h4>
+          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Submit targeted applications for selected positions through the integrated placement portal. Customize application materials for each role and ensure compliance with specific company requirements and deadlines.
+          </p>
+          <div className="text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
+            <strong>Application Components:</strong>
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>Tailored resume for specific role requirements</li>
+              <li>Cover letter addressing company needs</li>
+              <li>Academic credentials and skill assessments</li>
+              <li>Additional documentation as requested</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Step 5",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Application Status Tracking
+          </h4>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Monitor your application progress through the placement dashboard. Track submission confirmations, screening status updates, interview schedules, and feedback from recruiting teams in real-time.
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "Step 6",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Administrative Coordination & Notifications
+          </h4>
+          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Receive automated notifications and administrative updates regarding interview schedules, venue information, and process modifications. Coordinate with the Training and Placement Office for seamless communication between all stakeholders.
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
+            <li>Interview schedule notifications and reminders</li>
+            <li>Venue and logistics coordination updates</li>
+            <li>Administrative announcements and policy changes</li>
+            <li>Direct communication channels with placement officers</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      title: "Step 7",
+      content: (
+        <div>
+          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            Interview Process & Final Selection
+          </h4>
+          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Participate in comprehensive interview rounds including technical assessments, behavioral evaluations, and HR discussions. Navigate through multiple selection stages while maintaining professional communication with recruiters.
+          </p>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Successfully complete the final selection process, receive job offers, and coordinate with placement administrators for offer management and acceptance procedures.
+          </p>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div ref={timelineRef} className="relative max-w-4xl mx-auto pt-15 pb-20">
+    <div className="relative w-full overflow-clip">
+      {/* Main flex container with 70/30 split */}
+      <div className="flex">
+        {/* Timeline Section - 70% */}
+        <div className="w-full lg:w-[70%]">
+          <Timeline data={data} />
+        </div>
+        
+        {/* Fixed Sidebar - 30% */}
+        <div className="hidden lg:block lg:w-[30%] bg-neutral-50 dark:bg-neutral-900">
+          <div className="sticky top-0 h-screen p-8">
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-6 h-full overflow-y-auto">
+              
+              
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <div className="text-center mb-16">
-        <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-          Placement <span className="text-blue-900">Timeline</span>
+function Timeline({ data }) {
+  const ref = useRef(null);
+  const containerRef = useRef(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setHeight(rect.height);
+    }
+  }, [ref]);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 10%", "end 50%"],
+  });
+
+  const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height]);
+  const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+
+  return (
+    <div
+      className="w-full bg-white dark:bg-neutral-950 font-inter md:px-10"
+      ref={containerRef}
+    >
+      {/* Header section - constrained to timeline width */}
+      <div className="max-w-5xl mx-auto py-20 px-4 md:px-8 lg:px-10">
+        <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl">
+          Walk Through Of Placement Process
         </h2>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Your journey from application to offer - step by step
+        <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-lg">
+          Navigate through the placement process from profile creation to final selection. Experience a streamlined approach to career opportunities through our integrated placement management system.
         </p>
       </div>
-      {/* Timeline Steps */}
-      <div className="space-y-24">
-        {timelineData.map((step, index) => (
+
+      {/* Timeline content */}
+      <div ref={ref} className="relative max-w-5xl mx-auto pb-20">
+        {data.map((item, index) => (
           <div
-            key={step.id}
-            ref={(el) => (stepRefs.current[index] = el)}
-            className="relative flex items-start"
-            style={{
-              opacity: getStepOpacity(index),
-              transform: `scale(${getStepScale(index)})`,
-              transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
+            key={index}
+            className="flex justify-start pt-10 md:pt-40 md:gap-10"
           >
-            {/* Connecting Line Segment */}
-            {index < timelineData.length - 1 && (
-              <div className="absolute left-8 top-16 w-0.5 h-24 bg-gray-200 dark:bg-gray-700">
-                <div 
-                  className="w-full bg-gradient-to-b from-blue-500 to-purple-500 transition-all duration-300 ease-out origin-top"
-                  style={{
-                    height: `${(lineSegments[index] || 0) * 100}%`,
-                    boxShadow: lineSegments[index] > 0 ? '0 0 12px rgba(59, 130, 246, 0.6)' : 'none',
-                    opacity: lineSegments[index] || 0
-                  }}
-                />
+            {/* Left Step Column */}
+            <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
+              <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
+                <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 border border-neutral-300 dark:border-neutral-700 p-2" />
               </div>
-            )}
-
-            {/* Step Circle */}
-            <div className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${getBorderColor(step.status, index)} ${getBackgroundColor(step.status, index)}`}>
-              {step.status === 'completed' && index <= activeStep ? (
-                <div className={`transition-all duration-300 ${getIconColor(step.status, index)}`}>
-                  <Check className="w-8 h-8" />
-                </div>
-              ) : (
-                <div className={`transition-all duration-300 ${getIconColor(step.status, index)}`}>
-                  {step.icon}
-                </div>
-              )}
-              
-              {/* Pulse animation for active step */}
-              {index === activeStep && (
-                <>
-                  <div className="absolute inset-0 rounded-full border-4 border-blue-500 animate-ping opacity-20" />
-                  <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-pulse" />
-                </>
-              )}
-
-              {/* Glow effect for completed steps */}
-              {index <= activeStep && (
-                <div 
-                  className="absolute inset-0 rounded-full transition-all duration-500"
-                  style={{
-                    boxShadow: `0 0 20px ${
-                      step.status === 'completed' ? 'rgba(34, 197, 94, 0.3)' :
-                      step.status === 'current' ? 'rgba(59, 130, 246, 0.3)' :
-                      'rgba(168, 85, 247, 0.3)'
-                    }`
-                  }}
-                />
-              )}
+              <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 dark:text-neutral-500">
+                {item.title}
+              </h3>
             </div>
 
-            {/* Step Content */}
-            <div className="ml-8 flex-1">
-              <div className={`p-6 rounded-xl shadow-lg transition-all duration-500 ${
-                index <= activeStep 
-                  ? 'bg-[#FFEEC0]  shadow-xl border border-gray-200 dark:border-gray-700' 
-                  : 'bg-gray-50 dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800'
-              }`}>
-                <h3 className={`text-xl font-semibold mb-2 transition-colors duration-300 ${
-                  index <= activeStep 
-                    ? 'text-gray-900' 
-                    : 'text-gray-600'
-                }`}>
-                  {step.title}
-                </h3>
-                <p className={`transition-colors duration-300 ${
-                  index <= activeStep 
-                    ? 'text-gray-600' 
-                    : 'text-gray-500'
-                }`}>
-                  {step.description}
-                </p>
-                
-                {/* Status Badge */}
-                <div className="mt-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                    index <= activeStep ? (
-                      step.status === 'completed' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
-                        : step.status === 'current'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                    ) : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`}>
-                    {index <= activeStep ? (
-                      step.status === 'completed' ? 'Completed' :
-                      step.status === 'current' ? 'In Progress' : 'Active'
-                    ) : 'Pending'}
-                  </span>
-                </div>
-              </div>
+            {/* Right Content Column */}
+            <div className="relative pl-20 pr-4 md:pl-4 w-full">
+              <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500 dark:text-neutral-500">
+                {item.title}
+              </h3>
+              {item.content}
             </div>
           </div>
         ))}
-      </div>
 
-      
+        {/* Animated timeline line */}
+        <div
+          style={{
+            height: height + "px",
+          }}
+          className="absolute left-8 md:left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-neutral-200 dark:via-neutral-700 to-transparent to-[99%] [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
+        >
+          {/* Animated Scroll Line */}
+          <motion.div
+            style={{
+              height: heightTransform,
+              opacity: opacityTransform,
+            }}
+            className="absolute inset-x-0 top-0 w-[2px] bg-gradient-to-t from-purple-500 via-blue-500 to-transparent from-[0%] via-[10%] rounded-full"
+          />
+        </div>
+      </div>
     </div>
   );
-};
-
-export default PlacementTimeline;
+}

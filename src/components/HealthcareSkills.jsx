@@ -78,7 +78,7 @@ const HealthcareSkills = () => {
           <div className="space-y-8 text-start text-sm px-6">
             <div
               ref={(el) => addToClinicalSkillsRef(el, 0)}
-              className="group transition-all duration-300 bg-red-200"
+              className="group transition-all duration-300"
             >
               <div className="flex items-start">
                 <div>

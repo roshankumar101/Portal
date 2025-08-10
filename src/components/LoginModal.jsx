@@ -151,9 +151,9 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
         </div>
         {/* Login Form Right Side */}
         <div className="flex-1 flex flex-col justify-center h-full relative bg-transparent">
-          <button onClick={handleClose} className="absolute top-4 right-4 bg-black text-gray-300 hover:text-white text-xs font-semibold px-2 py-1 border-2 border-gray-400 rounded z-20 transition-colors duration-200">Esc</button>
+          <button onClick={handleClose} className="absolute top-4 right-4 bg-gray-200 text-black hover:text-black/40 text-sm font-bold px-4 py-0.5 border-2 rounded z-20 transition-colors duration-200">X</button>
           {/* Remove the border from the right side by deleting the border class below */}
-          <div className="absolute inset-0 pointer-events-none rounded-lg border-purple-400" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
+          <div className="absolute inset-0 pointer-events-none rounded-lg" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
           <div className="relative z-10 px-8 py-4">
             <h2 className="text-2xl font-bold mb-4 text-center text-black">Login</h2>
             <div className="flex justify-center gap-2 mb-6">

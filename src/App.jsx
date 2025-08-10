@@ -64,7 +64,7 @@ function App() {
            </div>
             
            {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-[#ede9e3]'>
+           <div className='bg-[#f8edd9]'>
              <WhyPw/>
            </div>
             

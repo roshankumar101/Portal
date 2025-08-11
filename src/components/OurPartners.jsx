@@ -11,8 +11,21 @@ import IBMLogo from '../assets/IBM-Logo.wine.svg';
 import OracleLogo from '../assets/Oracle_Corporation-Logo.wine.svg';
 import SalesforceLogo from '../assets/Salesforce.com-Logo.wine.svg';
 
+import AMDLogo from '../assets/Advanced_Micro_Devices-Logo.wine.svg';
+import AppleLogo from '../assets/Apple_Inc.-Logo.wine.svg';
+import LENOVOLogo from '../assets/Lenovo_K6_Power-Logo.wine.svg';
+import NvidiaLogo from '../assets/Nvidia-Logo.wine.svg';
+import PumaLogo from '../assets/Puma_(brand)-Logo.wine.svg';
+import ATnTLogo from '../assets/AT&T-Logo.wine.svg';
+import OLALogo from '../assets/Ola_Cabs-Logo.wine.svg';
+import SamsungLogo from '../assets/Samsung-Logo.wine.svg';
+import SkyscannerLogo from '../assets/Skyscanner-Logo.wine.svg';
+import TOYOTALogo from '../assets/Toyota_Canada_Inc.-Logo.wine.svg';
 
-const ORIGINAL_PARTNERS = [
+
+
+
+const ORIGINAL_PARTNERS1 = [
   { id: 1, name: 'Microsoft', logo: MicrosoftLogo, studentsPlaced: 142 },
   { id: 2, name: 'Google', logo: GoogleLogo, studentsPlaced: 98 },
   { id: 3, name: 'Amazon', logo: AmazonLogo, studentsPlaced: 156 },
@@ -25,13 +38,26 @@ const ORIGINAL_PARTNERS = [
   { id: 10, name: 'Salesforce', logo: SalesforceLogo, studentsPlaced: 59 },
 ];
 
+const ORIGINAL_PARTNERS2 = [
+  { id: 1, name: 'AMD', logo: AMDLogo, studentsPlaced: 89 },
+  { id: 2, name: 'Apple', logo: AppleLogo, studentsPlaced: 134 },
+  { id: 3, name: 'LENOVO', logo: LENOVOLogo, studentsPlaced: 67 },
+  { id: 4, name: 'Nvidia', logo: NvidiaLogo, studentsPlaced: 112 },
+  { id: 5, name: 'Puma', logo: PumaLogo, studentsPlaced: 78 },
+  { id: 6, name: 'AT&T', logo: ATnTLogo, studentsPlaced: 95 },
+  { id: 7, name: 'OLA', logo: OLALogo, studentsPlaced: 56 },
+  { id: 8, name: 'SAMSUNG', logo: SamsungLogo, studentsPlaced: 128 },
+  { id: 9, name: 'Skyscanner', logo: SkyscannerLogo, studentsPlaced: 73 },
+  { id: 10, name: 'TOYOTA', logo: TOYOTALogo, studentsPlaced: 91 },
+];
+
 // Example: Add "Labs" to company names for the 2nd row.
 const CHANGE_ROW2_NAMES = (arr) =>
   arr.map((p) => ({ ...p, name: `${p.name} Labs` }));
 
 const CARD_WIDTH = 192; // px (Tailwind w-48)
 const GAP_WIDTH = 24;   // px (Tailwind gap-6)
-const PARTNERS_PER_SET = ORIGINAL_PARTNERS.length;
+const PARTNERS_PER_SET = ORIGINAL_PARTNERS1.length;
 const DUPLICATION = 3;  // Duplicate enough sets for seamless loop
 
 const OurPartners = () => {
@@ -46,8 +72,8 @@ const OurPartners = () => {
   const animationRef = useRef(null);
 
   // Duplicated arrays for seamless animation
-  const duplicatedRow1 = Array(DUPLICATION).fill(ORIGINAL_PARTNERS).flat();
-  const row2Partners = CHANGE_ROW2_NAMES([...ORIGINAL_PARTNERS].reverse());
+  const duplicatedRow1 = Array(DUPLICATION).fill(ORIGINAL_PARTNERS1).flat();
+  const row2Partners = CHANGE_ROW2_NAMES([...ORIGINAL_PARTNERS2].reverse());
   const duplicatedRow2 = Array(DUPLICATION).fill(row2Partners).flat();
 
   // Calculate the width of one full set of cards + gaps

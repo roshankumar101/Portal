@@ -13,7 +13,7 @@ import AdminSlider from './components/CareerService'
 import PlacementFAQ from './components/FAQs'
 import LoginModal from './components/LoginModal'
 import cursor from './components/cursor'
-
+import NotificationModal from './components/Notification'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
@@ -56,56 +56,59 @@ function App() {
       {isLoading ? (
         <Preloader onComplete={() => setIsLoading(false)} />
       ) : (
-                 <main className='w-full min-h-screen'>
-           <Header onLoginOpen={openModal}/>
-           
-           {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-gradient-to-b from-gray-50 to-[#FFEECE]'>
-             <Banner/>
-           </div>
-            
-           {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-[#FFEECE]'>
-             <WhyPw/>
-           </div>
-            
-           {/* OurPartners - Odd component #F2F0EA */}
-           <div id="our-partners" className='bg-[#FFEECE]'>
-             <OurPartners/>
-           </div>
-            
-           {/* Records - Even component #A8D5E3 */}
-           <div className='bg-[#FFEECE]'>
-             <Records onLoginOpen={openModal}/>
-           </div>
-            
+        <main className='w-full min-h-screen'>
+
+          <NotificationModal />
+
+          <Header onLoginOpen={openModal} />
+
+          {/* Banner - Odd component #F2F0EA */}
+          <div className='bg-gradient-to-b from-gray-50 to-[#FFEECE]'>
+            <Banner />
+          </div>
+
+          {/* WhyPw - Even component #A8D5E3 */}
+          <div className='bg-[#FFEECE]'>
+            <WhyPw />
+          </div>
+
+          {/* OurPartners - Odd component #F2F0EA */}
+          <div id="our-partners" className='bg-[#FFEECE]'>
+            <OurPartners />
+          </div>
+
+          {/* Records - Even component #A8D5E3 */}
+          <div className='bg-[#FFEECE]'>
+            <Records onLoginOpen={openModal} />
+          </div>
+
           {/* PlacementTimeline - #A8D5E3 background */}
-            <div className='bg-[#FFEECE]'>
-              <PlacementTimeline autoplay={timelineAutoplay}/>
-            </div>
+          <div className='bg-[#FFEECE]'>
+            <PlacementTimeline autoplay={timelineAutoplay} />
+          </div>
 
 
-           <div className='bg-[#FFEECE] py-10'>
-             <AdminSlider/>
-           </div>
-            
-           {/* FoundersSection - Even component #A8D5E3 */}
-           <div className='bg-[#FFEECE]'>
-             <RecruitersSection/>
-           </div>
+          <div className='bg-[#FFEECE] py-10'>
+            <AdminSlider />
+          </div>
 
-           <div className='bg-[#FFEECE]'>
-             <PlacementFAQ/>
-           </div>
-           
-            
-           {/* Footer - Odd component #F2F0EA */}
-           <div>
-             <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact}/>
-           </div>
+          {/* FoundersSection - Even component #A8D5E3 */}
+          <div className='bg-[#FFEECE]'>
+            <RecruitersSection />
+          </div>
+
+          <div className='bg-[#FFEECE]'>
+            <PlacementFAQ />
+          </div>
+
+
+          {/* Footer - Odd component #F2F0EA */}
+          <div>
+            <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact} />
+          </div>
         </main>
       )}
-      
+
       {/* LoginModal rendered at app level for proper centering */}
       <LoginModal isOpen={isModalOpen} onClose={closeModal} defaultRole={loginType} />
     </>

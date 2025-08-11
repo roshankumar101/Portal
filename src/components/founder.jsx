@@ -146,12 +146,12 @@ export default function TestimonialSection() {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-12 flex flex-col lg:flex-row gap-8">
-      {/* Left: Testimonials */}
+      {/*Testimonials */}
       <div className="w-full lg:w-2/3">
         <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
       </div>
 
-      {/* Right: Contact Form */}
+      {/*Contact Form */}
       <div className="w-full lg:w-1/3">
         <div className="sticky top-[10%] bg-gray-100 p-6 rounded-xl shadow-md">
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">

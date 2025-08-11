@@ -160,7 +160,7 @@ const SkillsDisplay = () => {
         <div className="mb-6 h-full">
           {/* Colorful Header */}
           <div className="text-center w-full bg-[#ffb4a2] mb-8 py-6 px-4 relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white relative z-10">
+            <h3 className="text-2xl font-bold text-blue-900 relative z-10">
               What Employers Really Remember
             </h3>
           </div>

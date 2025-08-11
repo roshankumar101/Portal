@@ -103,7 +103,7 @@ export default function AdminSlider() {
     { 
       name: "Syed Zabi Ulla", 
       image: CS1,
-      position: "The Guiding light The Ultimate Motivation",
+      position: "Position",
       linkedin: "https://www.linkedin.com/in/syedzaabii/",
       email: "kaiful@example.com"
     },
@@ -131,14 +131,14 @@ export default function AdminSlider() {
     { 
       name: "Mr.Saurabh", 
       image: CS5,
-      position: "XYZ",
+      position: "Position",
       linkedin: "https://linkedin.com/in/priya",
       email: "priya@example.com"
     },
     { 
       name: "X", 
       image: CS6,
-      position: "XYZr",
+      position: "Position",
       linkedin: "https://linkedin.com/in/rahul",
       email: "rahul@example.com"
     },
@@ -181,7 +181,7 @@ export default function AdminSlider() {
 
   return (
     <div 
-      className="w-full max-w-6xl mx-auto p-6 min-h-screen"
+      className="w-full max-w-6xl mx-auto p-20 min-h-screen"
       style={{ backgroundColor: '#FFEEC3' }}
     >
       <div className="text-center mb-12 pt-8">
@@ -193,12 +193,12 @@ export default function AdminSlider() {
       
       <div className="relative">
         <div className="overflow-hidden rounded-2xl">
-          {/* Cards Container - FIXED: Only render exactly what we need */}
+          {/* Cards Container - FIXED*/}
           <div
             className="flex transition-transform duration-700 ease-in-out"
             style={{
               transform: `translateX(-${currentIndex * cardWidth}px)`,
-              width: `${admins.length * cardWidth}px` // Exact width for 6 cards only
+              width: `${admins.length * cardWidth}px` 
             }}
           >
             {admins.map((admin, index) => (
@@ -207,7 +207,7 @@ export default function AdminSlider() {
           </div>
         </div>
 
-        {/* Navigation Buttons */}
+        {/*Buttons*/}
         <button
           onClick={prevSlide}
           className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
@@ -222,7 +222,7 @@ export default function AdminSlider() {
           <IconChevronRight size={24} />
         </button>
 
-        {/* Dot Indicators - Only show dots for valid positions */}
+        {/* Dot Indicators */}
         <div className="flex justify-center mt-8 space-x-2">
           {Array.from({ length: maxIndex + 1 }).map((_, index) => (
             <button

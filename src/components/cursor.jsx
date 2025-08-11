@@ -12,7 +12,6 @@ const SmartCursor = () => {
   const [isPressed, setIsPressed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Mouse position tracking
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -51,22 +50,21 @@ const SmartCursor = () => {
     return () => cancelAnimationFrame(animationId);
   }, [mousePos]);
 
-  // Element hover detection
   useEffect(() => {
     const handleElementHover = (e) => {
       const target = e.target;
       
-      // Check for interactive elements
+     
       if (target.matches('a, button:not(:disabled), [role="button"], .clickable')) {
         if (!target.disabled) {
           setCursorState('hover-link');
         }
       }
-      // Check for disabled elements
+  
       else if (target.matches('button:disabled, .disabled, [disabled]')) {
         setCursorState('disabled');
       }
-      // Check for text elements
+  
       else if (target.matches('p, span, div, h1, h2, h3, h4, h5, h6, .text-content')) {
         const computedStyle = window.getComputedStyle(target);
         if (computedStyle.userSelect !== 'none' && !target.closest('a, button, [role="button"], .clickable')) {
@@ -88,7 +86,7 @@ const SmartCursor = () => {
     };
   }, []);
 
-  // Cursor class names based on state
+
   const getCursorClasses = () => {
     let classes = 'fixed top-0 left-0 pointer-events-none z-50 transition-opacity duration-300';
     if (!isVisible) classes += ' opacity-0';

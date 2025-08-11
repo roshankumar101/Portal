@@ -11,7 +11,7 @@ const ManagementSkills = () => {
   const leadershipSkillsItemsRef = useRef([]);
 
   useEffect(() => {
-    // Set initial states
+
     gsap.set([businessFocusRef.current, leadershipFocusRef.current], {
       opacity: 0,
       y: 50
@@ -22,7 +22,7 @@ const ManagementSkills = () => {
       y: 30
     });
 
-    // Animate columns on scroll
+
     gsap.to([businessFocusRef.current, leadershipFocusRef.current], {
       opacity: 1,
       y: 0,
@@ -36,7 +36,6 @@ const ManagementSkills = () => {
       }
     });
 
-    // Animate skill items with stagger
     gsap.to([...businessSkillsItemsRef.current, ...leadershipSkillsItemsRef.current], {
       opacity: 1,
       y: 0,
@@ -69,12 +68,12 @@ const ManagementSkills = () => {
 
   return (
     <div className="flex gap-16 mt-12 flex-wrap font-sans max-w-6xl mx-auto px-4">
-      {/* Hard Skills Column - Business Focus */}
+      {/* Hard Skills Column */}
       <div ref={businessFocusRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          {/* Colorful Header */}
+          {/* Header */}
           <div className="text-center w-full bg-[#fec89a] mb-8 py-6 px-4 relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white relative z-10">
+            <h3 className="text-2xl font-bold text-blue-900 relative z-10">
               Strategic Business Competencies
             </h3>
           </div>
@@ -158,9 +157,9 @@ const ManagementSkills = () => {
       {/* Soft Skills Column - Leadership Focus */}
       <div ref={leadershipFocusRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          {/* Colorful Header */}
+          {/* Header */}
           <div className="text-center w-full bg-[#ffb4a2] mb-8 py-6 px-4 relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white relative z-10">
+            <h3 className="text-2xl font-bold text-blue-900 relative z-10">
               Leadership Differentiators
             </h3>
           </div>

@@ -41,8 +41,8 @@ export default function PlacementFAQ() {
       className="w-full min-h-screen flex flex-col justify-center items-center px-4"
       style={{
         fontFamily: "'Inter', sans-serif",
-        "--chart-4": "oklch(92% .12 84.429)", // lighter version
-        "--chart-5": "oklch(88% .10 70.08)", // lighter version
+        "--chart-4": "oklch(92% .12 84.429)", 
+        "--chart-5": "oklch(88% .10 70.08)", 
       }}
     >
       <h2

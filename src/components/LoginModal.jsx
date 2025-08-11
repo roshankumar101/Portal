@@ -138,7 +138,7 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
         ref={modalRef}
         className="bg-transparent backdrop-blur-lg p-0 rounded-lg shadow-2xl w-full max-w-2xl h-[28rem] relative overflow-hidden flex flex-row items-center border border-gray-300"
         style={{
-          background: 'linear-gradient(135deg, #DBD7F9 60%, rgba(245,245,245,0.85) 60%, rgba(245,245,245,0.85) 100%)',
+          background: 'linear-gradient(135deg, #FFDE83 60%, rgba(245,245,245,0.85) 60%, rgba(245,245,245,0.85) 100%)',
           boxShadow: '0 8px 48px 8px rgba(80, 80, 120, 0.25), 0 1.5px 8px 0 rgba(80,80,120,0.10)',
           opacity: 0, // Start invisible to prevent flash
           transform: 'scale(0.8) translateY(50px)' // Start in initial animation state

@@ -36,7 +36,7 @@ const HealthcareSkills = () => {
       }
     });
 
-    // Animate skill items with stagger
+   
     gsap.to([...clinicalSkillItemsRef.current, ...besideExcellenceItemsRef.current], {
       opacity: 1,
       y: 0,
@@ -72,9 +72,9 @@ const HealthcareSkills = () => {
       {/* Clinical Competencies Column */}
       <div ref={clinicalSkillsRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          {/* Colorful Header */}
+          {/*Header */}
           <div className="text-center w-full bg-[#fec89a] mb-8 py-6 px-4 relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white relative z-10">
+            <h3 className="text-2xl font-bold text-blue-900 relative z-10">
               Clinical & Technical Mastery
             </h3>
           </div>
@@ -143,9 +143,9 @@ const HealthcareSkills = () => {
       {/* Beside Excellence Column */}
       <div ref={besideExcellenceRef} className="flex-1 min-w-[300px] bg-white/70 shadow-md rounded-xl overflow-hidden">
         <div className="mb-6 h-full">
-          {/* Colorful Header */}
+          {/* Header */}
           <div className="text-center w-full bg-[#ffb4a2] mb-8 py-6 px-4 relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white relative z-10">
+            <h3 className="text-2xl font-bold text-blue-900 relative z-10">
               Beside Excellence
             </h3>
           </div>

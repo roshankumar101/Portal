@@ -5,10 +5,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
-function LoginModal({ isOpen, onClose }) {
+function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
   const { login, registerWithEmail, resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [role, setRole] = useState('Student');
+  const [role, setRole] = useState(defaultRole);
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +19,13 @@ function LoginModal({ isOpen, onClose }) {
   const [shouldRender, setShouldRender] = useState(false);
   const modalRef = useRef(null);
   const backdropRef = useRef(null);
+
+  // Update role when defaultRole changes and modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setRole(defaultRole);
+    }
+  }, [isOpen, defaultRole]);
 
   useEffect(() => {
     if (isOpen && !shouldRender) {
@@ -142,7 +149,7 @@ function LoginModal({ isOpen, onClose }) {
         ref={modalRef}
         className="bg-transparent backdrop-blur-lg p-0 rounded-lg shadow-2xl w-full max-w-2xl h-[28rem] relative overflow-hidden flex flex-row items-center border border-gray-300"
         style={{
-          background: 'linear-gradient(135deg, #DBD7F9 60%, rgba(245,245,245,0.85) 60%, rgba(245,245,245,0.85) 100%)',
+          background: 'linear-gradient(135deg, #FFDE83 60%, rgba(245,245,245,0.85) 60%, rgba(245,245,245,0.85) 100%)',
           boxShadow: '0 8px 48px 8px rgba(80, 80, 120, 0.25), 0 1.5px 8px 0 rgba(80,80,120,0.10)',
           opacity: 0, // Start invisible to prevent flash
           transform: 'scale(0.8) translateY(50px)' // Start in initial animation state
@@ -155,9 +162,9 @@ function LoginModal({ isOpen, onClose }) {
         </div>
         {/* Login Form Right Side */}
         <div className="flex-1 flex flex-col justify-center h-full relative bg-transparent">
-          <button onClick={handleClose} className="absolute top-4 right-4 bg-black text-gray-300 hover:text-white text-xs font-semibold px-2 py-1 border-2 border-gray-400 rounded z-20 transition-colors duration-200">Esc</button>
+          <button onClick={handleClose} className="absolute top-4 right-4 bg-gray-200 text-black hover:text-black/40 text-sm font-bold px-4 py-0.5 border-2 rounded z-20 transition-colors duration-200">X</button>
           {/* Remove the border from the right side by deleting the border class below */}
-          <div className="absolute inset-0 pointer-events-none rounded-lg border-purple-400" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
+          <div className="absolute inset-0 pointer-events-none rounded-lg" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
           <div className="relative z-10 px-8 py-4">
             <h2 className="text-2xl font-bold mb-2 text-center text-black">
               {mode === 'login' && 'Sign in'}

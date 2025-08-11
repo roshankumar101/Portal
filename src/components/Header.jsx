@@ -13,15 +13,14 @@ function Header({ onLoginOpen }) {
   const scrollToPlacements = (e) => {
     e.preventDefault();
 
-    // Try to find the OurPartners section by ID first
+  
     let ourPartnersSection = document.getElementById('our-partners');
 
-    // If not found by ID, try the class selector
     if (!ourPartnersSection) {
       ourPartnersSection = document.querySelector('.bg-[#DBD7F9]');
     }
 
-    // If still not found, try finding by component structure
+    
     if (!ourPartnersSection) {
       const sections = document.querySelectorAll('div');
       for (let section of sections) {
@@ -32,15 +31,14 @@ function Header({ onLoginOpen }) {
       }
     }
 
-    // Scroll to the section if found
     if (ourPartnersSection) {
       ourPartnersSection.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
     } else {
-      // Fallback: scroll to approximate position where OurPartners should be
-      const scrollPosition = window.innerHeight * 2; // Roughly where OurPartners is
+      
+      const scrollPosition = window.innerHeight * 2; 
       window.scrollTo({
         top: scrollPosition,
         behavior: 'smooth'
@@ -49,11 +47,9 @@ function Header({ onLoginOpen }) {
   };
 
 
-  // Dynamic color based on background
   const [isBgBlack, setIsBgBlack] = useState(false);
   const headerRef = useRef(null);
 
-  // Scroll-based hide/show functionality
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -61,11 +57,10 @@ function Header({ onLoginOpen }) {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      // Hide header when scrolling down (after 50px from top)
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
         setIsVisible(false);
       }
-      // Show header when scrolling up
+      
       else if (currentScrollY < lastScrollY) {
         setIsVisible(true);
       }
@@ -82,19 +77,17 @@ function Header({ onLoginOpen }) {
       const header = headerRef.current;
       if (!header) return;
 
-      // Get the header's position
+   
       const rect = header.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
-      const y = rect.bottom + 5; // Check just below the header
+      const y = rect.bottom + 5; 
 
-      // Find the element at that point
       const el = document.elementFromPoint(x, y);
       if (!el) return;
 
-      // Find the section/component that contains this element
       let sectionElement = el;
       while (sectionElement && sectionElement !== document.body) {
-        // Check if this is a section with py-20 class (our component sections)
+        
         if (sectionElement.classList.contains('py-20') ||
           sectionElement.tagName === 'SECTION' ||
           sectionElement.classList.contains('bg-gradient-to-br') ||
@@ -106,37 +99,31 @@ function Header({ onLoginOpen }) {
         sectionElement = sectionElement.parentElement;
       }
 
-      // Use the section element if found, otherwise use the original element
       const targetElement = sectionElement || el;
       const style = window.getComputedStyle(targetElement);
       const bg = style.backgroundColor;
 
-      // Check if background is white
       let isWhite = false;
 
       if (bg === 'rgb(255, 255, 255)' || bg === 'rgba(255, 255, 255, 1)' || bg === '#ffffff' || bg === 'white') {
         isWhite = true;
       } else if (bg.startsWith('rgb')) {
-        // Parse RGB values
+    
         const rgb = bg.match(/\d+/g);
         if (rgb && rgb.length >= 3) {
           const r = parseInt(rgb[0]);
           const g = parseInt(rgb[1]);
           const b = parseInt(rgb[2]);
-          // Check if it's white or very light
           isWhite = (r > 240 && g > 240 && b > 240);
         }
       }
 
-      // Also check for Titan White gradient
       const backgroundImage = style.backgroundImage;
       if (backgroundImage && backgroundImage !== 'none') {
         if (backgroundImage.includes('#DBD7F9') || backgroundImage.includes('rgb(219, 215, 249)')) {
           isWhite = true;
         }
       }
-
-      // Check for specific background classes including Banner component
       if (targetElement.classList.contains('bg-[#DBD7F9]') ||
         targetElement.classList.contains('bg-white') ||
         (targetElement.classList.contains('bg-gradient-to-br') &&
@@ -144,21 +131,19 @@ function Header({ onLoginOpen }) {
         isWhite = true;
       }
 
-      // Additional check for Banner component structure
-      // Look for Banner component by checking if we're over the photo containers
       const bannerElement = document.querySelector('[class*="h-screen"]');
       if (bannerElement && bannerElement.contains(targetElement)) {
         isWhite = true;
       }
 
-      // Set the state: if background is white, use black content, else use white content
+      // Set the state
       setIsBgBlack(!isWhite);
     }
 
-    // Initial detection
+    
     detectBgColor();
 
-    // Set up event listeners
+    
     window.addEventListener('scroll', detectBgColor);
     window.addEventListener('resize', detectBgColor);
 
@@ -186,7 +171,7 @@ function Header({ onLoginOpen }) {
           </a>
         </div>
 
-        {/* Navigation Menu with Login Button */}
+        
         <nav className="flex items-center space-x-3 sm:space-x-6 lg:space-x-12">
           <a
             href="#calendar"

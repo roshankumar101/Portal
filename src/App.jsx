@@ -1,16 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css'
-import { Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import Home from './pages/Home';
-import AuthLogin from './pages/AuthLogin';
-import AuthRegister from './pages/AuthRegister';
-import AuthForgot from './pages/AuthForgot';
-import JobList from './pages/jobs/JobList';
-import JobDetail from './pages/jobs/JobDetail';
-import StudentDashboard from './pages/dashboard/StudentDashboard';
-import RecruiterDashboard from './pages/dashboard/RecruiterDashboard';
-import AdminDashboard from './pages/dashboard/AdminDashboard';
 import Header from './components/Header'
 import Banner from './components/Banner'
 import WhyPw from './components/WhyPw'
@@ -18,15 +8,20 @@ import Preloader from './components/PreLoader'
 import OurPartners from './components/OurPartners'
 import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
+import AdminSlider from './components/CareerService'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
-import AdminSlider from './components/CareerService'
-import PlacementFAQ from './components/FAQs'
 import LoginModal from './components/LoginModal'
-import cursor from './components/cursor'
 import NotificationModal from './components/Notification'
+import ProtectedRoute from './components/ProtectedRoute'
+import StudentDashboard from './pages/dashboard/StudentDashboard'
+import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
+import AdminDashboard from './pages/dashboard/AdminDashboard'
+import Login from './pages/Login'
+import { useAuth } from './hooks/useAuth'
 
-function App() {
+// Landing page component
+function LandingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -51,49 +46,92 @@ function App() {
       {isLoading ? (
         <Preloader onComplete={() => setIsLoading(false)} />
       ) : (
-                 <main className='w-full min-h-screen'>
-           <Header onLoginOpen={openModal}/>
-           
-           {/* Banner - Odd component #F2F0EA */}
-           <div className='bg-[#f8f5e1]'>
-             <Banner/>
-           </div>
-            
-           {/* WhyPw - Even component #A8D5E3 */}
-           <div className='bg-[#f1f1ef]'>
-             <WhyPw/>
-           </div>
-            
-           {/* OurPartners - Odd component #F2F0EA */}
-           <div id="our-partners" className='bg-[#FFFEFD]'>
-             <OurPartners/>
-           </div>
-            
-           {/* Records - Even component #A8D5E3 */}
-           <div className='bg-[#F2F0D6]'>
-             <Records onLoginOpen={openModal}/>
-           </div>
-            
+        <main className='w-full min-h-screen'>
+          <Header onLoginOpen={openModal} />
+
+
+          <NotificationModal />
+
+          {/* Banner - Odd component #F2F0EA */}
+          <div className='bg-[#f8f5e1]'>
+            <Banner />
+          </div>
+
+          {/* WhyPw - Even component #A8D5E3 */}
+          <div className='bg-[#f8f5e1]'>
+            <WhyPw />
+          </div>
+
+          {/* OurPartners - Odd component #F2F0EA */}
+          <div id="our-partners" className='bg-[#f8f5e1]'>
+            <OurPartners />
+          </div>
+
+          {/* Records - Even component #A8D5E3 */}
+          <div className='bg-[#F2F0D6]'>
+            <Records onLoginOpen={openModal} />
+          </div>
+
           {/* PlacementTimeline - #A8D5E3 background */}
-            <div className='bg-[#f1f1ef]'>
-              <PlacementTimeline autoplay={timelineAutoplay}/>
-            </div>
-            
-           {/* FoundersSection - Even component #A8D5E3 */}
-           <div className='bg-[#F2F0D6]'>
-             <RecruitersSection/>
-           </div>
-            
-           {/* Footer - Odd component #F2F0EA */}
-           <div>
-             <PWIOIFooter/>
-           </div>
+          <div className='bg-[#f8f5e1]'>
+            <PlacementTimeline autoplay={timelineAutoplay} />
+          </div>
+
+          <div className='bg-[#f8f5e1]'>
+            <AdminSlider />
+          </div>
+
+          {/* FoundersSection - Even component #A8D5E3 */}
+          <div className='bg-[#F2F0D6]'>
+            <RecruitersSection />
+          </div>
+
+          {/* Footer - Odd component #F2F0EA */}
+          <div>
+            <PWIOIFooter />
+          </div>
         </main>
       )}
-      
+
       {/* LoginModal rendered at app level for proper centering */}
       <LoginModal isOpen={isModalOpen} onClose={closeModal} />
     </>
+  )
+}
+
+function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected routes */}
+      <Route element={<ProtectedRoute allowRoles={['student']} />}>
+        <Route path="/student" element={<StudentDashboard />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowRoles={['recruiter']} />}>
+        <Route path="/recruiter" element={<RecruiterDashboard />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowRoles={['admin']} />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Route>
+
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import LoginForm from '../components/auth/LoginForm';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 

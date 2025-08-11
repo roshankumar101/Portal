@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listJobs, deleteJob } from '../../services/jobs';
 import JobForm from './JobForm';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function RecruiterJobs() {
   const { user } = useAuth();

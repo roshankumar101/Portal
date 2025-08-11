@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createJob, updateJob } from '../../services/jobs';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function JobForm({ job, onSaved }) {
   const { user } = useAuth();

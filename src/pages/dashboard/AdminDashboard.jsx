@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import AdminPanel from '../admin/AdminPanel';
 
 export default function AdminDashboard() {

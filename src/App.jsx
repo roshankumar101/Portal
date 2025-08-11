@@ -9,10 +9,12 @@ import OurPartners from './components/OurPartners'
 import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
 import AdminSlider from './components/CareerService'
+import PlacementFAQ from './components/FAQs'
 import RecruitersSection from './components/founder'
 import Records from './components/Records'
 import LoginModal from './components/LoginModal'
 import NotificationModal from './components/Notification'
+import cursor from './components/cursor'
 import ProtectedRoute from './components/ProtectedRoute'
 import StudentDashboard from './pages/dashboard/StudentDashboard'
 import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
@@ -25,6 +27,7 @@ function LandingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [loginType, setLoginType] = useState('Student')
 
   const triggerTimelineAnimation = () => {
     setTimelineAutoplay(true);
@@ -32,7 +35,8 @@ function LandingPage() {
     setTimeout(() => setTimelineAutoplay(false), 3500);
   };
 
-  const openModal = () => {
+  const openModal = (type = 'Student') => {
+    setLoginType(type);
     setIsModalOpen(true);
     triggerTimelineAnimation();
   };
@@ -41,60 +45,77 @@ function LandingPage() {
     setIsModalOpen(false);
   };
 
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact-form');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+      // Focus on company name input after scroll
+      setTimeout(() => {
+        const companyInput = document.querySelector('input[name="name"]');
+        if (companyInput) {
+          companyInput.focus();
+        }
+      }, 1000); // Wait for scroll to complete
+    }
+  };
+
   return (
     <>
       {isLoading ? (
         <Preloader onComplete={() => setIsLoading(false)} />
       ) : (
         <main className='w-full min-h-screen'>
-          <Header onLoginOpen={openModal} />
-
-
           <NotificationModal />
 
+          <Header onLoginOpen={openModal} />
+
           {/* Banner - Odd component #F2F0EA */}
-          <div className='bg-[#f8f5e1]'>
+          <div className='bg-gradient-to-b from-gray-50 to-[#FFEECE]'>
             <Banner />
           </div>
 
           {/* WhyPw - Even component #A8D5E3 */}
-          <div className='bg-[#f8f5e1]'>
+          <div className='bg-[#FFEECE]'>
             <WhyPw />
           </div>
 
           {/* OurPartners - Odd component #F2F0EA */}
-          <div id="our-partners" className='bg-[#f8f5e1]'>
+          <div id="our-partners" className='bg-[#FFEECE]'>
             <OurPartners />
           </div>
 
           {/* Records - Even component #A8D5E3 */}
-          <div className='bg-[#F2F0D6]'>
+          <div className='bg-[#FFEECE]'>
             <Records onLoginOpen={openModal} />
           </div>
 
           {/* PlacementTimeline - #A8D5E3 background */}
-          <div className='bg-[#f8f5e1]'>
+          <div className='bg-[#FFEECE]'>
             <PlacementTimeline autoplay={timelineAutoplay} />
           </div>
 
-          <div className='bg-[#f8f5e1]'>
+          <div className='bg-[#FFEECE] py-10'>
             <AdminSlider />
           </div>
 
           {/* FoundersSection - Even component #A8D5E3 */}
-          <div className='bg-[#F2F0D6]'>
+          <div className='bg-[#FFEECE]'>
             <RecruitersSection />
+          </div>
+
+          <div className='bg-[#FFEECE]'>
+            <PlacementFAQ />
           </div>
 
           {/* Footer - Odd component #F2F0EA */}
           <div>
-            <PWIOIFooter />
+            <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact} />
           </div>
         </main>
       )}
 
       {/* LoginModal rendered at app level for proper centering */}
-      <LoginModal isOpen={isModalOpen} onClose={closeModal} />
+      <LoginModal isOpen={isModalOpen} onClose={closeModal} defaultRole={loginType} />
     </>
   )
 }

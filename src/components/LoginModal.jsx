@@ -1,8 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { gsap } from 'gsap';
+import { useAuth } from '../hooks/useAuth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
 function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
+  const { login, registerWithEmail, resetPassword } = useAuth();
+  const navigate = useNavigate();
   const [role, setRole] = useState(defaultRole);
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [animKey, setAnimKey] = useState('Student');
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -155,8 +166,12 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
           {/* Remove the border from the right side by deleting the border class below */}
           <div className="absolute inset-0 pointer-events-none rounded-lg" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
           <div className="relative z-10 px-8 py-4">
-            <h2 className="text-2xl font-bold mb-4 text-center text-black">Login</h2>
-            <div className="flex justify-center gap-2 mb-6">
+            <h2 className="text-2xl font-bold mb-2 text-center text-black">
+              {mode === 'login' && 'Sign in'}
+              {mode === 'register' && 'Create account'}
+              {mode === 'forgot' && 'Reset password'}
+            </h2>
+            <div className="flex justify-center gap-2 mb-4">
               {['Student', 'Recruiter', 'Admin'].map(opt => (
                 <button
                   key={opt}
@@ -173,17 +188,74 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
               className="transition-all duration-300 ease-in-out opacity-100 scale-100 animate-fadeIn"
               style={{ animation: 'fadeInScale 0.3s' }}
             >
-              <form className="flex flex-col gap-4">
-                <input type="email" placeholder="Email" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                <input type="password" placeholder="Password" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                {role !== 'Student' && (
-                  <input type="password" placeholder="General Password" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                )}
-                <button type="submit" className="bg-black text-white py-2 rounded font-semibold">Login</button>
-                <div className="text-right mt-1">
-                  <button type="button" className="text-sm text-blue-600 font-semibold hover:underline focus:outline-none">Forgot password?</button>
-                </div>
-              </form>
+              {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+              {mode !== 'forgot' && (
+                <form className="flex flex-col gap-3" onSubmit={async (e)=>{
+                  e.preventDefault();
+                  setError('');
+                  setBusy(true);
+                  try {
+                    let uid = null;
+                    if (mode === 'login') {
+                      const u = await login(email, password);
+                      uid = u?.uid;
+                    } else {
+                      // Register. For Admin, require manual creation in Firestore after registration
+                      const selected = role.toLowerCase();
+                      const assignRole = selected === 'admin' ? 'student' : selected;
+                      const u = await registerWithEmail({ email, password, role: assignRole });
+                      uid = u?.uid;
+                      if (selected === 'admin') {
+                        // Inform user that admin role must be granted by existing admin in Firestore
+                        alert('Account created. Ask an existing admin to set your role to admin in Firestore.');
+                      }
+                    }
+                    // Role-based redirect
+                    if (uid) {
+                      try {
+                        const snap = await getDoc(doc(db, 'users', uid));
+                        const userRole = snap.exists() ? snap.data()?.role : null;
+                        if (userRole === 'student') navigate('/student', { replace: true });
+                        else if (userRole === 'recruiter') navigate('/recruiter', { replace: true });
+                        else if (userRole === 'admin') navigate('/admin', { replace: true });
+                        else navigate('/', { replace: true });
+                      } catch {
+                        navigate('/', { replace: true });
+                      }
+                    }
+                    onClose();
+                  } catch (err) {
+                    setError(err?.message || 'Action failed');
+                  } finally { setBusy(false); }
+                }}>
+                  <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" placeholder="Email" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
+                  <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" placeholder="Password" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
+                  <button disabled={busy} type="submit" className="bg-black text-white py-2 rounded font-semibold disabled:opacity-60">{busy ? 'Please wait...' : (mode==='login' ? 'Sign in' : 'Create account')}</button>
+                </form>
+              )}
+              {mode === 'forgot' && (
+                <form className="flex flex-col gap-3" onSubmit={async (e)=>{
+                  e.preventDefault();
+                  setError('');
+                  setBusy(true);
+                  try {
+                    await resetPassword(email);
+                    alert('Reset link sent to your email.');
+                    onClose();
+                  } catch (err) {
+                    setError(err?.message || 'Failed to send reset link');
+                  } finally { setBusy(false); }
+                }}>
+                  <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" placeholder="Email" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
+                  <button disabled={busy} type="submit" className="bg-black text-white py-2 rounded font-semibold disabled:opacity-60">{busy ? 'Sending...' : 'Send reset link'}</button>
+                </form>
+              )}
+              <div className="flex items-center justify-between mt-3 text-sm">
+                <button onClick={()=>setMode(mode==='login' ? 'register' : 'login')} className="text-blue-600 font-semibold">
+                  {mode==='login' ? 'Create account' : 'Have an account? Sign in'}
+                </button>
+                <button onClick={()=>setMode('forgot')} className="text-blue-600 font-semibold">Forgot password?</button>
+              </div>
             </div>
           </div>
         </div>

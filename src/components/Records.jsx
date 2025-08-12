@@ -6,7 +6,7 @@ const PlacementRecords = ({ onLoginOpen }) => {
   const [selectedBatch, setSelectedBatch] = useState('');
   const [isRotating, setIsRotating] = useState(true);
 
-  // Sample data for student records - multiple rows for rotation
+  // dummy
   const studentRecords = [
     // Row 1
     [

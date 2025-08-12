@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useScroll, useTransform, motion } from "motion/react";
 import gsap from "gsap";
+import BoldTextAnimation from "./gsap";
 
 export default function TimelineWithSidebar() {
   const data = [
@@ -14,7 +15,7 @@ export default function TimelineWithSidebar() {
             Profile Registration & Setup
           </h4>
           <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Create your account with academic credentials, personal information, and career preferences. Complete your professional profile to establish your digital presence within the placement ecosystem.
+            Create your account with academic credentials, personal information, and career preferences. 
           </p>
         </div>
       ),
@@ -29,11 +30,6 @@ export default function TimelineWithSidebar() {
           <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
             Upload your resume and supporting documents including academics , certificates, and project portfolios.
           </p>
-          <ul className="list-disc list-inside space-y-1 text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
-            <li>Professional resume in multiple formats</li>
-            <li>Project documentation and portfolio</li>
-            <li>Skill certification and training records</li>
-          </ul>
         </div>
       ),
     },
@@ -45,7 +41,7 @@ export default function TimelineWithSidebar() {
             Job Opportunity Discovery
           </h4>
           <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Browse and analyze available job descriptions posted by recruiters and companies. Review role requirements, compensation packages, and company profiles to identify suitable opportunities aligned with your career objectives.
+            Browse and analyze available job descriptions posted by recruiters and companies.
           </p>
         </div>
       ),
@@ -58,14 +54,11 @@ export default function TimelineWithSidebar() {
             Application Submission Process
           </h4>
           <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Submit targeted applications for selected positions through the portal. Customize application materials for each role and ensure compliance with specific company requirements .
+            Submit targeted applications for selected positions through the portal.
           </p>
           <div className="text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
-            <strong>Application Components:</strong>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Tailored resume for specific role requirements</li>
-              <li>Additional documentation as requested</li>
-            </ul>
+            
+          
           </div>
         </div>
       ),
@@ -78,7 +71,7 @@ export default function TimelineWithSidebar() {
             Application Status Tracking
           </h4>
           <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Monitor your application progress through the placement dashboard. Track submission confirmations, screening status updates, interview schedules, and feedback from recruiting teams in real-time.
+            Monitor your application progress through the placement dashboard. 
           </p>
         </div>
       ),
@@ -91,14 +84,8 @@ export default function TimelineWithSidebar() {
             Administrative Coordination & Notifications
           </h4>
           <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Receive automated notifications updates regarding interview schedules. Coordinate with the Admin for seamless communication between all stakeholders.
+            Receive automated notifications updates regarding interview schedules.
           </p>
-          <ul className="list-disc list-inside space-y-1 text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
-            <li>Interview schedule notifications and reminders</li>
-            <li>Venue and logistics coordination updates</li>
-            <li>Administrative announcements and policy changes</li>
-          
-          </ul>
         </div>
       ),
     },
@@ -112,14 +99,16 @@ export default function TimelineWithSidebar() {
           <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
             The interview rounds navigate through multiple selection stages while maintaining professional communication with recruiters.
           </p>
-          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Successfully complete the final selection process, receive job offers, and coordinate with placement administrators for offer management and acceptance procedures.
-          </p>
         </div>
       ),
     },
     {
-      title: "It's Time To Give Back To The 'SOCIETY'",
+      title: (
+        <span>
+          It's Time To Give Back To The '
+          <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_25%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]">SOCIETY</span>'
+        </span>
+      ),
     },
   ];
 
@@ -167,7 +156,7 @@ export default function TimelineWithSidebar() {
     }
   }, [showSecond]);
 
-  // Timeline animation
+
   const ref = useRef(null);
   const containerRef = useRef(null);
   const [height, setHeight] = useState(0);
@@ -191,85 +180,67 @@ export default function TimelineWithSidebar() {
     <div className="relative w-full overflow-clip">
       <div className="flex">
         
-        {/* Timeline Section - 70% */}
+        {/* Timeline Section  */}
         <div className="w-full lg:w-[70%] bg-white dark:bg-neutral-950 font-inter md:px-10" ref={containerRef}>
           <div className="max-w-5xl mx-auto py-20 px-4 md:px-8 lg:px-10">
             <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl">
-              Walk Through Of Placement Process
+          <span style={{fontFamily: 'Inter, sans-serif'}}>Walk Through Of Placement Process</span>
             </h2>
             <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-lg">
-              Navigate through the placement process from profile creation to final selection. Experience a streamlined approach to career opportunities through our integrated placement management system.
+              Navigate through the placement process from profile creation to final selection. 
             </p>
           </div>
 
           <div ref={ref} className="relative max-w-5xl mx-auto pb-20">
             {data.map((item, index) => (
-              <div key={index} className="flex justify-start pt-10 md:pt-30 md:gap-10">
-                <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
-                  <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
-                    <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 border border-neutral-300 dark:border-neutral-700 p-2" />
+              index === 7 ? (
+                <div key={index} className="w-full flex flex-col items-center justify-center pt-10 md:pt-30">
+                  <h3 className="text-2xl md:text-5xl font-bold text-gray-500 mb-4 text-center">
+                    {item.title}
+                  </h3>
+                  <div className="w-full flex justify-center text-gray-500">
+                    {item.content}
                   </div>
-                  <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 dark:text-neutral-500">
-                    {item.title}
-                  </h3>
                 </div>
+              ) : (
+                <div key={index} className={`flex justify-start ${index === 0 ? 'pt-4 md:pt-6' : 'pt-10 md:pt-30'} md:gap-10`}>
+                  <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
+                    <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
+                      <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 border border-neutral-300 dark:border-neutral-700 p-2" />
+                    </div>
+                    <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 dark:text-neutral-500">
+                      {item.title}
+                    </h3>
+                  </div>
 
-                <div className="relative pl-20 pr-4 md:pl-4 w-full">
-                  <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500 dark:text-neutral-500">
-                    {item.title}
-                  </h3>
-                  {item.content}
+                  <div className="relative pl-20 pr-4 md:pl-4 w-full">
+                    <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500 dark:text-neutral-500">
+                      {item.title}
+                    </h3>
+                    {item.content}
+                  </div>
                 </div>
-              </div>
+              )
             ))}
 
-            {/* Animation timeline */}
+            {/* timeline animation */}
             <div
               style={{ height: `${height}px` }}
-              className="absolute left-8 md:left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent via-neutral-200 dark:via-neutral-700 to-transparent [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
+              className="absolute left-8 md:left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-blue-800 via-white dark:via-neutral-700 to-transparent [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
             >
               <motion.div
                 style={{
                   height: heightTransform,
                   opacity: opacityTransform,
                 }}
-                className="absolute inset-x-0 top-0 w-[2px] bg-gradient-to-t from-purple-500 via-blue-500 to-transparent from-[0%] via-[10%] rounded-full"
+                className="absolute inset-x-0 top-0 w-[2px] bg-gradient-to-t from-blue-800 via-white to-transparent from-[0%] via-[10%] rounded-full"
               />
             </div>
           </div>
         </div>
 
-        {/* Sidebar - 30% */}
-        <div className="hidden lg:block lg:w-[30%] bg-neutral-50 dark:bg-neutral-900">
-          <div className="sticky top-0 h-screen p-8">
-            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-6 h-full overflow-y-auto flex items-center justify-center">
-              {!showSecond && (
-                <div
-                  ref={firstRef}
-                  className="text-3xl md:text-4xl font-semibold text-gray-800"
-                  style={{ letterSpacing: ".02em", minHeight: "2.5rem" }}
-                >
-                  Worried about placement updates? Chill.
-                </div>
-              )}
-              {showSecond && (
-                <div
-                  ref={secondRef}
-                  className="text-xl md:text-2xl font-bold bg-black bg-clip-text text-transparent relative animate-none"
-                  style={{
-                    backgroundImage: "linear-gradient(to right, silver, black)",
-                    backgroundSize: "200% 100%",
-                    backgroundPosition: "0% 0%",
-                    padding: "0.5rem 1rem",
-                    borderRadius: "0.375rem",
-                  }}
-                >
-                  Even RCB took 18 years to lift the IPL trophy.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+  {/* Sidebar*/}
+  <BoldTextAnimation />
 
       </div>
     </div>

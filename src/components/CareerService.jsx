@@ -67,7 +67,7 @@ const AdminCard = ({ admin }) => {
             className="w-full h-56 object-cover transition-all duration-300"
           />
           
-          {/* Social Links Overlay - Bottom Center */}
+          {/* Social Links */}
           <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 transition-all duration-300 z-20 ${
             showSocials ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}>
@@ -185,15 +185,15 @@ export default function AdminSlider() {
       style={{ backgroundColor: '#FFEEC3' }}
     >
       <div className="text-center mb-12 pt-8">
-        <p className="text-xl font-semibold text-amber-700 mb-3 tracking-wide">THE TEAM</p>
-        <h2 className="text-4xl font-bold text-amber-900">
+        <p className="text-3xl font-semibold text-black mb-3 tracking-wide">THE TEAM</p>
+        <h2 className="text-5xl font-bold text-blue-900">
           Office of Career Services
         </h2>
       </div>
       
       <div className="relative">
         <div className="overflow-hidden rounded-2xl">
-          {/* Cards Container - FIXED*/}
+          {/* Cards Container*/}
           <div
             className="flex transition-transform duration-700 ease-in-out"
             style={{

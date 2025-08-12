@@ -81,9 +81,9 @@ const Banner = () => {
 
     // Calculate when TypeWriter will complete:
     // delay: 2s + (5 chars × 0.2s charDelay) + (0.1s charDuration × 5) = 2 + 1 + 0.5 = 3.5s
-    const typewriterCompletionTime = 2.5; // Adding small buffer
+    const typewriterCompletionTime = 2.5; // small buffer
 
-    // Animate subtitle after TypeWriter completes
+    // subtitle after TypeWriter completes
     entranceTl.to(subtitleEl, {
       opacity: 1,
       y: 0,
@@ -119,7 +119,7 @@ const Banner = () => {
     >
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-2 items-center">
 
-        {/* Left Section - India Map with Facts */}
+        {/* India Map with Facts */}
         <div className="relative w-full h-full order-1">
           {/* India Map */}
           <div ref={mapRef} className="relative pt-10 lg:pt-6 mb-4">

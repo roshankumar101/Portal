@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import Login from './Login';
 import brandLogo from '../assets/brand_logo.webp';
 import { TypeWriter } from './TextStyle';
+import { useNavigate } from 'react-router-dom';
 
 function Header({ onLoginOpen }) {
-  const openModal = () => {
-    if (onLoginOpen) {
-      onLoginOpen();
-    }
+  const navigate = useNavigate();
+  const openLoginModal = () => {
+    if (onLoginOpen) onLoginOpen();
   };
 
   const scrollToPlacements = (e) => {
@@ -197,7 +197,7 @@ function Header({ onLoginOpen }) {
           </a>
 
           <Login
-            onClick={openModal}
+            onClick={openLoginModal}
             className="px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 hover:scale-105 bg-black text-white hover:bg-gray-800 shadow-lg"
           />
         </nav>

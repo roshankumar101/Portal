@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css'
 import Header from './components/Header'
 import Banner from './components/Banner'
@@ -8,15 +9,22 @@ import Preloader from './components/PreLoader'
 import OurPartners from './components/OurPartners'
 import PWIOIFooter from './components/Footer'
 import PlacementTimeline from './components/PlacementTimeline'
-import RecruitersSection from './components/founder'
-import Records from './components/Records'
 import AdminSlider from './components/CareerService'
 import PlacementFAQ from './components/FAQs'
+import RecruitersSection from './components/founder'
+import Records from './components/Records'
 import LoginModal from './components/LoginModal'
-import cursor from './components/cursor'
 import NotificationModal from './components/Notification'
+import cursor from './components/cursor'
+import ProtectedRoute from './components/ProtectedRoute'
+import StudentDashboard from './pages/dashboard/StudentDashboard'
+import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
+import AdminDashboard from './pages/dashboard/AdminDashboard'
+import Login from './pages/Login'
+import { useAuth } from './hooks/useAuth'
 
-function App() {
+// Landing page component
+function LandingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -58,7 +66,6 @@ function App() {
         <Preloader onComplete={() => setIsLoading(false)} />
       ) : (
         <main className='w-full min-h-screen'>
-
           <NotificationModal />
 
           <Header onLoginOpen={openModal} />
@@ -93,7 +100,6 @@ function App() {
             <PlacementTimeline autoplay={timelineAutoplay} />
           </div>
 
-
           <div className='bg-[#FFEECE] py-10'>
             <AdminSlider />
           </div>
@@ -107,7 +113,6 @@ function App() {
             <PlacementFAQ />
           </div>
 
-
           {/* Footer - Odd component #F2F0EA */}
           <div>
             <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact} />
@@ -118,6 +123,42 @@ function App() {
       {/* LoginModal rendered at app level for proper centering */}
       <LoginModal isOpen={isModalOpen} onClose={closeModal} defaultRole={loginType} />
     </>
+  )
+}
+
+function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected routes */}
+      <Route element={<ProtectedRoute allowRoles={['student']} />}>
+        <Route path="/student" element={<StudentDashboard />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowRoles={['recruiter']} />}>
+        <Route path="/recruiter" element={<RecruiterDashboard />} />
+      </Route>
+
+      <Route element={<ProtectedRoute allowRoles={['admin']} />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Route>
+
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

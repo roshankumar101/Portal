@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const PlacementRecords = ({ onLoginOpen }) => {
   const [currentRow, setCurrentRow] = useState(0);
   const [showBatchDropdown, setShowBatchDropdown] = useState(false);
-  const [selectedBatch, setSelectedBatch] = useState('');
   const [isRotating, setIsRotating] = useState(true);
 
   // dummy
@@ -75,8 +74,7 @@ const PlacementRecords = ({ onLoginOpen }) => {
     setShowBatchDropdown(!showBatchDropdown);
   };
 
-  const handleBatchSelect = (batchId) => {
-    setSelectedBatch(batchId);
+  const handleBatchSelect = () => {
     setShowBatchDropdown(false);
     onLoginOpen(); // Trigger the login modal
   };

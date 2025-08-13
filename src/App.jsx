@@ -4,6 +4,7 @@ import './App.css'
 import Header from './components/Header'
 import Banner from './components/Banner'
 import WhyPw from './components/WhyPw'
+import MasonryStats from './components/stats'
 import Preloader from './components/PreLoader'
 import OurPartners from './components/OurPartners'
 import PWIOIFooter from './components/Footer'
@@ -77,6 +78,11 @@ function LandingPage() {
           {/* WhyPw - Even component #A8D5E3 */}
           <div className='bg-[#FFEECE]'>
             <WhyPw />
+          </div>
+
+          {/* Stats - comes under WhyPw, before OurPartners */}
+          <div className='bg-[#FFEECE]'>
+            <MasonryStats />
           </div>
 
           {/* OurPartners - Odd component #F2F0EA */}

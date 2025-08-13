@@ -53,7 +53,7 @@ const AdminCard = ({ admin }) => {
   const [showSocials, setShowSocials] = useState(false);
 
   return (
-    <div className="flex-shrink-0 px-3" style={{ width: '320px' }}>
+  <div className="flex-shrink-0 mx-2" style={{ width: '320px' }}>
       <div 
         className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-400 hover:shadow-xl hover:scale-[1.02] group"
         onMouseEnter={() => setShowSocials(true)}
@@ -67,7 +67,7 @@ const AdminCard = ({ admin }) => {
             className="w-full h-56 object-cover transition-all duration-300"
           />
           
-          {/* Social Links Overlay - Bottom Center */}
+          {/* Social Links */}
           <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-4 transition-all duration-300 z-20 ${
             showSocials ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}>
@@ -145,8 +145,10 @@ export default function AdminSlider() {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cardWidth = 320 + 24; // card width + padding
-  const maxIndex = admins.length - 3; // Max index to show last 3 cards
+  const cardWidth = 320;
+  const cardGap = 16; // 2*mx-2 (Tailwind mx-2 = 0.5rem = 8px)
+  const cardsPerPage = 3;
+  const maxIndex = Math.ceil(admins.length / cardsPerPage) - 1;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -157,7 +159,6 @@ export default function AdminSlider() {
 
   const nextSlide = () => {
     setCurrentIndex(prev => {
-      // When we reach the end, go back to start
       if (prev >= maxIndex) {
         return 0;
       }
@@ -167,7 +168,6 @@ export default function AdminSlider() {
 
   const prevSlide = () => {
     setCurrentIndex(prev => {
-      // When we're at start, go to end
       if (prev <= 0) {
         return maxIndex;
       }
@@ -185,20 +185,23 @@ export default function AdminSlider() {
       style={{ backgroundColor: '#FFEEC3' }}
     >
       <div className="text-center mb-12 pt-8">
-        <p className="text-xl font-semibold text-amber-700 mb-3 tracking-wide">THE TEAM</p>
-        <h2 className="text-4xl font-bold text-amber-900">
+        <p className="text-3xl font-semibold text-black mb-3 tracking-wide">THE TEAM</p>
+        <h2 className="text-5xl font-bold text-blue-900">
           Office of Career Services
         </h2>
       </div>
       
       <div className="relative">
-        <div className="overflow-hidden rounded-2xl">
-          {/* Cards Container - FIXED*/}
+        <div
+          className="overflow-hidden rounded-2xl"
+          style={{ width: `${cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap}px`, margin: '0 auto' }}
+        >
+          {/* Cards Container*/}
           <div
             className="flex transition-transform duration-700 ease-in-out"
             style={{
-              transform: `translateX(-${currentIndex * cardWidth}px)`,
-              width: `${admins.length * cardWidth}px` 
+              transform: `translateX(-${currentIndex * (cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap)}px)`,
+              width: `${admins.length * cardWidth + (admins.length - 1) * cardGap}px`
             }}
           >
             {admins.map((admin, index) => (

@@ -81,9 +81,9 @@ const Banner = () => {
 
     // Calculate when TypeWriter will complete:
     // delay: 2s + (5 chars × 0.2s charDelay) + (0.1s charDuration × 5) = 2 + 1 + 0.5 = 3.5s
-    const typewriterCompletionTime = 2.5; // Adding small buffer
+    const typewriterCompletionTime = 2.5; // small buffer
 
-    // Animate subtitle after TypeWriter completes
+    // subtitle after TypeWriter completes
     entranceTl.to(subtitleEl, {
       opacity: 1,
       y: 0,
@@ -119,7 +119,7 @@ const Banner = () => {
     >
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-2 items-center">
 
-        {/* Left Section - India Map with Facts */}
+        {/* India Map with Facts */}
         <div className="relative w-full h-full order-1">
           {/* India Map */}
           <div ref={mapRef} className="relative pt-10 lg:pt-6 mb-4">
@@ -145,9 +145,9 @@ const Banner = () => {
         </div>
 
 
-        {/* Right Section - Mission and Solutions */}
+        {/* Right Section*/}
         <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-12 order-2 mt-8">
-          {/* Mission Statement */}
+          
           <div ref={missionRef} className="text-center lg:text-left relative">
             <h1 className="text-3xl md:text-4xl lg:text-[2.8rem] font-bold text-gray-900 leading-tight">
               <span className="text-5xl">On</span> a mission to change the
@@ -180,7 +180,7 @@ const Banner = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[160%] -left-[28%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
 
-                {/* Lottie Animation */}
+               
               </div>
 
               {/* Passion Aligned Opportunities */}
@@ -224,21 +224,8 @@ const Banner = () => {
             </div>
           </div>
 
-          {/* Slogan */}
-          <div ref={sloganRef} className="pt-3 border-t border-gray-200">
-            <p className="text-xs sm:text-sm font-bold text-gray-600 text-center relative">
-              Hiring from us is a common sense <span className="text-gray-800 font-italic underline">Don't believe us Scroll down</span>
-              <div className="absolute z-10 delay-1000 hidden sm:block">
-                <dotlottie-wc
-                  src="https://lottie.host/ae1d97bb-5c47-4831-9dcb-b722fa2b7aa2/HYheM2XgzN.lottie"
-                  speed="1"
-                  style={{ width: '80px', height: '80px' }}
-                  mode="forward"
-                  autoplay
-                ></dotlottie-wc>
-              </div>
-            </p>
-          </div>
+          
+          
         </div>
       </div>
     </div>

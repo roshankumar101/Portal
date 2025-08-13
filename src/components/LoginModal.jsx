@@ -158,7 +158,16 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
       >
         {/* Lottie Animation Left Side */}
         <div className="hidden md:flex flex-col items-center justify-center w-1/2 h-full bg-transparent ">
-          <dotlottie-wc src="https://lottie.host/a22e1a8b-a8e9-4fe4-893c-f5ba49c2a4b6/KHjSf9NMKB.lottie" speed="1" style={{ width: '220px', height: '220px' }} mode="forward" loop="" autoplay=""></dotlottie-wc>
+          {lottieReady && (
+            <dotlottie-wc
+              src="https://lottie.host/a22e1a8b-a8e9-4fe4-893c-f5ba49c2a4b6/KHjSf9NMKB.lottie"
+              speed="1"
+              style={{ width: '220px', height: '220px' }}
+              mode="forward"
+              loop
+              autoplay
+            ></dotlottie-wc>
+          )}
         </div>
         {/* Login Form Right Side */}
         <div className="flex-1 flex flex-col justify-center h-full relative bg-transparent">

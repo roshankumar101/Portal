@@ -1,135 +1,172 @@
 import React from "react";
-import {
-  FaTrophy,
-  FaCalendarAlt,
-  FaHandshake,
-  FaRupeeSign,
-  FaRocket,
-  FaChartLine,
-} from "react-icons/fa";
 
 const stats = [
   {
     label: "Highest CTC Offered",
     value: "₹45 LPA",
-    icon: <FaTrophy className="text-yellow-600 text-4xl" />,
-    bgColor: "#FFEEC3",
+    bgColor: "#d15836ff",
     borderColor: "#f8dba9",
   },
   {
     label: "Placement Drives",
     value: "85",
-    icon: <FaCalendarAlt className="text-yellow-600 text-3xl" />,
-    bgColor: "#fec89a",
+    bgColor: "#cb7c37ff",
     borderColor: "#f8bfa9",
   },
   {
     label: "Exclusive Recruiters",
     value: "12",
-    icon: <FaHandshake className="text-yellow-600 text-3xl" />,
-    bgColor: "#ffb4a2",
+    bgColor: "#ca4625ff",
     borderColor: "#f7b8ae",
   },
   {
     label: "Average CTC",
     value: "₹8.5 LPA",
-    icon: <FaRupeeSign className="text-yellow-600 text-3xl" />,
-    bgColor: "#FFEEC3",
+    bgColor: "#9c4923ff",
     borderColor: "#f8dba9",
   },
   {
     label: "Ventures Launched",
     value: "7",
-    icon: <FaRocket className="text-yellow-600 text-3xl" />,
-    bgColor: "#ffb4a2",
+    bgColor: "#b84326ff",
     borderColor: "#f7b8ae",
   },
   {
     label: "Placement Percentage",
     value: "92%",
-    icon: <FaChartLine className="text-yellow-600 text-3xl" />,
-    bgColor: "#fec89a",
+    bgColor: "#c04012ff",
     borderColor: "#f8bfa9",
   },
 ];
 
-const MasonryStats = () => (
-  <section className="bg-[#FFEEC3] flex items-center justify-center px-6 py-10">
-    <div className="max-w-6xl w-full">
-      {/* Heading */}
-      <h2 className="text-4xl font-bold mb-8 text-gray-900 text-center">
-        Heard the Why —{" "}
-        <span
-          className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat
-          [background-size:100%_25%] [background-position:0_100%] 
-          transition-all duration-300 ease-in-out 
-          hover:[background-size:100%_100%] hover:[background-position:0_100%]"
-        >
-          Here’s the WoW!
-        </span>
-      </h2>
+const PlacementStats = () => {
+  return (
+    <section className="relative py-12 px-4 flex flex-col items-center overflow-hidden">
+      {/* Rays Background with lighter colors */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: "#FFEEC3",
+          backgroundImage: `
+            repeating-conic-gradient(
+              from 0deg,
+              oklch(96% 0.04 95.746) 0deg 15deg,
+              oklch(94% 0.07 91.605) 15deg 30deg,
+              oklch(92.5% 0.06 91.936) 30deg 45deg
+            )
+          `,
+          maskImage:
+            "radial-gradient(circle at center, rgba(0,0,0,1) 70%, transparent 100%)",
+          WebkitMaskImage:
+            "radial-gradient(circle at center, rgba(0,0,0,1) 70%, transparent 100%)",
+        }}
+      ></div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-4 gap-6">
-        {/* Tall Long Card */}
-        <div
-          className="rounded-xl p-8 flex flex-col items-center justify-center shadow-md col-span-1 row-span-2"
-          style={{
-            backgroundColor: stats[0].bgColor,
-            border: `1px solid ${stats[0].borderColor}`,
-          }}
-        >
-          {stats[0].icon}
-          <span className="text-5xl font-extrabold text-orange-700 mt-4">
-            {stats[0].value}
+      {/* Content Layer */}
+      <div className="relative z-10 max-w-6xl w-full">
+        {/* Heading with sparkle */}
+        <h2 className="text-4xl font-bold mb-10 text-gray-900 text-center">
+          Heard the WHY —{" "}
+          <span
+            className="relative px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat
+            [background-size:100%_25%] [background-position:0_100%]
+            transition-all duration-300 ease-in-out
+            hover:[background-size:100%_100%] hover:[background-position:0_100%]"
+          >
+            Here’s the WoW!
+            {/* Sparkles */}
+            <span
+              className="absolute -top-3 -right-6 sm:-right-8 animate-sparkle"
+              style={{ animationDelay: "0s" }}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 28 28"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M14 3L16.5 11.5L25 14L16.5 16.5L14 25L11.5 16.5L3 14L11.5 11.5L14 3Z"
+                  fill="#FFD700"
+                />
+              </svg>
+            </span>
+            <span
+              className="absolute -top-2 -left-3 sm:-top-3 sm:-left-5 animate-sparkle"
+              style={{ animationDelay: "1s" }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 2L9.2 6.2L14 8L9.2 9.2L8 14L6.8 9.2L2 8L6.8 6.2L8 2Z"
+                  fill="#FFD700"
+                />
+              </svg>
+            </span>
+            <span
+              className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-4 animate-sparkle"
+              style={{ animationDelay: "1.7s" }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6 1.5L7 4.5L10.5 6L7 7.5L6 10.5L5 7.5L1.5 6L5 4.5L6 1.5Z"
+                  fill="#FFD700"
+                />
+              </svg>
+            </span>
           </span>
-          <span className="text-lg font-medium text-gray-800 mt-2">
-            {stats[0].label}
-          </span>
+        </h2>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="rounded-xl p-4 shadow-md text-center border flex flex-col items-center"
+              style={{
+                backgroundColor: stat.bgColor,
+                borderColor: stat.borderColor,
+              }}
+            >
+              {/* No icons */}
+              <div className="text-5xl font-extrabold text-white mt-4">
+                {stat.value}
+              </div>
+              <div className="text-sm font-medium text-white mt-2">
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* Top row - 3 small cards */}
-        {stats.slice(1, 4).map((stat, index) => (
-          <div
-            key={index}
-            className="rounded-xl shadow-sm p-6 flex flex-col items-center justify-center text-center"
-            style={{
-              backgroundColor: stat.bgColor,
-              border: `1px solid ${stat.borderColor}`,
-            }}
-          >
-            {stat.icon}
-            <span className="text-3xl font-bold text-gray-900 mt-3">
-              {stat.value}
-            </span>
-            <span className="text-sm font-medium text-gray-700">
-              {stat.label}
-            </span>
-          </div>
-        ))}
-
-        {/* Second row - 2 medium cards */}
-        {stats.slice(4).map((stat, index) => (
-          <div
-            key={index}
-            className="rounded-xl shadow-sm p-8 flex flex-col items-center justify-center text-center"
-            style={{
-              backgroundColor: stat.bgColor,
-              border: `1px solid ${stat.borderColor}`,
-            }}
-          >
-            {stat.icon}
-            <span className="text-3xl font-bold text-gray-900 mt-3">
-              {stat.value}
-            </span>
-            <span className="text-sm font-medium text-gray-700">
-              {stat.label}
-            </span>
-          </div>
-        ))}
       </div>
-    </div>
-  </section>
-);
 
-export default MasonryStats;
+      {/* Sparkle Animation CSS */}
+      <style>{`
+        @keyframes sparkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(-10deg); }
+          10% { opacity: 1; transform: scale(1.2) rotate(10deg); }
+          20% { opacity: 0.7; transform: scale(1) rotate(-5deg); }
+          80% { opacity: 0.2; transform: scale(0.7) rotate(-10deg); }
+        }
+        .animate-sparkle {
+          animation: sparkle 2.5s infinite;
+          pointer-events: none;
+        }
+      `}</style>
+    </section>
+  );
+};
+
+export default PlacementStats;

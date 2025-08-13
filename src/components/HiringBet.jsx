@@ -11,7 +11,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   const getWordsBySelection = (selection) => {
     switch (selection) {
       case 'SOT': // Software Development
-        return ["framework","tool", "API", "library"];
+        return ["framework","tool", "API", "library"," language","Tech-stack"];
       case 'SOM': // Software Management
         return ["case study", "algorithm", "metric"];
       case 'SOH': // Software Healthcare
@@ -104,7 +104,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       techLine.removeEventListener('mouseleave', handleMouseLeave);
       tl.kill();
     };
-  }, [userSelection]); // Add userSelection as dependency
+  }, [userSelection]); 
 
   return (
     <div className="max-w-4xl mx-auto my-12 text-center text-black">
@@ -124,15 +124,15 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
             ref={nahRef}
             className="font-black rotate-1 text-blue-800 inline-block ml-4"
           >
-            : NAH !
+            ?  NAH !
           </span>
         </div>
       </div>
       
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight">
-        <span className="font-bold relative inline-block">but they're</span>
+        <span className="font-bold relative inline-block">But they're</span>
         <span className="font-bold text-4xl text-blue-900 bg-clip-text">
-          passionate learners
+          lifelong learners
         </span>
       </div>
     </div>

@@ -2,9 +2,9 @@
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import R1 from '../assets/Rec1.jpg'
-import R2 from '../assets/Rec2.jpg'
-import R3 from '../assets/Rec3.jpg'
+import R1 from '../assets/Rec1.png'
+import R2 from '../assets/Rec2.png'
+import R3 from '../assets/Rec3.png'
 
 const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
   const [active, setActive] = useState(0);
@@ -112,7 +112,7 @@ export default function TestimonialSection() {
   const testimonials = [
     {
       src: `${R1}`,
-      name: "Sarah Johnson",
+      name: "Arvind Kumar",
       designation: "Software Engineer",
       quote:
         "Hiring from them has always felt less like a transaction and more like discovering a hidden talent gem—shiny, valuable, and instantly impressive",
@@ -126,7 +126,7 @@ export default function TestimonialSection() {
     },
     {
       src: `${R3}`,
-      name: "David Kim",
+      name: "Shobhit Singh",
       designation: "Marketing Specialist",
       quote:
         "Hiring from them has always been suspiciously easy—like they've cracked some secret hiring algorithm",

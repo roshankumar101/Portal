@@ -53,7 +53,7 @@ const AdminCard = ({ admin }) => {
   const [showSocials, setShowSocials] = useState(false);
 
   return (
-    <div className="flex-shrink-0 px-3" style={{ width: '320px' }}>
+  <div className="flex-shrink-0 mx-2" style={{ width: '320px' }}>
       <div 
         className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-400 hover:shadow-xl hover:scale-[1.02] group"
         onMouseEnter={() => setShowSocials(true)}
@@ -145,8 +145,10 @@ export default function AdminSlider() {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cardWidth = 320 + 24; // card width + padding
-  const maxIndex = admins.length - 3; // Max index to show last 3 cards
+  const cardWidth = 320;
+  const cardGap = 16; // 2*mx-2 (Tailwind mx-2 = 0.5rem = 8px)
+  const cardsPerPage = 3;
+  const maxIndex = Math.ceil(admins.length / cardsPerPage) - 1;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -157,7 +159,6 @@ export default function AdminSlider() {
 
   const nextSlide = () => {
     setCurrentIndex(prev => {
-      // When we reach the end, go back to start
       if (prev >= maxIndex) {
         return 0;
       }
@@ -167,7 +168,6 @@ export default function AdminSlider() {
 
   const prevSlide = () => {
     setCurrentIndex(prev => {
-      // When we're at start, go to end
       if (prev <= 0) {
         return maxIndex;
       }
@@ -192,13 +192,16 @@ export default function AdminSlider() {
       </div>
       
       <div className="relative">
-        <div className="overflow-hidden rounded-2xl">
+        <div
+          className="overflow-hidden rounded-2xl"
+          style={{ width: `${cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap}px`, margin: '0 auto' }}
+        >
           {/* Cards Container*/}
           <div
             className="flex transition-transform duration-700 ease-in-out"
             style={{
-              transform: `translateX(-${currentIndex * cardWidth}px)`,
-              width: `${admins.length * cardWidth}px` 
+              transform: `translateX(-${currentIndex * (cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap)}px)`,
+              width: `${admins.length * cardWidth + (admins.length - 1) * cardGap}px`
             }}
           >
             {admins.map((admin, index) => (

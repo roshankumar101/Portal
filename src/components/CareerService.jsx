@@ -49,11 +49,11 @@ const SpotlightCard = ({ children, className = "" }) => {
 };
 
 // Admin Card Component with Image Spotlight and Social Links
-const AdminCard = ({ admin }) => {
+const AdminCard = ({ admin, cardWidth }) => {
   const [showSocials, setShowSocials] = useState(false);
 
   return (
-  <div className="flex-shrink-0 mx-2" style={{ width: '260px' }}>
+  <div className="flex-shrink-0" style={{ width: `${cardWidth}px`, marginRight: '8px', marginLeft: '8px' }}>
       <div 
         className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-400 hover:shadow-xl hover:scale-[1.02] group"
         onMouseEnter={() => setShowSocials(true)}
@@ -145,10 +145,24 @@ export default function AdminSlider() {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cardWidth = 260;
-  const cardGap = 16;
+  const [containerWidth, setContainerWidth] = useState(0);
   const cardsPerPage = 4;
+  const cardGap = 16;
+  // Calculate card width based on 80% viewport width minus gaps
+  const cardWidth = containerWidth > 0 ? (containerWidth - (cardsPerPage - 1) * cardGap) / cardsPerPage : 260;
   const maxIndex = admins.length - cardsPerPage;
+
+  // Update container width on mount and resize
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      const viewportWidth = window.innerWidth;
+      setContainerWidth(viewportWidth * 0.8); // 80% of viewport width
+    };
+    
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -181,9 +195,10 @@ export default function AdminSlider() {
 
   return (
     <div 
-      className="w-full max-w-6xl mx-auto p-20 min-h-screen"
+      className="w-full min-h-screen flex flex-col justify-center items-center"
       style={{ backgroundColor: '#FFEEC3' }}
     >
+      <div className="w-full max-w-6xl mx-auto px-6 py-12">
       <div className="text-center mb-12 pt-8">
         <p className="text-3xl font-semibold text-black mb-3 tracking-wide">THE TEAM</p>
         <h2 className="text-5xl font-bold text-blue-900">
@@ -194,7 +209,7 @@ export default function AdminSlider() {
       <div className="relative">
         <div
           className="overflow-hidden rounded-2xl"
-          style={{ width: `${cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap}px`, margin: '0 auto' }}
+          style={{ width: `${containerWidth}px`, margin: '0 auto' }}
         >
           {/* Cards Container*/}
           <div
@@ -205,7 +220,7 @@ export default function AdminSlider() {
             }}
           >
             {admins.map((admin, index) => (
-              <AdminCard key={index} admin={admin} />
+              <AdminCard key={index} admin={admin} cardWidth={cardWidth} />
             ))}
           </div>
         </div>
@@ -213,15 +228,16 @@ export default function AdminSlider() {
         {/*Buttons*/}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          style={{ left: `${containerWidth * 0.07}px` }}
         >
           <IconChevronLeft size={24} />
         </button>
         
         <button
           onClick={nextSlide}
-          className="absolute top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
-          style={{ left: `calc(${cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap}px - 64px)` }}
+          className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          style={{ right: `${containerWidth * 0.07}px` }}
         >
           <IconChevronRight size={24} />
         </button>
@@ -240,6 +256,7 @@ export default function AdminSlider() {
             />
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

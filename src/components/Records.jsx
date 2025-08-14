@@ -73,25 +73,28 @@ const PlacementRecords = ({ onLoginOpen }) => {
     };
   }, [showBatchDropdown]);
 
+  // For lg and above, show all cards; for below lg, limit cards for horizontal scroll
   useEffect(() => {
     function handleResize() {
       const vw = window.innerWidth;
-      if (vw < 640) {
-        setCardsToShow(3);
-      } else if (vw < 900) {
-        setCardsToShow(4);
-      } else if (vw < 1200) {
-        setCardsToShow(5);
+      if (vw >= 1024) {
+        // lg and above: show all cards, they will fit with reduced width
+        setCardsToShow(studentRecords[currentRow].length);
       } else {
-        // Fit as many cards as possible for larger screens
-        const maxCards = Math.floor((vw - 100) / (cardWidth + cardGap));
-        setCardsToShow(Math.max(5, maxCards));
+        // Below lg: limit cards for horizontal scrolling
+        if (vw < 640) {
+          setCardsToShow(3);
+        } else if (vw < 768) {
+          setCardsToShow(4);
+        } else {
+          setCardsToShow(5);
+        }
       }
     }
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [currentRow]);
 
   const handleShowAll = () => {
     setShowBatchDropdown(!showBatchDropdown);
@@ -161,7 +164,14 @@ const PlacementRecords = ({ onLoginOpen }) => {
           {/* Rotating Cards Container */}
           <div className="relative">
             <div 
-              className="flex gap-6 justify-center transition-all duration-1000 ease-in-out"
+              className="
+                flex gap-2 sm:gap-3 md:gap-4 lg:gap-4 
+                transition-all duration-1000 ease-in-out
+                overflow-x-auto lg:overflow-hidden
+                lg:justify-center
+                scrollbar-hide
+                px-4 lg:px-0
+              "
               onMouseEnter={() => setIsRotating(false)}
               onMouseLeave={() => setIsRotating(true)}
             >
@@ -202,7 +212,12 @@ const PlacementRecords = ({ onLoginOpen }) => {
 const StudentCard = ({ student, index }) => {
   return (
     <div
-      className="relative group w-56 h-56 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100"
+      className="
+        relative group bg-white rounded-lg shadow-md overflow-hidden 
+        transition-all duration-300 ease-out transform hover:scale-105 hover:shadow-lg border border-gray-100
+        flex-shrink-0
+        w-40 h-56
+      "
       style={{
         animationDelay: `${index * 100}ms`,
         animation: 'slideInUp 0.6s ease-out forwards'

@@ -11,10 +11,10 @@ export default function TimelineWithSidebar() {
       title: "Step 1",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Profile Registration & Setup
           </h4>
-          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -32,10 +32,10 @@ export default function TimelineWithSidebar() {
       title: "Step 2",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Resume Upload & Documentation
           </h4>
-          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -53,10 +53,10 @@ export default function TimelineWithSidebar() {
       title: "Step 3",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Job Opportunity Discovery
           </h4>
-          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -74,10 +74,10 @@ export default function TimelineWithSidebar() {
       title: "Step 4",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Application Submission Process
           </h4>
-          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -88,7 +88,7 @@ export default function TimelineWithSidebar() {
               Submit targeted applications for selected positions through the portal.
             </motion.span>
           </p>
-          <div className="text-xs md:text-sm text-neutral-700 dark:text-neutral-300"></div>
+          <div className="text-xs md:text-sm text-neutral-700"></div>
         </div>
       ),
     },
@@ -96,10 +96,10 @@ export default function TimelineWithSidebar() {
       title: "Step 5",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Application Status Tracking
           </h4>
-          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -117,10 +117,10 @@ export default function TimelineWithSidebar() {
       title: "Step 6",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Administrative Coordination & Notifications
           </h4>
-          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -138,10 +138,10 @@ export default function TimelineWithSidebar() {
       title: "Step 7",
       content: (
         <div>
-          <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+          <h4 className="mb-4 text-base font-semibold text-neutral-900">
             Interview Process & Final Selection
           </h4>
-          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800">
             <motion.span
               initial={{ opacity: 0, y: 60 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -233,10 +233,10 @@ export default function TimelineWithSidebar() {
         {/* Timeline Section  */}
         <div className="w-full lg:w-[70%] font-inter md:px-10" ref={containerRef}>
           <div className="max-w-5xl mx-auto py-20 px-4 md:px-8 lg:px-10">
-            <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl">
+            <h2 className="text-lg font-semibold md:text-4xl mb-4 text-black max-w-4xl">
               <span style={{ fontFamily: "Inter, sans-serif" }}>Walk Through Of Placement Process</span>
             </h2>
-            <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-lg">
+            <p className="text-neutral-700 text-sm md:text-base max-w-lg">
               Navigate through the placement process from profile creation to final selection.
             </p>
           </div>
@@ -267,16 +267,16 @@ export default function TimelineWithSidebar() {
                   className={`flex justify-start ${index === 0 ? "pt-4 md:pt-6" : "pt-10 md:pt-30"} md:gap-10`}
                 >
                   <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
-                    <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
-                      <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 border border-neutral-300 dark:border-neutral-700 p-2" />
+                    <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white  flex items-center justify-center">
+                      <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 border-neutral-300 p-2" />
                     </div>
-                    <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 dark:text-neutral-500">
+                    <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 ">
                       {item.title}
                     </h3>
                   </div>
 
                   <div className="relative pl-20 pr-4 md:pl-4 w-full">
-                    <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500 dark:text-neutral-500">
+                    <h3 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500">
                       {item.title}
                     </h3>
                     {item.content}
@@ -288,7 +288,7 @@ export default function TimelineWithSidebar() {
             {/* timeline animation */}
             <div
               style={{ height: `${height}px` }}
-              className="absolute left-8 md:left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-blue-800 via-white dark:via-neutral-700 to-transparent [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
+              className="absolute left-8 md:left-8 top-0 overflow-hidden w-[2px] bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-blue-800 via-white to-transparent [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
             >
               <motion.div
                 style={{

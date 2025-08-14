@@ -113,32 +113,33 @@ const Banner = () => {
             <div ref={factsRef} className="absolute w-full h-full">
               <div className="relative w-full h-full">
 
-              <p className="absolute right-[6%] top-[8%] text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[18%] -top-[22%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(273, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1820)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1820"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
-              <p className="absolute right-[2%] top-[18%] w-1/2 text-sm font-semibold text-gray-600">40% Students forced to choose the wrong career path</p>
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[25%] -top-[30%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(284, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1829)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1829"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
-              <p className="absolute -left-[8%] top-[15%] w-1/4 text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
-              <p className="absolute right-[4%] bottom-[27%] w-1/2 text-sm font-semibold text-gray-600">29% population in 20's but lack industry exposure</p>
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[17%] top-[10%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(351, 400, 400)"><path d="M350.5 350.5Q447.5 370.5 449.5 449.5 " marker-end="url(#SvgjsMarker2041)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2041"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
-              <p className="absolute -left-[8%] bottom-[10%] w-1/4 text-sm font-semibold text-gray-600">40% Students forced to choose the wrong career path</p>
-              <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[38%] top-[43%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(344, 400, 400)"><path d="M350.5 350.5Q362.5 419.5 449.5 449.5 " marker-end="url(#SvgjsMarker2158)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2158"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
-              <p className="absolute right-[12%] bottom-[15%] w-1/2 text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
+                <p className="absolute right-[5%] top-[12%] text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
+                <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[18%] -top-[22%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(273, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1820)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1820"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                <p className="absolute right-[2%] top-[21%] w-1/2 text-sm font-semibold text-gray-600">40% Students forced to choose the wrong career path</p>
+                <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[25%] -top-[30%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(284, 400, 400)"><path d="M350.5 350.5Q410.5 384.5 449.5 449.5 " marker-end="url(#SvgjsMarker1829)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker1829"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                <p className="absolute -left-[8%] top-[15%] w-1/4 text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
+                <p className="absolute right-[4%] bottom-[15%] w-1/2 text-sm font-semibold text-gray-600">29% population in 20's but lack industry exposure</p>
+                <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[17%] top-[16%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(351, 400, 400)"><path d="M350.5 350.5Q447.5 370.5 449.5 449.5 " marker-end="url(#SvgjsMarker2041)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2041"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                <p className="absolute -left-[8%] bottom-[4%] w-1/4 text-sm font-semibold text-gray-600">40% Students forced to choose the wrong career path</p>
+                <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-[36%] top-[48%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="2" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6" transform="rotate(344, 400, 400)"><path d="M350.5 350.5Q362.5 419.5 449.5 449.5 " marker-end="url(#SvgjsMarker2158)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2158"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                <p className="absolute right-[12%] -bottom-[0%] w-1/2 text-sm font-semibold text-gray-600">70% Students lack Industry relevant Skills</p>
+              </div>
             </div>
           </div>
         </div>
 
 
         {/* Right Section*/}
-        <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-[12%] order-2 mt-8">
+        <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-[20%] order-2 mt-8 w-full h-full">
 
           <div ref={missionRef} className="text-center lg:text-left relative">
-            <h1 className="text-3xl md:text-4xl lg:text-[2.6rem] font-bold text-gray-900 leading-tight ">
+            <h1 className="text-3xl md:text-4xl lg:text-[2.6rem] font-bold text-gray-900 leading-tight">
               On a mission to change the
               <span className="text-blue-900"> Skilling landscape</span> of <span className="px-1 rounded-xs bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_25%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]"> INDIA</span>
             </h1>
 
-            <div className="absolute w-[70%] right-0 top-[30%]">
-              <img src={r2} alt="" className="opacity-30 brightness-90" />
+            <div className="absolute w-[70%] right-0 top-[80%] -z-10">
+              <img src={r2} alt="" className="opacity-30 brightness-90 " />
             </div>
 
           </div>
@@ -146,25 +147,26 @@ const Banner = () => {
 
           {/* Solutions */}
           <div ref={solutionsRef} className="space-y-2">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-700 text-center lg:text-left">Two simple solutions:</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-6">
+            <div>
+              <p className="text-lg text-gray-600 font-semibold text-center lg:text-left">with</p>
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">Two simple solutions:</h2>
+            </div>
 
 
             <div className="flex lg:flex-row flex-col justify-between items-center gap-4 sm:gap-2 px-2">
               {/* Industry Relevant Skills */}
-              <div className="flex flex-col items-center relative rounded-md h-8 sm:h-10 px-3 sm:px-6 py-1.5 sm:py-2 shadow-md bg-white/90 hover:shadow-lg transition-all duration-300">
-                <div className="mb-2 sm:mb-3 ">
-                  <h3 className="text-sm sm:text-base lg:text-lg font-bold text-black">Precision Learning</h3>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[160%] -left-[28%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+              <div className="relative rounded-md px-4 sm:px-10 py-1.5 shadow-md bg-white/80 hover:shadow-lg transition-all duration-300">
+                <div>
+                  <h3 className="text-sm text-gray-600 text-center sm:text-base lg:text-lg font-bold">Industry-Relevant <br /> <span className="text-xl text-black font-caveat cursive"> SKILLS</span></h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[35%] -left-[25%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
               </div>
 
               {/* Passion Aligned Opportunities */}
               <div className="relative rounded-md px-3 sm:px-10 py-1.5 shadow-md bg-white/90 hover:shadow-lg transition-all duration-300">
                 <div>
-                  <h3 className="text-sm sm:text-base lg:text-lg font-bold text-black">Excellence Network</h3>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[160%] -right-[28%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.32556815445715676,0.9455185755993167,-0.9455185755993167,0.32556815445715676,658.980168456864,-108.43469202258939)"><path d="M347.5 347.5Q446.5 365.5 452.5 452.5 " marker-end="url(#SvgjsMarker2056)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2056"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                  <h3 className="text-sm text-center sm:text-base lg:text-lg font-bold text-gray-600">Passion-Aligned <br /><span className="text-xl text-black font-caveat cursive font-black "> OPPORTUNITIES</span></h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[25%] -right-[25%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.32556815445715676,0.9455185755993167,-0.9455185755993167,0.32556815445715676,658.980168456864,-108.43469202258939)"><path d="M347.5 347.5Q446.5 365.5 452.5 452.5 " marker-end="url(#SvgjsMarker2056)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2056"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
               </div>
 

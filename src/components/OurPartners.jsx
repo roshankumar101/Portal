@@ -94,7 +94,7 @@ const OurPartners = () => {
     const carousel2 = carouselRef2.current;
     const speed = 0.6;
 
-    // Initialize starting positions only once
+    // Initialize starting positions 
     if (carousel1 && positionRef1.current === 0) {
       positionRef1.current = 0;
     }

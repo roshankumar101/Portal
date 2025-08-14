@@ -14,8 +14,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Profile Registration & Setup
           </h4>
-          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Create your account with academic credentials, personal information, and career preferences. 
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Create your account with academic credentials, personal information, and career preferences.
+            </motion.span>
           </p>
         </div>
       ),
@@ -27,8 +35,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Resume Upload & Documentation
           </h4>
-          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Upload your resume and supporting documents including academics , certificates, and project portfolios.
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Upload your resume and supporting documents including academics , certificates, and project portfolios.
+            </motion.span>
           </p>
         </div>
       ),
@@ -40,8 +56,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Job Opportunity Discovery
           </h4>
-          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Browse and analyze available job descriptions posted by recruiters and companies.
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Browse and analyze available job descriptions posted by recruiters and companies.
+            </motion.span>
           </p>
         </div>
       ),
@@ -53,13 +77,18 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Application Submission Process
           </h4>
-          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Submit targeted applications for selected positions through the portal.
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Submit targeted applications for selected positions through the portal.
+            </motion.span>
           </p>
-          <div className="text-xs md:text-sm text-neutral-700 dark:text-neutral-300">
-            
-          
-          </div>
+          <div className="text-xs md:text-sm text-neutral-700 dark:text-neutral-300"></div>
         </div>
       ),
     },
@@ -70,8 +99,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Application Status Tracking
           </h4>
-          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Monitor your application progress through the placement dashboard. 
+          <p className="mb-8 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Monitor your application progress through the placement dashboard.
+            </motion.span>
           </p>
         </div>
       ),
@@ -83,8 +120,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Administrative Coordination & Notifications
           </h4>
-          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            Receive automated notifications updates regarding interview schedules.
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              Receive automated notifications updates regarding interview schedules.
+            </motion.span>
           </p>
         </div>
       ),
@@ -96,8 +141,16 @@ export default function TimelineWithSidebar() {
           <h4 className="mb-4 text-base font-semibold text-neutral-900 dark:text-neutral-100">
             Interview Process & Final Selection
           </h4>
-          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
-            The interview rounds navigate through multiple selection stages while maintaining professional communication with recruiters.
+          <p className="mb-4 text-base md:text-lg font-normal text-neutral-800 dark:text-neutral-200">
+            <motion.span
+              initial={{ opacity: 0, y: 60 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              style={{ display: "inline-block" }}
+            >
+              The interview rounds navigate through multiple selection stages while maintaining professional communication with recruiters.
+            </motion.span>
           </p>
         </div>
       ),
@@ -112,7 +165,6 @@ export default function TimelineWithSidebar() {
     },
   ];
 
- 
   const [showSecond, setShowSecond] = useState(false);
   const firstRef = useRef(null);
   const secondRef = useRef(null);
@@ -156,7 +208,6 @@ export default function TimelineWithSidebar() {
     }
   }, [showSecond]);
 
-
   const ref = useRef(null);
   const containerRef = useRef(null);
   const [height, setHeight] = useState(0);
@@ -177,33 +228,44 @@ export default function TimelineWithSidebar() {
   const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
 
   return (
-    <div className="relative w-full overflow-clip">
+    <div className="relative w-full overflow-clip bg-[#FFEEC3]">
       <div className="flex">
-        
         {/* Timeline Section  */}
-        <div className="w-full lg:w-[70%] bg-white dark:bg-neutral-950 font-inter md:px-10" ref={containerRef}>
+        <div className="w-full lg:w-[70%] font-inter md:px-10" ref={containerRef}>
           <div className="max-w-5xl mx-auto py-20 px-4 md:px-8 lg:px-10">
             <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl">
-          <span style={{fontFamily: 'Inter, sans-serif'}}>Walk Through Of Placement Process</span>
+              <span style={{ fontFamily: "Inter, sans-serif" }}>Walk Through Of Placement Process</span>
             </h2>
             <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-lg">
-              Navigate through the placement process from profile creation to final selection. 
+              Navigate through the placement process from profile creation to final selection.
             </p>
           </div>
 
           <div ref={ref} className="relative max-w-5xl mx-auto pb-20">
-            {data.map((item, index) => (
+            {data.map((item, index) =>
               index === 7 ? (
-                <div key={index} className="w-full flex flex-col items-center justify-center pt-10 md:pt-30">
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className="w-full flex flex-col items-center justify-center pt-10 md:pt-30"
+                >
                   <h3 className="text-2xl md:text-5xl font-bold text-gray-500 mb-4 text-center">
                     {item.title}
                   </h3>
-                  <div className="w-full flex justify-center text-gray-500">
-                    {item.content}
-                  </div>
-                </div>
+                  <div className="w-full flex justify-center text-gray-500">{item.content}</div>
+                </motion.div>
               ) : (
-                <div key={index} className={`flex justify-start ${index === 0 ? 'pt-4 md:pt-6' : 'pt-10 md:pt-30'} md:gap-10`}>
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className={`flex justify-start ${index === 0 ? "pt-4 md:pt-6" : "pt-10 md:pt-30"} md:gap-10`}
+                >
                   <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
                     <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
                       <div className="h-4 w-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 dark:from-purple-400 dark:to-blue-400 border border-neutral-300 dark:border-neutral-700 p-2" />
@@ -219,9 +281,9 @@ export default function TimelineWithSidebar() {
                     </h3>
                     {item.content}
                   </div>
-                </div>
+                </motion.div>
               )
-            ))}
+            )}
 
             {/* timeline animation */}
             <div
@@ -239,9 +301,8 @@ export default function TimelineWithSidebar() {
           </div>
         </div>
 
-  {/* Sidebar*/}
-  <BoldTextAnimation />
-
+        {/* Sidebar*/}
+        <BoldTextAnimation />
       </div>
     </div>
   );

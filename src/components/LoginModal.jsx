@@ -17,8 +17,10 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
   const [animKey, setAnimKey] = useState('Student');
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const [lottieReady, setLottieReady] = useState(false);
   const modalRef = useRef(null);
   const backdropRef = useRef(null);
+  const formRef = useRef(null);
 
   // Update role when defaultRole changes and modal opens
   useEffect(() => {
@@ -38,71 +40,119 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
     }
   }, [isOpen, shouldRender, isAnimating]);
 
+  // Load and track Lottie web component
+  useEffect(() => {
+    const loadLottie = async () => {
+      if (!document.querySelector('script[src*="dotlottie-wc"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js';
+        script.type = 'module';
+        
+        script.onload = () => {
+          // Wait a bit for the web component to register
+          setTimeout(() => {
+            setLottieReady(true);
+          }, 100);
+        };
+        
+        document.body.appendChild(script);
+      } else {
+        // Script already exists, check if web component is ready
+        if (customElements.get('dotlottie-wc')) {
+          setLottieReady(true);
+        } else {
+          // Wait for it to be defined
+          customElements.whenDefined('dotlottie-wc').then(() => {
+            setLottieReady(true);
+          });
+        }
+      }
+    };
+    
+    loadLottie();
+  }, []);
+
   useEffect(() => {
     if (shouldRender && modalRef.current && backdropRef.current) {
       if (isOpen) {
         // Opening animation
         gsap.killTweensOf([modalRef.current, backdropRef.current]);
+        if (formRef.current) gsap.killTweensOf(formRef.current);
         
         // Set initial state immediately
         gsap.set(backdropRef.current, { opacity: 0 });
-        gsap.set(modalRef.current, { opacity: 0, scale: 0.8, y: 50 });
+        gsap.set(modalRef.current, { opacity: 0, scale: 0.85, y: 60, rotationX: 5 });
+        if (formRef.current) {
+          gsap.set(formRef.current, { opacity: 0, y: 30 });
+        }
         
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-          // Animate backdrop
-          gsap.to(backdropRef.current, {
-            opacity: 1,
-            duration: 0.4,
-            ease: 'power2.out'
-          });
-          
-          // Animate modal
-          gsap.to(modalRef.current, {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.6,
-            ease: 'back.out(1.4)',
-            delay: 0.1,
-            onComplete: () => {
-              setIsAnimating(false);
-            }
-          });
-        }, 10);
+        // Create timeline for smoother animations
+        const tl = gsap.timeline();
+        
+        // Animate backdrop
+        tl.to(backdropRef.current, {
+          opacity: 1,
+          duration: 0.5,
+          ease: 'power2.out'
+        })
+        // Animate modal with enhanced easing
+        .to(modalRef.current, {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          rotationX: 0,
+          duration: 0.7,
+          ease: 'back.out(1.2)'
+        }, 0.1)
+        // Animate form content
+        .to(formRef.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          onComplete: () => {
+            setIsAnimating(false);
+          }
+        }, 0.3);
+        
       } else {
         // Closing animation
         gsap.killTweensOf([modalRef.current, backdropRef.current]);
+        if (formRef.current) gsap.killTweensOf(formRef.current);
+        
+        const tl = gsap.timeline();
+        
+        // Animate form out first
+        if (formRef.current) {
+          tl.to(formRef.current, {
+            opacity: 0,
+            y: -20,
+            duration: 0.3,
+            ease: 'power2.in'
+          });
+        }
         
         // Animate modal out
-        gsap.to(modalRef.current, {
+        tl.to(modalRef.current, {
           opacity: 0,
-          scale: 0.8,
-          y: 50,
+          scale: 0.85,
+          y: 60,
+          rotationX: -5,
           duration: 0.4,
           ease: 'power2.in'
-        });
+        }, 0.1)
         
         // Animate backdrop out
-        gsap.to(backdropRef.current, {
+        .to(backdropRef.current, {
           opacity: 0,
           duration: 0.4,
           ease: 'power2.in',
-          delay: 0.1,
           onComplete: () => {
             setShouldRender(false);
             setIsAnimating(false);
           }
-        });
+        }, 0.2);
       }
-    }
-    
-    // Dynamically load the Lottie web component script if not already present
-    if (!document.querySelector('script[src*="dotlottie-wc"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js';
-      script.type = 'module';
-      document.body.appendChild(script);
     }
   }, [shouldRender, isOpen]);
 
@@ -171,10 +221,10 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
         </div>
         {/* Login Form Right Side */}
         <div className="flex-1 flex flex-col justify-center h-full relative bg-transparent">
-          <button onClick={handleClose} className="absolute top-4 right-4 bg-gray-200 text-black hover:text-black/40 text-sm font-bold px-4 py-0.5 border-2 rounded z-20 transition-colors duration-200">X</button>
-          {/* Remove the border from the right side by deleting the border class below */}
-          <div className="absolute inset-0 pointer-events-none rounded-lg" style={{ boxShadow: '0 0 8px 2px rgba(128,0,255,0.3)' }}></div>
-          <div className="relative z-10 px-8 py-4">
+          <button onClick={handleClose} className="absolute top-4 right-4 bg-gray-200 text-black hover:bg-gray-300 hover:scale-110 text-sm font-bold px-4 py-0.5 border-2 rounded z-20 transition-all duration-200">✕</button>
+          {/* Enhanced glow effect */}
+          <div className="absolute inset-0 pointer-events-none rounded-lg" style={{ boxShadow: '0 0 12px 3px rgba(128,0,255,0.2)' }}></div>
+          <div ref={formRef} className="relative z-10 px-8 py-4">
             <h2 className="text-2xl font-bold mb-2 text-center text-black">
               {mode === 'login' && 'Sign in'}
               {mode === 'register' && 'Create account'}
@@ -184,9 +234,12 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
               {['Student', 'Recruiter', 'Admin'].map(opt => (
                 <button
                   key={opt}
-                  className={`px-3 py-1 rounded font-semibold text-xs uppercase border transition-all duration-200
-                    ${role === opt ? 'bg-black text-white scale-110 shadow-lg' : 'bg-white bg-opacity-20 text-black border-gray-400 hover:scale-105 hover:shadow-md'}`}
-                  onClick={() => setRole(opt)}
+                  className={`px-3 py-1 rounded-lg font-semibold text-xs uppercase border transition-all duration-300 transform hover:rotate-1
+                    ${role === opt ? 'bg-gradient-to-r from-black to-gray-800 text-white scale-110 shadow-lg border-black' : 'bg-white bg-opacity-30 text-black border-gray-400 hover:scale-105 hover:shadow-md hover:bg-opacity-50'}`}
+                  onClick={() => {
+                    setRole(opt);
+                    setAnimKey(opt); // Trigger form animation
+                  }}
                 >
                   {opt}
                 </button>
@@ -194,8 +247,11 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
             </div>
             <div
               key={animKey}
-              className="transition-all duration-300 ease-in-out opacity-100 scale-100 animate-fadeIn"
-              style={{ animation: 'fadeInScale 0.3s' }}
+              className="transition-all duration-500 ease-out opacity-100 scale-100"
+              style={{ 
+                animation: 'fadeInScale 0.4s ease-out',
+                animationFillMode: 'both'
+              }}
             >
               {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
               {mode !== 'forgot' && (
@@ -237,9 +293,27 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                     setError(err?.message || 'Action failed');
                   } finally { setBusy(false); }
                 }}>
-                  <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" placeholder="Email" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                  <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" placeholder="Password" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                  <button disabled={busy} type="submit" className="bg-black text-white py-2 rounded font-semibold disabled:opacity-60">{busy ? 'Please wait...' : (mode==='login' ? 'Sign in' : 'Create account')}</button>
+                  <input 
+                    value={email} 
+                    onChange={(e)=>setEmail(e.target.value)} 
+                    type="email" 
+                    placeholder="Email" 
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                  />
+                  <input 
+                    value={password} 
+                    onChange={(e)=>setPassword(e.target.value)} 
+                    type="password" 
+                    placeholder="Password" 
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                  />
+                  <button 
+                    disabled={busy} 
+                    type="submit" 
+                    className="bg-gradient-to-r from-black to-gray-800 text-white py-2 rounded-lg font-semibold disabled:opacity-60 hover:from-gray-800 hover:to-black transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {busy ? 'Please wait...' : (mode==='login' ? 'Sign in' : 'Create account')}
+                  </button>
                 </form>
               )}
               {mode === 'forgot' && (
@@ -255,23 +329,70 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                     setError(err?.message || 'Failed to send reset link');
                   } finally { setBusy(false); }
                 }}>
-                  <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" placeholder="Email" className="border rounded px-3 py-2 bg-white bg-opacity-70 text-black placeholder-gray-700 focus:outline-none" />
-                  <button disabled={busy} type="submit" className="bg-black text-white py-2 rounded font-semibold disabled:opacity-60">{busy ? 'Sending...' : 'Send reset link'}</button>
+                  <input 
+                    value={email} 
+                    onChange={(e)=>setEmail(e.target.value)} 
+                    type="email" 
+                    placeholder="Email" 
+                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                  />
+                  <button 
+                    disabled={busy} 
+                    type="submit" 
+                    className="bg-gradient-to-r from-black to-gray-800 text-white py-2 rounded-lg font-semibold disabled:opacity-60 hover:from-gray-800 hover:to-black transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {busy ? 'Sending...' : 'Send reset link'}
+                  </button>
                 </form>
               )}
               <div className="flex items-center justify-between mt-3 text-sm">
-                <button onClick={()=>setMode(mode==='login' ? 'register' : 'login')} className="text-blue-600 font-semibold">
+                <button 
+                  onClick={()=>setMode(mode==='login' ? 'register' : 'login')} 
+                  className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 hover:underline"
+                >
                   {mode==='login' ? 'Create account' : 'Have an account? Sign in'}
                 </button>
-                <button onClick={()=>setMode('forgot')} className="text-blue-600 font-semibold">Forgot password?</button>
+                <button 
+                  onClick={()=>setMode('forgot')} 
+                  className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
             </div>
           </div>
         </div>
         <style>{`
             @keyframes fadeInScale {
-              0% { opacity: 0; transform: scale(0.97); }
-              100% { opacity: 1; transform: scale(1); }
+              0% { 
+                opacity: 0; 
+                transform: scale(0.95) translateY(10px); 
+              }
+              100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0px); 
+              }
+            }
+            
+            /* Enhanced focus states for form elements */
+            input:focus {
+              transform: scale(1.02);
+            }
+            
+            /* Smooth lottie animation entry */
+            dotlottie-wc {
+              animation: lottieEntry 0.8s ease-out 0.5s both;
+            }
+            
+            @keyframes lottieEntry {
+              0% {
+                opacity: 0;
+                transform: scale(0.8) rotate(-5deg);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+              }
             }
           `}</style>
       </div>

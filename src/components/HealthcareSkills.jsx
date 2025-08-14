@@ -81,10 +81,10 @@ const HealthcareSkills = () => {
           <div className="space-y-8 text-start text-sm px-6">
             <div
               ref={(el) => addToClinicalSkillsRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">4 Years of Immersive Medical Training</h4>
                   <p className="text-gray-700">Trained by practicing physicians and nurses through high-fidelity simulations and clinical rotations.</p>
                 </div>
@@ -92,10 +92,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Real Patient Care Experience</h4>
                   <p className="text-gray-700">From emergency drills to actual clinical placements—delivered care under supervision with 95% patient satisfaction scores.</p>
                 </div>
@@ -103,10 +103,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Healthcare Systems Fluency</h4>
                   <p className="text-gray-700">Proficient in EHR systems (Epic, Cerner), medical coding, and healthcare administration protocols.</p>
                 </div>
@@ -114,12 +114,12 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold mb-1">
-                    <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]">Zero-Cost Clinical Talent</span>
+                    <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] ease-in-out">Zero-Cost Clinical Talent</span>
                   </h4>
                   <p className="text-gray-700">Hospitals access pre-credentialed graduates without recruitment fees or temp agency markups.</p>
                 </div>
@@ -127,10 +127,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToClinicalSkillsRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Clinical Readiness</h4>
                   <p className="text-gray-700">Certified in BLS, ACLS, and facility-specific EMR systems before first shift.</p>
                 </div>
@@ -152,10 +152,10 @@ const HealthcareSkills = () => {
           <div className="space-y-7 text-start text-sm px-6">
             <div
               ref={(el) => addToBesideExcellenceRef(el, 0)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">CRISIS POISE IN EMERGENCIES</h4>
                   <p className="text-gray-700"><span className="underline decoration-black font-semibold px-2 py-1 rounded">40% faster response times</span> during code blues and rapid responses compared to average new hires.</p>
                 </div>
@@ -163,10 +163,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 1)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">PATIENT-CENTERED COMMUNICATION</h4>
                   <p className="text-gray-700">Certified in health literacy best practices and interpreter collaboration for diverse populations.</p>
                 </div>
@@ -174,10 +174,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 2)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">CLINICAL JUDGMENT</h4>
                   <p className="text-gray-700"><span className="underline decoration-black font-semibold px-2 py-1 rounded">30% fewer safety incidents</span> due to proactive risk identification and mitigation.</p>
                 </div>
@@ -185,10 +185,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 3)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">INTERPROFESSIONAL COLLABORATION</h4>
                   <p className="text-gray-700">Demonstrated ability to work effectively in care teams across nursing, medicine, and allied health.</p>
                 </div>
@@ -196,10 +196,10 @@ const HealthcareSkills = () => {
             </div>
             <div
               ref={(el) => addToBesideExcellenceRef(el, 4)}
-              className="group transition-all duration-300 hover:translate-x-2 relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50 glare-effect"
             >
               <div className="flex items-start">
-                <div className="hover:translate-x-2 duration-300">
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">EVIDENCE-BASED ADAPTABILITY</h4>
                   <p className="text-gray-700"><span className="underline decoration-black font-semibold px-2 py-1 rounded">50% faster protocol adoption</span> when implementing new clinical guidelines or technology.</p>
                 </div>
@@ -212,4 +212,4 @@ const HealthcareSkills = () => {
   );
 };
 
-export default HealthcareSkills; 
+export default HealthcareSkills;

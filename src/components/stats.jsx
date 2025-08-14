@@ -4,67 +4,30 @@ const stats = [
   {
     label: "Highest CTC Offered",
     value: "₹45 LPA",
-    bgColor: "#d15836ff",
-    borderColor: "#f8dba9",
   },
   {
     label: "Placement Drives",
     value: "85",
-    bgColor: "#cb7c37ff",
-    borderColor: "#f8bfa9",
-  },
-  {
-    label: "Exclusive Recruiters",
-    value: "12",
-    bgColor: "#ca4625ff",
-    borderColor: "#f7b8ae",
   },
   {
     label: "Average CTC",
-    value: "₹8.5 LPA",
-    bgColor: "#9c4923ff",
-    borderColor: "#f8dba9",
-  },
-  {
-    label: "Ventures Launched",
-    value: "7",
-    bgColor: "#b84326ff",
-    borderColor: "#f7b8ae",
+    value: "₹12.5 LPA",
   },
   {
     label: "Placement Percentage",
     value: "92%",
-    bgColor: "#c04012ff",
-    borderColor: "#f8bfa9",
   },
 ];
 
 const PlacementStats = () => {
   return (
     <section className="relative py-12 px-4 flex flex-col items-center overflow-hidden">
-      {/* Rays Background with lighter colors */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundColor: "#FFEEC3",
-          backgroundImage: `
-            repeating-conic-gradient(
-              from 0deg,
-              oklch(96% 0.04 95.746) 0deg 15deg,
-              oklch(94% 0.07 91.605) 15deg 30deg,
-              oklch(92.5% 0.06 91.936) 30deg 45deg
-            )
-          `,
-          maskImage:
-            "radial-gradient(circle at center, rgba(0,0,0,1) 70%, transparent 100%)",
-          WebkitMaskImage:
-            "radial-gradient(circle at center, rgba(0,0,0,1) 70%, transparent 100%)",
-        }}
-      ></div>
+      {/* Background */}
+      <div className="absolute inset-0 bg-[#f5e5ca]"></div>
 
-      {/* Content Layer */}
+      {/* Content */}
       <div className="relative z-10 max-w-6xl w-full">
-        {/* Heading with sparkle */}
+        {/* Heading with sparkle effect */}
         <h2 className="text-4xl font-bold mb-10 text-gray-900 text-center">
           Heard the WHY —{" "}
           <span
@@ -73,8 +36,8 @@ const PlacementStats = () => {
             transition-all duration-300 ease-in-out
             hover:[background-size:100%_100%] hover:[background-position:0_100%]"
           >
-            Here’s the WoW!
-            {/* Sparkles */}
+            Here's the WoW!
+            {/* Sparkle animations */}
             <span
               className="absolute -top-3 -right-6 sm:-right-8 animate-sparkle"
               style={{ animationDelay: "0s" }}
@@ -129,22 +92,17 @@ const PlacementStats = () => {
           </span>
         </h2>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Stats Grid with separators */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-xl">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="rounded-xl p-4 shadow-md text-center border flex flex-col items-center"
-              style={{
-                backgroundColor: stat.bgColor,
-                borderColor: stat.borderColor,
-              }}
+              className="stat-card rounded-xl p-4 text-center flex flex-col items-center"
             >
-              {/* No icons */}
-              <div className="text-5xl font-extrabold text-white mt-4">
+              <div className="text-5xl font-extrabold text-black mt-4">
                 {stat.value}
               </div>
-              <div className="text-sm font-medium text-white mt-2">
+              <div className="text-sm font-medium text-black mt-2">
                 {stat.label}
               </div>
             </div>
@@ -152,8 +110,9 @@ const PlacementStats = () => {
         </div>
       </div>
 
-      {/* Sparkle Animation CSS */}
+      {/* Sparkle Animation & Separator Styles */}
       <style>{`
+        /* Sparkle animation keyframes */
         @keyframes sparkle {
           0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(-10deg); }
           10% { opacity: 1; transform: scale(1.2) rotate(10deg); }
@@ -163,6 +122,33 @@ const PlacementStats = () => {
         .animate-sparkle {
           animation: sparkle 2.5s infinite;
           pointer-events: none;
+        }
+
+        /* Separator line styles */
+        .placement-stats-grid {
+          position: relative;
+        }
+        @media (min-width: 1024px) {
+          .placement-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+          }
+          .stat-card {
+            position: relative;
+          }
+          /* Vertical separator line on all cards except last */
+          .stat-card:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 20%;
+            right: -10px;
+            width: 2px;
+            height: 60%;
+            background: #a77029;
+            border-radius: 999px;
+            opacity: 0.7;
+            z-index: 1;
+          }
         }
       `}</style>
     </section>

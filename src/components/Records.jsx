@@ -4,6 +4,9 @@ const PlacementRecords = ({ onLoginOpen }) => {
   const [currentRow, setCurrentRow] = useState(0);
   const [showBatchDropdown, setShowBatchDropdown] = useState(false);
   const [isRotating, setIsRotating] = useState(true);
+  const [cardsToShow, setCardsToShow] = useState(4);
+  const cardWidth = 224; 
+  const cardGap = 24; 
 
   // dummy
   const studentRecords = [
@@ -70,6 +73,26 @@ const PlacementRecords = ({ onLoginOpen }) => {
     };
   }, [showBatchDropdown]);
 
+  useEffect(() => {
+    function handleResize() {
+      const vw = window.innerWidth;
+      if (vw < 640) {
+        setCardsToShow(3);
+      } else if (vw < 900) {
+        setCardsToShow(4);
+      } else if (vw < 1200) {
+        setCardsToShow(5);
+      } else {
+        // Fit as many cards as possible for larger screens
+        const maxCards = Math.floor((vw - 100) / (cardWidth + cardGap));
+        setCardsToShow(Math.max(5, maxCards));
+      }
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleShowAll = () => {
     setShowBatchDropdown(!showBatchDropdown);
   };
@@ -79,7 +102,7 @@ const PlacementRecords = ({ onLoginOpen }) => {
     onLoginOpen(); // Trigger the login modal
   };
 
-  const currentCards = studentRecords[currentRow];
+  const currentCards = studentRecords[currentRow].slice(0, cardsToShow);
 
   return (
     <>

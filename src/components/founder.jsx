@@ -1,11 +1,15 @@
 "use client";
+
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import R1 from '../assets/Rec1.png'
-import R2 from '../assets/Rec2.png'
-import R3 from '../assets/Rec3.png'
+import { FaQuoteLeft, FaQuoteRight } from "react-icons/fa6";
 
+import R1 from "../assets/Rec1.png";
+import R2 from "../assets/Rec2.png";
+import R3 from "../assets/Rec3.png";
+
+// ----------------- Animated Testimonials -----------------
 const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
   const [active, setActive] = useState(0);
 
@@ -31,6 +35,7 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
   return (
     <div className="mx-auto max-w-sm px-4 py-10 font-sans antialiased md:max-w-4xl md:px-8 lg:px-12">
       <div className="relative grid grid-cols-1 gap-10 md:grid-cols-2">
+        {/* ----- IMAGE SECTION ----- */}
         <div>
           <div className="relative h-80 w-full">
             <AnimatePresence>
@@ -61,6 +66,8 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
             </AnimatePresence>
           </div>
         </div>
+
+        {/* ----- TEXT SECTION ----- */}
         <div className="flex flex-col justify-between py-4">
           <motion.div
             key={active}
@@ -69,9 +76,14 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
             <h3 className="text-2xl font-bold">{testimonials[active].name}</h3>
-            <p className="text-sm text-gray-500">{testimonials[active].designation}</p>
-            <motion.p className="mt-8 text-lg text-gray-500">
-              {testimonials[active].quote.split(" ").map((word, index) => (
+            <p className="text-sm text-gray-500">
+              {testimonials[active].designation}
+            </p>
+
+            {/* QUOTE TEXT WITH ICONS */}
+            <motion.p className="mt-8 text-lg text-gray-500 leading-relaxed">
+              <FaQuoteLeft className="inline text-blue-900 mr-2 align-top" />
+              {testimonials[active].quote.split(" ").map((word, index, arr) => (
                 <motion.span
                   key={index}
                   initial={{ filter: "blur(10px)", opacity: 0, y: 5 }}
@@ -82,16 +94,29 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                   }}
                   className="inline-block"
                 >
-                  {word}&nbsp;
+                  {word}
+                  {/* Attach closing quote to last word */}
+                  {index === arr.length - 1 && (
+                    <FaQuoteRight className="inline text-blue-900 ml-2 align-bottom" />
+                  )}
+                  &nbsp;
                 </motion.span>
               ))}
             </motion.p>
           </motion.div>
+
+          {/* NAVIGATION BUTTONS */}
           <div className="flex gap-4 pt-8">
-            <button onClick={handlePrev} className="group/button flex h-7 w-7 items-center justify-center rounded-full bg-gray-100">
+            <button
+              onClick={handlePrev}
+              className="group/button flex h-7 w-7 items-center justify-center rounded-full bg-gray-100"
+            >
               <IconArrowLeft className="h-5 w-5 text-black group-hover/button:rotate-12 transition-transform" />
             </button>
-            <button onClick={handleNext} className="group/button flex h-7 w-7 items-center justify-center rounded-full bg-gray-100">
+            <button
+              onClick={handleNext}
+              className="group/button flex h-7 w-7 items-center justify-center rounded-full bg-gray-100"
+            >
               <IconArrowRight className="h-5 w-5 text-black group-hover/button:-rotate-12 transition-transform" />
             </button>
           </div>
@@ -101,6 +126,7 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
   );
 };
 
+// ----------------- MAIN TESTIMONIAL + FORM SECTION -----------------
 export default function TestimonialSection() {
   const [formData, setFormData] = useState({
     name: "",
@@ -115,21 +141,21 @@ export default function TestimonialSection() {
       name: "Arvind Kumar",
       designation: "Software Engineer",
       quote:
-        "Hiring from them has always felt less like a transaction and more like discovering a hidden talent gem—shiny, valuable, and instantly impressive",
+        `Hiring from them has always felt less like a transaction and more like discovering a hidden talent gem—shiny, valuable, and instantly impressive`,
     },
     {
       src: `${R2}`,
       name: "Priya Patel",
       designation: "Data Analyst",
       quote:
-        "Working with them is like having a recruitment cheat code every role gets filled with that perfect candidate",
+        `Working with them is like having a recruitment cheat code—every role gets filled with that perfect candidate`,
     },
     {
       src: `${R3}`,
       name: "Shobhit Singh",
       designation: "Marketing Specialist",
       quote:
-        "Hiring from them has always been suspiciously easy—like they've cracked some secret hiring algorithm",
+        `Hiring from them has always been suspiciously easy—like they've cracked some secret hiring algorithm`,
     },
   ];
 
@@ -146,12 +172,12 @@ export default function TestimonialSection() {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-12 flex flex-col lg:flex-row gap-8">
-      {/*Testimonials */}
+      {/* TESTIMONIALS */}
       <div className="w-full lg:w-2/3">
         <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
       </div>
 
-      {/*Contact Form */}
+      {/* CONTACT FORM */}
       <div className="w-full lg:w-1/3">
         <div className="sticky top-[10%] bg-gray-100 p-6 rounded-xl shadow-md">
           <h2 className="text-2xl font-semibold mb-4 text-gray-700">

@@ -53,7 +53,7 @@ const AdminCard = ({ admin }) => {
   const [showSocials, setShowSocials] = useState(false);
 
   return (
-  <div className="flex-shrink-0 mx-2" style={{ width: '320px' }}>
+  <div className="flex-shrink-0 mx-2" style={{ width: '260px' }}>
       <div 
         className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-400 hover:shadow-xl hover:scale-[1.02] group"
         onMouseEnter={() => setShowSocials(true)}
@@ -145,10 +145,10 @@ export default function AdminSlider() {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cardWidth = 320;
-  const cardGap = 16; // 2*mx-2 (Tailwind mx-2 = 0.5rem = 8px)
-  const cardsPerPage = 3;
-  const maxIndex = Math.ceil(admins.length / cardsPerPage) - 1;
+  const cardWidth = 260;
+  const cardGap = 16;
+  const cardsPerPage = 4;
+  const maxIndex = admins.length - cardsPerPage;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -200,7 +200,7 @@ export default function AdminSlider() {
           <div
             className="flex transition-transform duration-700 ease-in-out"
             style={{
-              transform: `translateX(-${currentIndex * (cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap)}px)`,
+              transform: `translateX(-${currentIndex * (cardWidth + cardGap)}px)`,
               width: `${admins.length * cardWidth + (admins.length - 1) * cardGap}px`
             }}
           >
@@ -220,7 +220,8 @@ export default function AdminSlider() {
         
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          className="absolute top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          style={{ left: `calc(${cardsPerPage * cardWidth + (cardsPerPage - 1) * cardGap}px - 64px)` }}
         >
           <IconChevronRight size={24} />
         </button>

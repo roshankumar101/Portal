@@ -11,7 +11,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
   const getWordsBySelection = (selection) => {
     switch (selection) {
       case 'SOT': // Software Development
-        return ["framework","tool", "API", "library"," language","Tech-stack"];
+        return ["framework","tool", "API", "library"," language","tech-stack"];
       case 'SOM': // Software Management
         return ["case study", "algorithm", "metric"];
       case 'SOH': // Software Healthcare
@@ -120,11 +120,9 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
               className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 origin-left scale-x-0"
             />
           </div>
-          <span 
-            ref={nahRef}
-            className="font-black rotate-1 text-blue-800 inline-block ml-4"
-          >
-            ?  NAH !
+          <span ref={nahRef} className="font-black rotate-1 inline-block ml-4">
+            <span className="text-black">?</span>
+            <span className="text-blue-800">&nbsp;NAH !</span>
           </span>
         </div>
       </div>

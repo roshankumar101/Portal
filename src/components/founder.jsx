@@ -82,7 +82,7 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
 
             {/* QUOTE TEXT WITH ICONS */}
             <motion.p className="mt-8 text-lg text-gray-500 leading-relaxed">
-              <FaQuoteLeft className="inline text-blue-900 mr-2 align-top" />
+              <FaQuoteLeft className="inline text-2xl text-blue-900 mr-2 align-top" />
               {testimonials[active].quote.split(" ").map((word, index, arr) => (
                 <motion.span
                   key={index}
@@ -96,9 +96,9 @@ const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                 >
                   {word}
                   {/* Attach closing quote to last word */}
-                  {index === arr.length - 1 && (
+                  {/* {index === arr.length - 1 && (
                     <FaQuoteRight className="inline text-blue-900 ml-2 align-bottom" />
-                  )}
+                  )} */}
                   &nbsp;
                 </motion.span>
               ))}

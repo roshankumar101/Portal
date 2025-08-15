@@ -85,7 +85,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">4 Years of Immersive Training</h4>
                   <p className="text-gray-700">
                     Mentored by industry experts with real-world simulations, not just textbook learning.
@@ -96,10 +96,10 @@ const SkillsDisplay = () => {
 
             <div
               ref={(el) => addToHardSkillsRef(el, 1)}
-              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 hover:pr-3 duration-300 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Worked on Real-Time Projects</h4>
                   <p className="text-gray-700">
                     From hackathons to live deployments—they've built, failed, and delivered under pressure.
@@ -113,7 +113,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Business Acumen Included</h4>
                   <p className="text-gray-700">
                     Students gain exposure to business strategy, finance, and stakeholder management beyond core skills.
@@ -127,7 +127,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold mb-1">
                     <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]">No-Cost Hiring Policy</span>
                   </h4>
@@ -143,10 +143,10 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Play-and-Plug Resources</h4>
                   <p className="text-gray-700">
-                    Trained on industry tools so they're "productive" from Day 1, not just "familiar."
+                    Trained on industry tools so they're "productive" from Day 1, not just "familiar".
                   </p>
                 </div>
               </div>
@@ -171,7 +171,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">CALM IN CHAOS</h4>
                   <p className="text-gray-700">
                     They are trained to think, speak and resolve crisis calmly 40% faster than industry norm.
@@ -185,7 +185,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">FLUENT IN GEEK AND EXEC</h4>
                   <p className="text-gray-700">
                     Breaks down tech-speak into plain English - because great ideas shouldn't get lost in translation.
@@ -196,10 +196,10 @@ const SkillsDisplay = () => {
 
             <div
               ref={(el) => addToSoftSkillsRef(el, 2)}
-              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
+              className="group relative overflow-hidden rounded-lg px-4 hover:pr-3 duration-300 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">SOLUTION-ORIENTED OWNERSHIP</h4>
                   <p className="text-gray-700">
                     Pattern of identifying risks proactively and presenting validated solutions rather than just problems.
@@ -213,7 +213,7 @@ const SkillsDisplay = () => {
               className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">SOLUTIONS OVER EXCUSES</h4>
                   <p className="text-gray-700">
                     Take accountability - doesn't just report problems. They are used to taking charge, they don't blink when it fires, they extinguish it.
@@ -224,10 +224,10 @@ const SkillsDisplay = () => {
 
             <div
               ref={(el) => addToSoftSkillsRef(el, 4)}
-              className="group relative overflow-hidden rounded-lg px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
+              className="group relative overflow-hidden rounded-lg hover:pr-3 duration-300 px-4 bg-gradient-to-r from-transparent to-gray-50/50  glare-effect"
             >
               <div className="flex items-start">
-                <div>
+                <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">LEARN FAST AND STAY RELEVANT</h4>
                   <p className="text-gray-700">
                     Not spoon-fed, they pick up new tech 50% faster than the industry average. Plug them into a new tool and get surprised - we promise, try it!

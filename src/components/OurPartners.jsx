@@ -147,7 +147,7 @@ const OurPartners = () => {
       {/* Section Heading */}
       <div className="text-center mb-16">
         <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-          Our <span className="text-blue-900">Partners</span>
+          Our <span className="text-blue-900">Partners</span> in Launching Careers
         </h2>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
           Leading companies trust us to deliver exceptional talent

@@ -17,6 +17,15 @@ const stats = [
     label: "Placement Percentage",
     value: "92%",
   },
+  {
+    label: "Ventures Launched",
+    value: "7",
+  },
+  {
+    label: "Exclusive Recruiters",
+    value: "12",
+  },
+  
 ];
 
 const PlacementStats = () => {
@@ -94,10 +103,27 @@ const PlacementStats = () => {
 
         {/* Stats Grid with separators */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-xl">
-          {stats.map((stat, index) => (
+          {stats.slice(0, 4).map((stat, index) => (
             <div
               key={index}
-              className="stat-card rounded-xl p-4 text-center flex flex-col items-center"
+              className="stat-card rounded-xl py-4 text-center flex flex-col items-center"
+            >
+              <div className="text-5xl font-extrabold text-black mt-4">
+                {stat.value}
+              </div>
+              <div className="text-sm font-medium text-black mt-2">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Second row with centered 2 columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 placement-stats-grid-row2 bg-[#FFDE83]/80 rounded-es-xl rounded-ee-xl max-w-2xl mx-auto">
+          {stats.slice(4).map((stat, index) => (
+            <div
+              key={index + 4}
+              className="stat-card-row2 rounded-xl pb-4 text-center flex flex-col items-center"
             >
               <div className="text-5xl font-extrabold text-black mt-4">
                 {stat.value}
@@ -114,10 +140,10 @@ const PlacementStats = () => {
       <style>{`
         /* Sparkle animation keyframes */
         @keyframes sparkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.7) rotate(-10deg); }
-          10% { opacity: 1; transform: scale(1.2) rotate(10deg); }
-          20% { opacity: 0.7; transform: scale(1) rotate(-5deg); }
-          80% { opacity: 0.2; transform: scale(0.7) rotate(-10deg); }
+          0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(-10deg); }
+          10% { opacity: 1; transform: scale(1.4) rotate(10deg); }
+          20% { opacity: 0.7; transform: scale(1.1) rotate(-5deg); }
+          80% { opacity: 0.2; transform: scale(0.8) rotate(-10deg); }
         }
         .animate-sparkle {
           animation: sparkle 2.5s infinite;
@@ -136,12 +162,41 @@ const PlacementStats = () => {
           .stat-card {
             position: relative;
           }
-          /* Vertical separator line on all cards except last */
-          .stat-card:not(:last-child)::after {
+          /* Vertical separator line - hide on 4th card (index 3) */
+          .stat-card:nth-child(1)::after,
+          .stat-card:nth-child(2)::after,
+          .stat-card:nth-child(3)::after {
             content: "";
             position: absolute;
             top: 20%;
-            right: -10px;
+            right: 0px;
+            width: 2px;
+            height: 60%;
+            background: #a77029;
+            border-radius: 999px;
+            opacity: 0.7;
+            z-index: 1;
+          }
+        }
+        
+        /* Second row styles */
+        .placement-stats-grid-row2 {
+          position: relative;
+        }
+        @media (min-width: 640px) {
+          .placement-stats-grid-row2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+          }
+          .stat-card-row2 {
+            position: relative;
+          }
+          /* Vertical separator line for second row - only between the 2 columns */
+          .stat-card-row2:first-child::after {
+            content: "";
+            position: absolute;
+            top: 20%;
+            right: 0px;
             width: 2px;
             height: 60%;
             background: #a77029;

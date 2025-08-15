@@ -209,7 +209,7 @@ export default function AdminSlider() {
       <div className="relative">
         <div
           className="overflow-hidden rounded-2xl"
-          style={{ width: `${containerWidth}px`, margin: '0 auto' }}
+          style={{ width: `${containerWidth + 12}px`, margin: '0 auto' }}
         >
           {/* Cards Container*/}
           <div
@@ -228,18 +228,18 @@ export default function AdminSlider() {
         {/*Buttons*/}
         <button
           onClick={prevSlide}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
-          style={{ left: `${containerWidth * 0.07}px` }}
+          className="absolute top-1/2 -translate-y-1/3 -translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          style={{ left: `${containerWidth * 0.075}px` }}
         >
-          <IconChevronLeft size={24} />
+          <IconChevronLeft size={18} />
         </button>
         
         <button
           onClick={nextSlide}
-          className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
+          className="absolute top-1/2 -translate-y-1/3 translate-x-1/2 bg-white/90 hover:bg-white text-amber-800 rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl border border-amber-200"
           style={{ right: `${containerWidth * 0.07}px` }}
         >
-          <IconChevronRight size={24} />
+          <IconChevronRight size={18} />
         </button>
 
         {/* Dot Indicators */}

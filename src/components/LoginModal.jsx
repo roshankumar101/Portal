@@ -234,8 +234,8 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
               {['Student', 'Recruiter', 'Admin'].map(opt => (
                 <button
                   key={opt}
-                  className={`px-3 py-1 rounded-lg font-semibold text-xs uppercase border transition-all duration-300 transform hover:rotate-1
-                    ${role === opt ? 'bg-gradient-to-r from-black to-gray-800 text-white scale-110 shadow-lg border-black' : 'bg-white bg-opacity-30 text-black border-gray-400 hover:scale-105 hover:shadow-md hover:bg-opacity-50'}`}
+                  className={`px-3 py-1 rounded-lg font-semibold text-sm uppercase border transition-all duration-300 transform hover:rotate-1
+                    ${role === opt ? 'bg-gradient-to-r from-black to-gray-800 text-white scale-105 shadow-lg border-black' : 'bg-white bg-opacity-30 text-black border-gray-400 hover:scale-105 hover:shadow-md hover:bg-opacity-50'}`}
                   onClick={() => {
                     setRole(opt);
                     setAnimKey(opt); // Trigger form animation

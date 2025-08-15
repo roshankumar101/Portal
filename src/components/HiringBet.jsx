@@ -120,7 +120,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
               className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 origin-left scale-x-0"
             />
           </div>
-          <span ref={nahRef} className="font-black rotate-1 inline-block ml-4">
+          <span ref={nahRef} className="font-bold rotate-1 inline-block ml-1 space-x-3">
             <span className="text-black">?</span>
             <span className="text-blue-800">&nbsp;NAH !</span>
           </span>
@@ -130,7 +130,7 @@ const HiringBet = ({ userSelection = 'SOT' }) => {
       <div className="flex justify-center items-center flex-wrap gap-2 text-4xl leading-tight">
         <span className="font-bold relative inline-block">But they're</span>
         <span className="font-bold text-4xl text-blue-900 bg-clip-text">
-          lifelong learners
+          lifelong learners.
         </span>
       </div>
     </div>

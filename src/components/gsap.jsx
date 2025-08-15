@@ -5,39 +5,34 @@ export default function SidebarCard() {
   // Quotes list
   const quotes = [
     "Ready for the next round? Welcome to the Patience Test!",
-    "Great things take time… and so do HR emails",
-    "Rome wasn’t built in a day… neither are offer letters."
+    "Great things take time… and so do HR emails.",
+    "Rome wasn't built in a day… neither are offer letters."
   ];
 
-  // Start random
-  const startIndex = useMemo(
-    () => Math.floor(Math.random() * quotes.length),
-    []
-  );
+  // Generate random 2-digit value (10-99) only once
+  const randomValue = useMemo(() => Math.floor(Math.random() * 100), []);
+  
+  // Determine quote index based on random value
+  const selectedQuoteIndex = useMemo(() => {
+    if (randomValue < 33) return 0;  // First quote
+    else if (randomValue < 66) return 1;  // Second quote
+    else return 2;  // Third quote
+  }, [randomValue]);
 
-  const [quoteIndex, setQuoteIndex] = useState(startIndex);
   const [displayText, setDisplayText] = useState("");
   const [charIndex, setCharIndex] = useState(0);
 
-  // Typing effect
+  // Typing effect - shows only the selected quote based on random value
   useEffect(() => {
-    if (charIndex < quotes[quoteIndex].length) {
+    if (charIndex < quotes[selectedQuoteIndex].length) {
       const timeout = setTimeout(() => {
-        setDisplayText((prev) => prev + quotes[quoteIndex][charIndex]);
+        setDisplayText((prev) => prev + quotes[selectedQuoteIndex][charIndex]);
         setCharIndex((prev) => prev + 1);
-      }, 90); // typing speed
+      }, 70); // typing speed
       return () => clearTimeout(timeout);
-    } else {
-      // When finished typing, wait 4–5 seconds before changing
-      const pause = setTimeout(() => {
-        const nextIndex = (quoteIndex + 1) % quotes.length;
-        setQuoteIndex(nextIndex);
-        setDisplayText("");
-        setCharIndex(0);
-      }, 4500); // pause time after fully typed
-      return () => clearTimeout(pause);
     }
-  }, [charIndex, quoteIndex, quotes]);
+    // Note: Removed cycling logic - quote stays displayed once fully typed
+  }, [charIndex, selectedQuoteIndex, quotes]);
 
   return (
     <div className="hidden lg:block lg:w-[30%] bg-neutral-50 dark:bg-neutral-900">

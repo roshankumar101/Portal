@@ -130,7 +130,7 @@ const Banner = () => {
 
 
         {/* Right Section*/}
-        <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-[20%] order-2 mt-8 w-full h-full">
+        <div className="space-y-6 sm:space-y-8 md:space-y-10 lg:space-y-[25%] order-2 mt-8 w-full h-full">
 
           <div ref={missionRef} className="text-center lg:text-left relative">
             <h1 className="text-3xl md:text-4xl lg:text-[2.6rem] font-bold text-gray-900 leading-tight">
@@ -148,8 +148,7 @@ const Banner = () => {
           {/* Solutions */}
           <div ref={solutionsRef} className="space-y-2">
             <div>
-              <p className="text-lg text-gray-600 font-semibold text-center lg:text-left">with</p>
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">Two simple solutions:</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">With two-simple solutions:</h2>
             </div>
 
 
@@ -157,16 +156,16 @@ const Banner = () => {
               {/* Industry Relevant Skills */}
               <div className="relative rounded-md px-4 sm:px-10 py-1.5 shadow-md bg-white/80 hover:shadow-lg transition-all duration-300">
                 <div>
-                  <h3 className="text-sm text-gray-600 text-center sm:text-base lg:text-lg font-bold">Industry-Relevant <br /> <span className="text-xl text-black font-caveat cursive"> SKILLS</span></h3>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[35%] -left-[25%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                  <h3 className="text-sm text-gray-600 text-center sm:text-base lg:text-lg font-bold">Industry-Relevant <br /> <span className="text-xl text-black italic"> SKILLS</span></h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[34%] -left-[21%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.9455185755993168,0.32556815445715664,-0.32556815445715664,0.9455185755993168,147.0198315431359,-108.43469202258939)"><path d="M347.5 347.5Q359.5 445.5 452.5 452.5 " marker-end="url(#SvgjsMarker2436)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2436"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
               </div>
 
               {/* Passion Aligned Opportunities */}
               <div className="relative rounded-md px-3 sm:px-10 py-1.5 shadow-md bg-white/90 hover:shadow-lg transition-all duration-300">
                 <div>
-                  <h3 className="text-sm text-center sm:text-base lg:text-lg font-bold text-gray-600">Passion-Aligned <br /><span className="text-xl text-black font-caveat cursive font-black "> OPPORTUNITIES</span></h3>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[25%] -right-[25%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.32556815445715676,0.9455185755993167,-0.9455185755993167,0.32556815445715676,658.980168456864,-108.43469202258939)"><path d="M347.5 347.5Q446.5 365.5 452.5 452.5 " marker-end="url(#SvgjsMarker2056)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2056"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
+                  <h3 className="text-sm text-center sm:text-base lg:text-lg font-bold text-gray-600">Passion-Aligned <br /><span className="text-xl text-black italic"> OPPORTUNITIES</span></h3>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute w-[90%] -top-[35%] -right-[22%]" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 800 800"><g stroke-width="7" stroke="hsl(0, 0%, 0%)" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.32556815445715676,0.9455185755993167,-0.9455185755993167,0.32556815445715676,658.980168456864,-108.43469202258939)"><path d="M347.5 347.5Q446.5 365.5 452.5 452.5 " marker-end="url(#SvgjsMarker2056)"></path></g><defs><marker markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" viewBox="0 0 5 5" orient="auto" id="SvgjsMarker2056"><polygon points="0,5 1.6666666666666667,2.5 0,0 5,2.5" fill="hsl(0, 0%, 0%)"></polygon></marker></defs></svg>
                 </div>
               </div>
 

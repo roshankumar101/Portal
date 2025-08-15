@@ -46,9 +46,10 @@ export default function PlacementFAQ() {
       }}
     >
       <h2
-        className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800"
+        className="text-2xl sm:text-3xl md:text-3xl font-bold mb-8 text-center text-gray-800"
       >
-      Frequently Asked Questions
+      {/* Frequently Asked Questions */}
+      Baar Baar Puche Gaye Sawaal (FAQs)
       </h2>
 
       <div className="w-full  space-y-2 px-15">

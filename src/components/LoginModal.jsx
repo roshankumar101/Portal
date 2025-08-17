@@ -279,28 +279,56 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                       }
                     }
                     
-                    console.log('LoginModal - Closing modal, AuthContext should handle redirect');
-                    // Close modal and let AuthContext handle redirect
-                    onClose();
+                    console.log('LoginModal - Closing modal and checking for redirect');
+                    
+                    // Get user role and redirect appropriately
+                    try {
+                      const userDoc = await getDoc(doc(db, 'users', uid));
+                      if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        const userRole = userData.role;
+                        console.log('LoginModal - User role:', userRole);
+                        
+                        // Close modal first
+                        onClose();
+                        
+                        // Navigate based on role
+                        if (userRole === 'student') {
+                          navigate('/student', { replace: true });
+                        } else if (userRole === 'recruiter') {
+                          navigate('/recruiter', { replace: true });
+                        } else if (userRole === 'admin') {
+                          navigate('/admin', { replace: true });
+                        } else {
+                          console.log('LoginModal - No role found, staying on home page');
+                        }
+                      } else {
+                        console.log('LoginModal - No user document found');
+                        onClose();
+                      }
+                    } catch (roleError) {
+                      console.error('LoginModal - Error fetching user role:', roleError);
+                      onClose();
+                    }
                   } catch (err) {
                     setError(err?.message || 'Action failed');
                   } finally { setBusy(false); }
-                }}>
-                  <input 
-                    value={email} 
-                    onChange={(e)=>setEmail(e.target.value)} 
-                    type="email" 
-                    placeholder="Email" 
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
-                  />
-                  <input 
-                    value={password} 
-                    onChange={(e)=>setPassword(e.target.value)} 
-                    type="password" 
-                    placeholder="Password" 
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
-                  />
-                  <button 
+              }}>
+                <input 
+                  value={email} 
+                  onChange={(e)=>setEmail(e.target.value)} 
+                  type="email" 
+                  placeholder="Email" 
+                  className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                />
+                <input 
+                  value={password} 
+                  onChange={(e)=>setPassword(e.target.value)} 
+                  type="password" 
+                  placeholder="Password" 
+                  className="border border-gray-300 rounded-lg px-3 py-2 bg-white bg-opacity-80 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200" 
+                />
+                <button 
                     disabled={busy} 
                     type="submit" 
                     className="bg-gradient-to-r from-black to-gray-800 text-white py-2 rounded-lg font-semibold disabled:opacity-60 hover:from-gray-800 hover:to-black transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"

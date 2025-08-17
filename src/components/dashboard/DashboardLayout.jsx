@@ -92,9 +92,9 @@ export default function DashboardLayout({ children }) {
                 </div>
 
                 {/* Student Details */}
-                <div className="ml-4">
+                <div className="ml-4 space-y-1">
                   <div className="text-2xl font-bold text-gray-900">
-                    {user?.displayName || user?.email?.split('@')[0] || 'Student Name'}
+                    {user?.displayName || 'Student Name'}
                   </div>
                   <div className="flex flex-col sm:flex-row sm:space-x-6 text-sm text-gray-900">
                     <div>

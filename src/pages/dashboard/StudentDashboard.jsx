@@ -60,10 +60,13 @@ export default function StudentDashboard() {
 
   const handleLogout = async () => {
     try {
+      console.log('Logout button clicked - starting logout process');
       await logout();
+      console.log('Logout successful - navigating to home');
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout failed:', error);
+      alert('Logout failed: ' + error.message);
     }
   };
 

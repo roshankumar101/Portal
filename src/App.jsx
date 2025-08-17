@@ -146,7 +146,6 @@ function AppContent() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/test" element={<DatabaseTest />} />
 
         {/* Protected routes */}

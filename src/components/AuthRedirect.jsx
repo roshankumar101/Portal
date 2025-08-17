@@ -20,7 +20,13 @@ export default function AuthRedirect() {
       const currentPath = location.pathname;
       console.log('AuthRedirect - User authenticated with role:', role, 'Current path:', currentPath);
       
-      // Don't redirect if already on the correct dashboard
+      // Don't redirect if user is on home page (allow them to stay after logout)
+      // or if already on the correct dashboard
+      if (currentPath === '/') {
+        console.log('AuthRedirect - User on home page, not redirecting');
+        return;
+      }
+      
       if (role === 'student' && currentPath !== '/student') {
         console.log('AuthRedirect - Redirecting to student dashboard');
         navigate('/student', { replace: true });

@@ -2,15 +2,15 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Inserted user's Firebase config
+// Firebase config using environment variables
 const firebaseConfig = {
-  apiKey: 'AIzaSyD_EylJRZJ3G3TzJP7wzGFPO1hJYi5m5As',
-  authDomain: 'placement-portal-e11ab.firebaseapp.com',
-  projectId: 'placement-portal-e11ab',
-  storageBucket: 'placement-portal-e11ab.firebasestorage.app',
-  messagingSenderId: '632561052922',
-  appId: '1:632561052922:web:beee4a92f275925b65ad43',
-  measurementId: 'G-MNTWBF748M',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);

@@ -260,34 +260,27 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                   setError('');
                   setBusy(true);
                   try {
+                    console.log('LoginModal - Starting login process...');
                     let uid = null;
                     if (mode === 'login') {
                       const u = await login(email, password);
                       uid = u?.uid;
+                      console.log('LoginModal - Login successful, UID:', uid);
                     } else {
                       // Register. For Admin, require manual creation in Firestore after registration
                       const selected = role.toLowerCase();
                       const assignRole = selected === 'admin' ? 'student' : selected;
                       const u = await registerWithEmail({ email, password, role: assignRole });
                       uid = u?.uid;
+                      console.log('LoginModal - Registration successful, UID:', uid);
                       if (selected === 'admin') {
                         // Inform user that admin role must be granted by existing admin in Firestore
                         alert('Account created. Ask an existing admin to set your role to admin in Firestore.');
                       }
                     }
-                    // Role-based redirect
-                    if (uid) {
-                      try {
-                        const snap = await getDoc(doc(db, 'users', uid));
-                        const userRole = snap.exists() ? snap.data()?.role : null;
-                        if (userRole === 'student') navigate('/student', { replace: true });
-                        else if (userRole === 'recruiter') navigate('/recruiter', { replace: true });
-                        else if (userRole === 'admin') navigate('/admin', { replace: true });
-                        else navigate('/', { replace: true });
-                      } catch {
-                        navigate('/', { replace: true });
-                      }
-                    }
+                    
+                    console.log('LoginModal - Closing modal, AuthContext should handle redirect');
+                    // Close modal and let AuthContext handle redirect
                     onClose();
                   } catch (err) {
                     setError(err?.message || 'Action failed');

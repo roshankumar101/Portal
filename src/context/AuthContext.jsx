@@ -17,8 +17,28 @@ export function AuthProvider({ children }) {
         // Fetch role from Firestore: users/{uid} -> { role }
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          const data = userDoc.exists() ? userDoc.data() : null;
-          setRole(data?.role ?? null);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            console.log('User document data:', data);
+            
+            // Check if role exists, if not, infer from document structure
+            let userRole = data.role;
+            if (!userRole) {
+              // Infer role based on existing fields
+              if (data.cgpa !== undefined || data.rollNo !== undefined || data.department !== undefined) {
+                userRole = 'student';
+              } else if (data.company !== undefined || data.recruiterVerified !== undefined) {
+                userRole = 'recruiter';
+              } else {
+                userRole = 'student'; // Default to student
+              }
+              console.log('Inferred role:', userRole);
+            }
+            setRole(userRole);
+          } else {
+            console.log('No user document found for UID:', firebaseUser.uid);
+            setRole(null);
+          }
         } catch (e) {
           console.error('Failed to fetch role', e);
           setRole(null);

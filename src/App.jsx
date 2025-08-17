@@ -22,6 +22,9 @@ import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 import Login from './pages/Login'
 import { useAuth } from './hooks/useAuth'
+import { AuthProvider } from './context/AuthContext'
+import AuthRedirect from './components/AuthRedirect'
+import DatabaseTest from './components/DatabaseTest'
 
 // Landing page component
 function LandingPage() {
@@ -126,7 +129,7 @@ function LandingPage() {
   )
 }
 
-function App() {
+function AppContent() {
   const { loading } = useAuth();
 
   if (loading) {
@@ -138,27 +141,39 @@ function App() {
   }
 
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
+    <>
+      <AuthRedirect />
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/test" element={<DatabaseTest />} />
 
-      {/* Protected routes */}
-      <Route element={<ProtectedRoute allowRoles={['student']} />}>
-        <Route path="/student" element={<StudentDashboard />} />
-      </Route>
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute allowRoles={['student']} />}>
+          <Route path="/student" element={<StudentDashboard />} />
+        </Route>
 
-      <Route element={<ProtectedRoute allowRoles={['recruiter']} />}>
-        <Route path="/recruiter" element={<RecruiterDashboard />} />
-      </Route>
+        <Route element={<ProtectedRoute allowRoles={['recruiter']} />}>
+          <Route path="/recruiter" element={<RecruiterDashboard />} />
+        </Route>
 
-      <Route element={<ProtectedRoute allowRoles={['admin']} />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-      </Route>
+        <Route element={<ProtectedRoute allowRoles={['admin']} />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Route>
 
-      {/* Catch all route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 

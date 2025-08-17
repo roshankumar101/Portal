@@ -5,12 +5,38 @@ const JOBS_COLL = 'jobs';
 const APPS_COLL = 'applications';
 
 export async function listJobs({ limitTo = 50, recruiterId, status } = {}) {
-  const constraints = [orderBy('createdAt', 'desc'), limit(limitTo)];
-  if (recruiterId) constraints.unshift(where('recruiterId', '==', recruiterId));
-  if (status) constraints.unshift(where('status', '==', status));
-  const q = query(collection(db, JOBS_COLL), ...constraints);
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  try {
+    const constraints = [orderBy('postedDate', 'desc'), limit(limitTo)];
+    if (recruiterId) constraints.unshift(where('recruiterId', '==', recruiterId));
+    if (status) constraints.unshift(where('isActive', '==', status));
+    
+    const q = query(collection(db, JOBS_COLL), ...constraints);
+    const snap = await getDocs(q);
+    
+    const jobs = [];
+    for (const docSnap of snap.docs) {
+      const jobData = { id: docSnap.id, ...docSnap.data() };
+      
+      // Fetch company details
+      try {
+        if (jobData.companyId) {
+          const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
+          if (companyDoc.exists()) {
+            jobData.company = companyDoc.data();
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching company for job:', err);
+      }
+      
+      jobs.push(jobData);
+    }
+    
+    return jobs;
+  } catch (error) {
+    console.error('Error listing jobs:', error);
+    return [];
+  }
 }
 
 export async function getJob(jobId) {

@@ -26,17 +26,21 @@ export default function DashboardLayout({ children }) {
   
   const completionPercentage = calculateProfileCompletion();
   
-  // Calculate color based on completion (50-100% mapped to red-yellow-green)
-  const getCompletionColor = (percentage) => {
-    if (percentage <= 70) {
-      // Red to Yellow (50-70%)
-      const ratio = (percentage - 50) / 20;
-      return `conic-gradient(from 0deg, #ef4444 0%, #f59e0b ${ratio * 100}%, #e5e7eb ${ratio * 100}%, #e5e7eb 100%)`;
+  // Get dynamic color based on completion percentage (0-100%)
+  const getProgressColor = (percentage) => {
+    if (percentage <= 50) {
+      // Red to Yellow (0-50%)
+      const ratio = percentage / 50;
+      const red = 239; // #ef4444 red component
+      const green = Math.round(68 + (171 * ratio)); // Transition from 68 to 239
+      return `rgb(${red}, ${green}, 68)`;
     } else {
-      // Yellow to Green (70-100%)
-      const ratio = (percentage - 70) / 30;
-      const yellowToGreen = ratio * 120; // 0 to 120 degrees in HSL
-      return `conic-gradient(from 0deg, hsl(${45 + yellowToGreen}, 85%, 55%) 0%, hsl(${45 + yellowToGreen}, 85%, 55%) ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`;
+      // Yellow to Green (50-100%)
+      const ratio = (percentage - 50) / 50;
+      const red = Math.round(239 - (205 * ratio)); // Transition from 239 to 34
+      const green = 239; // Keep green high
+      const blue = Math.round(68 + (16 * ratio)); // Slight blue increase
+      return `rgb(${red}, ${green}, ${blue})`;
     }
   };
 
@@ -49,9 +53,40 @@ export default function DashboardLayout({ children }) {
             <div className="flex justify-between items-center h-22">
               {/* Left Side - Student Details */}
               <div className="flex items-center flex-1">
-                {/* Profile Image */}
-                <div className="flex-shrink-0">
-                  <div className="w-18 h-18 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                {/* Profile Image with Completion Indicator */}
+                <div className="flex-shrink-0 relative">
+                  {/* SVG Circle Progress */}
+                  <svg
+                    className="absolute inset-0 transform -rotate-90"
+                    width="72"
+                    height="72"
+                  >
+                    {/* Background circle */}
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="32"
+                      stroke="#E5E7EB"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    {/* Progress circle with dynamic color */}
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="32"
+                      stroke={getProgressColor(completionPercentage)}
+                      strokeWidth="4"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 32}
+                      strokeDashoffset={2 * Math.PI * 32 - (completionPercentage / 100) * (2 * Math.PI * 32)}
+                      className="transition-all duration-1000 ease-out"
+                    />
+                  </svg>
+                  
+                  {/* Profile Image */}
+                  <div className="w-18 h-18 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg border-0">
                     <User className="h-8 w-8 text-white" />
                   </div>
                 </div>

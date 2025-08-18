@@ -78,6 +78,12 @@ const PWIOIFooter = ({ onLoginOpen, onContactTeam }) => {
                     >
                         Contact Team
                     </button>
+                    <button
+                        onClick={() => window.location.href = '/meet-dev-team'}
+                        className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
+                    >
+                        Meet the Dev Team
+                    </button>
                 </div>
 
                 {/* Contact Info Section */}
@@ -154,7 +160,7 @@ const PWIOIFooter = ({ onLoginOpen, onContactTeam }) => {
             <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />
             <div className="mt-10 pt-5 border-t border-white/30 text-gray-400 text-sm flex flex-col items-center gap-2">
                 <span className="text-center" style={{ fontFamily: 'Caveat, cursive', fontSize: '1rem', fontWeight: 600, letterSpacing: '.02em', justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
-                    Built with <span style={{ color: 'red', fontSize: '1.1em', margin: '0 2px' }}>❤️</span> by our 2nd-sem Students — proof of their talent!
+                    Built with<span style={{ color: 'red', fontSize: '1.1em', margin: '0 2px' }}>&nbsp;❤</span>&nbsp;by our 2nd-sem Students — proof of their talent!
                 </span>
                 <div className="w-full flex items-center justify-center gap-2">
                     <span className="hidden sm:block h-px w-12 bg-gray-400" />

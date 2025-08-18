@@ -46,15 +46,15 @@ const ProjectsSection = () => {
         
         <div className="my-3">
           {/* Scrollable container with fixed height for 3 projects */}
-          <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
+          <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
             <div className="space-y-2">
               {projects.map((project, index) => (
-                <ul key={index} className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex-shrink-0">
-                  <h4 className="text-lg font-bold text-gray-900 mb-3">{project.projectName}</h4>
+                <ul key={index} className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg px-4 py-2 hover:shadow-md transition-all duration-200 flex-shrink-0">
+                  <h4 className="text-lg font-bold text-gray-900 mb-1">{project.projectName}</h4>
                   
-                  <li className="mb-3 ml-4">
+                  <li className="mb-2 ml-4">
                     <span className="font-semibold text-gray-800">Project Description: </span>
-                    <span className="text-sm text-gray-700 leading-relaxed">
+                    <span className="text-sm text-gray-600 leading-relaxed">
                       {project.description}
                     </span>
                   </li>

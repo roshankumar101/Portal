@@ -25,6 +25,7 @@ import { useAuth } from './hooks/useAuth'
 import { AuthProvider } from './context/AuthContext'
 import AuthRedirect from './components/AuthRedirect'
 import DatabaseTest from './components/DatabaseTest'
+import MeetDevTeamPage from './components/meetDevTeam'
 
 // Landing page component
 function LandingPage() {
@@ -146,6 +147,7 @@ function AppContent() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/meet-dev-team" element={<MeetDevTeamPage />} />
         <Route path="/test" element={<DatabaseTest />} />
 
         {/* Protected routes */}

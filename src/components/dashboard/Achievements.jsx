@@ -78,7 +78,7 @@ const Achievements = () => {
         
         <div className="my-3">
           {/* Scrollable container with fixed height for 5 items */}
-          <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
+          <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
             <div className="space-y-3">
               {achievementsData.map((achievement) => (
                 <div

@@ -7,6 +7,7 @@ import AboutMe from './AboutMe';
 import DashboardStatsSection from './DashboardStatsSection';
 import ApplicationTrackerSection from './ApplicationTrackerSection';
 import JobPostingsSection from './JobPostingsSection';
+import Education from './Education';
 import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
@@ -183,6 +184,9 @@ const DashboardHome = () => {
 
       {/* Latest Job Postings Section */}
       <JobPostingsSection jobs={jobs} onKnowMore={handleKnowMore} />
+
+      {/* Education Section */}
+      <Education />
 
       {/* Skills Section */}
       <SkillsSection />

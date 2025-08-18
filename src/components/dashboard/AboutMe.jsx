@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+// In your login component, after successful login:
+import { useNavigate } from "react-router-dom";
+
+// ...inside your component
+const navigate = useNavigate();
+
+const handleLogin = async () => {
+  // ...login logic
+  if (loginSuccess) {
+    navigate("/dashboard"); // Redirect to dashboard
+  }
+};import React, { useState } from 'react';
 import { Phone, Mail, Linkedin } from 'lucide-react';
 
 const AboutMe = ({ studentData, user }) => {

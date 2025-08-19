@@ -16,6 +16,8 @@ import Records from './components/Records'
 import LoginModal from './components/LoginModal'
 import NotificationModal from './components/Notification'
 import cursor from './components/cursor'
+import DevTeam from './components/DevTeam'
+import placementPolicy from './assets/Docs/PlacementPolicy.pdf'
 import ProtectedRoute from './components/ProtectedRoute'
 import StudentDashboard from './pages/dashboard/StudentDashboard'
 import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
@@ -61,6 +63,24 @@ function LandingPage() {
         }
       }, 1000); // Wait for scroll to complete
     }
+  };
+
+  const handleMeetDevTeam = () => {
+    // Navigate to DevTeam component
+    window.location.href = '/dev-team';
+  };
+
+  const handleContactTeam = () => {
+    // Navigate to founders component
+    const foundersSection = document.querySelector('#founders-section');
+    if (foundersSection) {
+      foundersSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handlePlacementPolicy = () => {
+    // Open placement policy PDF
+    window.open(placementPolicy, '_blank');
   };
 
   return (
@@ -118,7 +138,12 @@ function LandingPage() {
 
           {/* Footer - Odd component #F2F0EA */}
           <div>
-            <PWIOIFooter onLoginOpen={openModal} onContactTeam={scrollToContact} />
+            <PWIOIFooter 
+              onLoginOpen={openModal} 
+              onContactTeam={handleContactTeam}
+              onMeetDevTeam={handleMeetDevTeam}
+              onPlacementPolicy={handlePlacementPolicy}
+            />
           </div>
         </main>
       )}
@@ -146,6 +171,7 @@ function AppContent() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/dev-team" element={<DevTeam />} />
         <Route path="/test" element={<DatabaseTest />} />
 
         {/* Protected routes */}

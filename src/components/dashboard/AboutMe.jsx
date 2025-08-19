@@ -24,8 +24,8 @@ const AboutMe = ({ studentData, user }) => {
 
   return (
     <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 p-6 transition-all duration-200">
-        <legend className="text-xl font-bold text-blue-600 px-4 bg-blue-100 rounded-full">
+      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
+        <legend className="text-xl font-bold text-yellow-300 px-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full">
           About Me
         </legend>
         
@@ -45,24 +45,18 @@ const AboutMe = ({ studentData, user }) => {
           
           {/* Contact Information - LinkedIn Style */}
           <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-start space-x-4 text-gray-600">
+            <div className="flex items-center justify-start text-gray-600">
               {/* Phone */}
-              <div className="flex items-center space-x-1">
-                <Phone className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">{studentData?.personalInfo?.phone || '8603231644'}</span>
-              </div>
+              <span className="text-sm font-medium">{studentData?.personalInfo?.phone || '9876543210'}</span>
               
-              {/* Separator */}
-              <span className="text-gray-400">|</span>
+              {/* Dot separator */}
+              <span className="ml-4 mr-1 text-black">•</span>
               
               {/* Email */}
-              <div className="flex items-center space-x-1">
-                <Mail className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium">{studentData?.personalInfo?.email || user?.email || 'student@example.com'}</span>
-              </div>
+              <span className="text-sm font-medium">{studentData?.personalInfo?.email || user?.email || 'student@example.com'}</span>
               
-              {/* Separator */}
-              <span className="text-gray-400">|</span>
+              {/* Dot separator */}
+              <span className="ml-4 mr-1 text-black">•</span>
               
               {/* LinkedIn */}
               <button 

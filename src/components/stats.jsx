@@ -18,6 +18,10 @@ const stats = [
     value: "92%",
   },
   {
+    label: "Global Internships",
+    value: "42+",
+  },
+  {
     label: "Ventures Launched",
     value: "7",
   },
@@ -25,6 +29,10 @@ const stats = [
     label: "Exclusive Recruiters",
     value: "12",
   },
+  {
+    label: "Average Internship Stipend",
+    value: "₹35K/m",
+  }
   
 ];
 
@@ -102,7 +110,7 @@ const PlacementStats = () => {
         </h2>
 
         {/* Stats Grid with separators */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-t-xl">
           {stats.slice(0, 4).map((stat, index) => (
             <div
               key={index}
@@ -111,24 +119,21 @@ const PlacementStats = () => {
               <div className="text-5xl font-extrabold text-black mt-4">
                 {stat.value}
               </div>
-              <div className="text-sm font-medium text-black mt-2">
+              <div className="text-sm text-gray-600 mt-1">
                 {stat.label}
               </div>
             </div>
           ))}
         </div>
         
-        {/* Second row with centered 2 columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 placement-stats-grid-row2 bg-[#FFDE83]/80 rounded-es-xl rounded-ee-xl max-w-2xl mx-auto">
-          {stats.slice(4).map((stat, index) => (
-            <div
-              key={index + 4}
-              className="stat-card-row2 rounded-xl pb-4 text-center flex flex-col items-center"
-            >
+        {/* Second row with 4 stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-b-xl">
+          {stats.slice(4, 8).map((stat, index) => (
+            <div key={index + 4} className="stat-card rounded-xl py-4 text-center flex flex-col items-center">
               <div className="text-5xl font-extrabold text-black mt-4">
                 {stat.value}
               </div>
-              <div className="text-sm font-medium text-black mt-2">
+              <div className="text-sm text-gray-600 mt-1">
                 {stat.label}
               </div>
             </div>

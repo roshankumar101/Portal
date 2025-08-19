@@ -26,21 +26,14 @@ export default function DashboardLayout({ children }) {
   
   const completionPercentage = calculateProfileCompletion();
   
-  // Get dynamic color based on completion percentage (0-100%)
+  // Get dynamic color based on completion percentage
   const getProgressColor = (percentage) => {
-    if (percentage <= 50) {
-      // Red to Yellow (0-50%)
-      const ratio = percentage / 50;
-      const red = 239; // #ef4444 red component
-      const green = Math.round(68 + (171 * ratio)); // Transition from 68 to 239
-      return `rgb(${red}, ${green}, 68)`;
+    if (percentage < 40) {
+      return '#ef4444'; // red-500
+    } else if (percentage < 70) {
+      return '#eab308'; // yellow-500
     } else {
-      // Yellow to Green (50-100%)
-      const ratio = (percentage - 50) / 50;
-      const red = Math.round(239 - (205 * ratio)); // Transition from 239 to 34
-      const green = 239; // Keep green high
-      const blue = Math.round(68 + (16 * ratio)); // Slight blue increase
-      return `rgb(${red}, ${green}, ${blue})`;
+      return '#22c55e'; // green-500
     }
   };
 
@@ -86,7 +79,7 @@ export default function DashboardLayout({ children }) {
                   </svg>
                   
                   {/* Profile Image */}
-                  <div className="w-18 h-18 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg border-0">
+                  <div className="w-18 h-18 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                     <User className="h-8 w-8 text-white" />
                   </div>
                 </div>

@@ -69,18 +69,24 @@ const Achievements = () => {
     }
   };
 
+  // Sort achievements to show those with certificates first
+  const sortedAchievements = [...achievementsData].sort((a, b) => {
+    if (a.hasCertificate && !b.hasCertificate) return -1;
+    if (!a.hasCertificate && b.hasCertificate) return 1;
+    return 0;
+  });
+
   return (
     <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 p-6 transition-all duration-200">
-        <legend className="text-xl font-bold text-blue-600 px-4 bg-blue-100 rounded-full">
+      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
+        <legend className="text-xl font-bold text-blue-600 px-2 bg-blue-100 rounded-full">
           Achievements & Certifications
         </legend>
         
         <div className="my-3">
-          {/* Scrollable container with fixed height for 5 items */}
           <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
             <div className="space-y-3">
-              {achievementsData.map((achievement) => (
+              {sortedAchievements.map((achievement) => (
                 <div
                   key={achievement.id}
                   className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between"
@@ -100,23 +106,18 @@ const Achievements = () => {
                     </div>
                   </div>
 
-                  {/* Right side - View Certificate button */}
-                  <div className="flex-shrink-0">
-                    <button
-                      onClick={() => handleViewCertificate(achievement)}
-                      disabled={!achievement.hasCertificate}
-                      className={`
-                        flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50
-                        ${achievement.hasCertificate
-                          ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105 focus:ring-blue-500 cursor-pointer'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
-                        }
-                      `}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Certificate
-                    </button>
-                  </div>
+                  {/* Right side - View Certificate button - Only show if certificate exists */}
+                  {achievement.hasCertificate && (
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={() => handleViewCertificate(achievement)}
+                        className="flex items-center px-4 py-2 rounded-lg font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Certificate
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -37,8 +37,8 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
 
   return (
     <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 p-3 transition-all duration-200">
-        <legend className="text-xl font-bold text-blue-600 px-4 bg-blue-100 rounded-full">
+      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
+        <legend className="text-xl font-bold text-blue-600 px-2 bg-blue-100 rounded-full">
           Latest Job Postings
         </legend>
         
@@ -50,10 +50,12 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
           ) : (
             <div className="space-y-2">
               {/* Column Headers */}
-              <div className="grid grid-cols-5 gap-6 mb-3 p-3">
+              <div className="grid grid-cols-5 gap-6 mb-3 py-3 px-6">
                 <div className="text-gray-800 font-bold text-lg">Company</div>
                 <div className="text-gray-800 font-bold text-lg pl-2">Job Title</div>
-                <div className="text-gray-800 font-bold text-lg">Tentative Interview Date</div>
+                <div className="text-gray-800 font-bold text-lg">Interview Date
+                  <div className='text-sm -mt-2'>(Tentative)</div> 
+                </div>
                 <div className="text-gray-800 font-bold text-lg">Salary (CTC)</div>
                 <div></div>
               </div>

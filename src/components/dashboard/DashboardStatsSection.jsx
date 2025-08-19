@@ -52,8 +52,8 @@ const DashboardStatsSection = ({ studentData }) => {
 
   return (
     <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 p-3 transition-all duration-200">
-        <legend className="text-xl font-bold text-blue-600 px-4 bg-blue-100 rounded-full">
+      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
+        <legend className="text-xl font-bold text-white px-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full">
           Dashboard Stats
         </legend>
         <div className="my-3">

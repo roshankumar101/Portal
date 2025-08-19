@@ -171,7 +171,7 @@ export default function TestimonialSection() {
   };
 
   return (
-    <div className="container mx-auto px-4 lg:px-8 py-12 flex flex-col lg:flex-row gap-8">
+    <div id="founders-section" className="container mx-auto px-4 lg:px-8 py-12 flex flex-col lg:flex-row gap-8">
       {/* TESTIMONIALS */}
       <div className="w-full lg:w-2/3">
         <AnimatedTestimonials testimonials={testimonials} autoplay={true} />

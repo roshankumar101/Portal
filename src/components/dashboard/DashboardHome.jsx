@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { getStudentProfile } from '../../services/students';
 import { listJobs } from '../../services/jobs';
-import { getStudentApplications } from '../../services/applications';
+import { getStudentApplications, deleteApplication } from '../../services/applications';
 import AboutMe from './AboutMe';
 import DashboardStatsSection from './DashboardStatsSection';
 import ApplicationTrackerSection from './ApplicationTrackerSection';
 import JobPostingsSection from './JobPostingsSection';
 import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
+import EducationSection from './EducationSection';
 import Achievements from './Achievements';
 import { 
   Clock,
@@ -18,19 +19,26 @@ import {
   Loader
 } from 'lucide-react';
 
-const DashboardHome = () => {
+const DashboardHome = ({ studentData: propStudentData, onExploreMore }) => {
   const { user } = useAuth();
-  const [studentData, setStudentData] = useState(null);
+  const [studentData, setStudentData] = useState(propStudentData);
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState({});
 
-  // Fetch student profile data
+  // Update studentData when prop changes
+  useEffect(() => {
+    if (propStudentData) {
+      setStudentData(propStudentData);
+    }
+  }, [propStudentData]);
+
+  // Fetch student profile data if not provided via props
   useEffect(() => {
     const fetchStudentData = async () => {
-      if (!user?.uid) return;
+      if (!user?.uid || propStudentData) return;
       
       try {
         const userData = await getStudentProfile(user.uid);
@@ -42,7 +50,7 @@ const DashboardHome = () => {
     };
 
     fetchStudentData();
-  }, [user]);
+  }, [user, propStudentData]);
 
   // Fetch jobs and applications
   useEffect(() => {
@@ -119,6 +127,28 @@ const DashboardHome = () => {
     }
   };
 
+  // Handle application deletion
+  const handleDeleteApplication = async (applicationId, index) => {
+    if (window.confirm('Are you sure you want to delete this application?')) {
+      try {
+        await deleteApplication(applicationId);
+        
+        // Remove from local state
+        const updatedApplications = applications.filter((_, i) => i !== index);
+        setApplications(updatedApplications);
+        
+        // Refresh student data to update stats
+        const updatedStudentData = await getStudentProfile(user.uid);
+        setStudentData(updatedStudentData);
+        
+        alert('Application deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting application:', error);
+        alert(error.message || 'Failed to delete application. Please try again.');
+      }
+    }
+  };
+
   // Check if student meets eligibility criteria
   const meetsEligibility = (eligibilityCriteria) => {
     if (!studentData?.cgpa || !eligibilityCriteria) return true;
@@ -176,19 +206,30 @@ const DashboardHome = () => {
       <AboutMe studentData={studentData} user={user} />
 
       {/* Student Stats Section */}
-      <DashboardStatsSection studentData={studentData} />
+      <DashboardStatsSection applications={applications} />
 
       {/* Live Application Tracker Section */}
-      <ApplicationTrackerSection applications={applications} />
+      <ApplicationTrackerSection applications={applications} onDeleteApplication={handleDeleteApplication} />
 
       {/* Latest Job Postings Section */}
-      <JobPostingsSection jobs={jobs} onKnowMore={handleKnowMore} />
+      <JobPostingsSection 
+        jobs={jobs} 
+        onKnowMore={handleKnowMore} 
+        onApply={handleApplyToJob}
+        hasApplied={hasApplied}
+        applying={applying}
+        meetsEligibility={meetsEligibility}
+        onExploreMore={onExploreMore}
+      />
+
+      {/* Educational Background Section */}
+      <EducationSection />
 
       {/* Skills Section */}
       <SkillsSection />
 
       {/* Projects Section */}
-      <ProjectsSection studentId={user?.uid} />
+      <ProjectsSection />
 
       {/* Achievements & Certifications Section */}
       <Achievements />

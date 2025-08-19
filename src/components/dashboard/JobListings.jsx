@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const JobListings = ({ jobs, onKnowMore }) => {
+const JobListings = ({ jobs, onKnowMore, onApply, hasApplied, applying, meetsEligibility, onExploreMore }) => {
+  const navigate = useNavigate();
   const formatSalary = (salary) => {
     if (!salary) return 'Not specified';
     if (typeof salary === 'number') {
@@ -80,16 +82,33 @@ const JobListings = ({ jobs, onKnowMore }) => {
             {formatSalary(job.salary)}
           </div>
           <div className="flex justify-end space-x-1">
-            <button 
-              onClick={() => onKnowMore && onKnowMore(job)}
-              className="px-2 py-1 bg-blue-200 text-blue-800 font-medium rounded-lg hover:bg-blue-300 transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
+            <button
+              onClick={() => onKnowMore(job)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
             >
               Know More
             </button>
-            <button 
-              className="px-2 py-1 bg-yellow-200 text-yellow-800 font-medium rounded-lg hover:bg-yellow-300 transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
+            <button
+              onClick={() => onApply(job.id, job.companyId)}
+              disabled={hasApplied(job.id) || applying[job.id] || !meetsEligibility(job.eligibilityCriteria)}
+              className={`px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium ${
+                hasApplied(job.id) 
+                  ? 'bg-green-600 text-white cursor-not-allowed' 
+                  : applying[job.id]
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : !meetsEligibility(job.eligibilityCriteria)
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : 'bg-yellow-500 text-white hover:bg-yellow-600'
+              }`}
             >
-              Apply Now
+              {hasApplied(job.id) 
+                ? 'Applied' 
+                : applying[job.id] 
+                ? 'Applying...' 
+                : !meetsEligibility(job.eligibilityCriteria)
+                ? 'Not Eligible'
+                : 'Apply Now'
+              }
             </button>
           </div>
         </div>
@@ -97,7 +116,10 @@ const JobListings = ({ jobs, onKnowMore }) => {
       
       {jobs.length > 3 && (
         <div className="flex justify-end pt-4">
-          <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm">
+          <button 
+            onClick={() => onExploreMore ? onExploreMore() : navigate('/dashboard/jobs')}
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm"
+          >
             Explore More
           </button>
         </div>

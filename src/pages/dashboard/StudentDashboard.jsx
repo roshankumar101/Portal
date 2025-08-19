@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import DashboardHome from '../../components/dashboard/DashboardHome';
+import ExploreJobsPage from '../../components/dashboard/ExploreJobsPage';
 import { useAuth } from '../../hooks/useAuth';
+import { getStudentProfile, updateStudentProfile, createStudentProfile } from '../../services/students';
 import { useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -19,8 +21,104 @@ import {
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { logout } = useAuth();
+  const [studentData, setStudentData] = useState(null);
+  const [profileFormData, setProfileFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    enrollmentId: '',
+    school: '',
+    cgpa: '',
+    skills: '',
+    bio: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch student data on component mount
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      if (user?.uid) {
+        try {
+          let data = await getStudentProfile(user.uid);
+          
+          // If student profile doesn't exist, create a basic one
+          if (!data) {
+            const basicProfile = {
+              name: user.displayName || '',
+              email: user.email || '',
+              phone: '',
+              enrollmentId: '',
+              school: '',
+              cgpa: '',
+              skills: [],
+              bio: ''
+            };
+            
+            await createStudentProfile(user.uid, basicProfile);
+            data = basicProfile;
+          }
+          
+          setStudentData(data);
+          setProfileFormData({
+            name: data.name || '',
+            email: data.email || user.email || '',
+            phone: data.phone || '',
+            enrollmentId: data.enrollmentId || data.rollNo || '',
+            school: data.school || data.department || '',
+            cgpa: data.cgpa || '',
+            skills: data.skills ? (Array.isArray(data.skills) ? data.skills.join(', ') : data.skills) : '',
+            bio: data.bio || ''
+          });
+        } catch (error) {
+          console.error('Error fetching student data:', error);
+        }
+      }
+    };
+
+    fetchStudentData();
+  }, [user]);
+
+  const handleProfileInputChange = (field, value) => {
+    setProfileFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    if (!user?.uid) return;
+
+    setLoading(true);
+    try {
+      const updatedData = {
+        ...profileFormData,
+        skills: profileFormData.skills.split(',').map(skill => skill.trim()).filter(skill => skill),
+        updatedAt: new Date().toISOString()
+      };
+
+      // Check if student profile exists, if not create it first
+      let existingProfile = await getStudentProfile(user.uid);
+      if (!existingProfile) {
+        await createStudentProfile(user.uid, updatedData);
+      } else {
+        await updateStudentProfile(user.uid, updatedData);
+      }
+      
+      // Update local state
+      const newStudentData = { ...studentData, ...updatedData };
+      setStudentData(newStudentData);
+      
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -28,7 +126,6 @@ export default function StudentDashboard() {
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'applications', label: 'Track Applications', icon: FileText },
     { id: 'resources', label: 'Placement Resources', icon: FileText },
-    { id: 'editProfile', label: 'Edit Profile', icon: Calendar },
   ];
 
   const skillsCredentials = [
@@ -67,40 +164,17 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleExploreMore = () => {
+    setActiveTab('jobs');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardHome />;
+        return <DashboardHome studentData={studentData} onExploreMore={handleExploreMore} />;
         
       case 'jobs':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Explore Job Opportunities</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Job Cards */}
-                {[
-                  { title: 'Software Engineer', company: 'TechCorp', location: 'Bangalore', type: 'Full-time', salary: '₹8-12 LPA' },
-                  { title: 'Frontend Developer', company: 'StartupXYZ', location: 'Hyderabad', type: 'Full-time', salary: '₹6-10 LPA' },
-                  { title: 'Data Analyst', company: 'DataCo', location: 'Mumbai', type: 'Full-time', salary: '₹7-11 LPA' },
-                  { title: 'Product Manager', company: 'InnovateInc', location: 'Pune', type: 'Full-time', salary: '₹10-15 LPA' },
-                  { title: 'DevOps Engineer', company: 'CloudTech', location: 'Chennai', type: 'Full-time', salary: '₹9-13 LPA' },
-                  { title: 'UI/UX Designer', company: 'DesignHub', location: 'Gurgaon', type: 'Full-time', salary: '₹5-9 LPA' }
-                ].map((job, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <h3 className="font-semibold text-lg text-gray-900">{job.title}</h3>
-                    <p className="text-blue-600 font-medium">{job.company}</p>
-                    <p className="text-gray-600 text-sm">{job.location} • {job.type}</p>
-                    <p className="text-green-600 font-semibold mt-2">{job.salary}</p>
-                    <button className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
-                      Apply Now
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
+        return <ExploreJobsPage />;
         
       case 'calendar':
         return (
@@ -275,53 +349,123 @@ export default function StudentDashboard() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h2>
-              <form className="space-y-6">
+              <form onSubmit={handleProfileSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your full name" />
+                    <input 
+                      type="text" 
+                      value={profileFormData.name}
+                      onChange={(e) => handleProfileInputChange('name', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Enter your full name" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" />
+                    <input 
+                      type="email" 
+                      value={profileFormData.email}
+                      onChange={(e) => handleProfileInputChange('email', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Enter your email" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input type="tel" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your phone number" />
+                    <input 
+                      type="tel" 
+                      value={profileFormData.phone}
+                      onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Enter your phone number" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100" value="ENR123456789" disabled />
+                    <input 
+                      type="text" 
+                      value={profileFormData.enrollmentId}
+                      onChange={(e) => handleProfileInputChange('enrollmentId', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Enter your enrollment ID" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">School</label>
-                    <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>School of Technology</option>
-                      <option>School of Engineering</option>
-                      <option>School of Business</option>
+                    <select 
+                      value={profileFormData.school}
+                      onChange={(e) => handleProfileInputChange('school', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select School</option>
+                      <option value="School of Technology">School of Technology</option>
+                      <option value="School of Engineering">School of Engineering</option>
+                      <option value="School of Business">School of Business</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">CGPA</label>
-                    <input type="number" step="0.01" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your CGPA" />
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      value={profileFormData.cgpa}
+                      onChange={(e) => handleProfileInputChange('cgpa', e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Enter your CGPA" 
+                    />
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-                  <textarea className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="List your key skills (comma separated)"></textarea>
+                  <textarea 
+                    value={profileFormData.skills}
+                    onChange={(e) => handleProfileInputChange('skills', e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    rows="3" 
+                    placeholder="List your key skills (comma separated)"
+                  ></textarea>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                  <textarea className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Write a brief bio about yourself"></textarea>
+                  <textarea 
+                    value={profileFormData.bio}
+                    onChange={(e) => handleProfileInputChange('bio', e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    rows="4" 
+                    placeholder="Write a brief bio about yourself"
+                  ></textarea>
                 </div>
                 
                 <div className="flex space-x-4">
-                  <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                    Save Changes
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
                   </button>
-                  <button type="button" className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      // Reset form to original data
+                      if (studentData) {
+                        setProfileFormData({
+                          name: studentData.name || '',
+                          email: studentData.email || user.email || '',
+                          phone: studentData.phone || '',
+                          enrollmentId: studentData.enrollmentId || studentData.rollNo || '',
+                          school: studentData.school || studentData.department || '',
+                          cgpa: studentData.cgpa || '',
+                          skills: studentData.skills ? (Array.isArray(studentData.skills) ? studentData.skills.join(', ') : studentData.skills) : '',
+                          bio: studentData.bio || ''
+                        });
+                      }
+                    }}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -336,7 +480,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout studentData={studentData} onEditProfile={() => setActiveTab('editProfile')}>
       {/* 20% Sidebar / 80% Content Layout */}
       <div className="flex min-h-screen">
         {/* Left Sidebar - 20% - Navigation */}

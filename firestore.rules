@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Students collection - students can read/write their own data
+    match /students/{studentId} {
+      allow read, write: if request.auth != null && request.auth.uid == studentId;
+    }
+    
+    // Jobs collection - authenticated users can read, only recruiters can write
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+    }
+    
+    // Companies collection - authenticated users can read
+    match /companies/{companyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['recruiter', 'admin'];
+    }
+    
+    // Applications collection - students can read/write their own applications
+    match /applications/{applicationId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.studentId ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['recruiter', 'admin']));
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.studentId;
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+    }
+    
+    // Educational background - students can read/write their own data
+    match /educational_background/{educationId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.studentId;
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+    }
+    
+    // Skills collection - students can read/write their own skills
+    match /skills/{skillId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.studentId;
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+    }
+    
+    // Projects collection - students can read/write their own projects
+    match /projects/{projectId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.studentId;
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+    }
+    
+    // Coding profiles - students can read/write their own profiles
+    match /coding_profiles/{profileId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.studentId;
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import ApplicationTracker from './ApplicationTracker';
 
-const ApplicationTrackerSection = ({ applications }) => {
+const ApplicationTrackerSection = ({ applications, onDeleteApplication }) => {
   return (
     <div className="w-full">
       <fieldset className="bg-white rounded-2xl border-2 border-blue-200 p-6 transition-all duration-200">
@@ -10,7 +10,7 @@ const ApplicationTrackerSection = ({ applications }) => {
         </legend>
         
         <div className="my-3">
-          <ApplicationTracker applications={applications} />
+          <ApplicationTracker applications={applications} onDeleteApplication={onDeleteApplication} />
         </div>
         
         {/* Track All Button */}

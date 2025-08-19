@@ -1,7 +1,7 @@
 import React from 'react';
-import { Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
-const ApplicationTracker = ({ applications }) => {
+const ApplicationTracker = ({ applications, onDeleteApplication }) => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'applied': return 'bg-blue-100 text-blue-800';
@@ -72,18 +72,19 @@ const ApplicationTracker = ({ applications }) => {
   return (
     <div className="space-y-2">
       {/* Column Headers */}
-      <div className="grid grid-cols-4 gap-4 mb-2 p-4">
+      <div className="grid grid-cols-5 gap-4 mb-2 p-4">
         <div className="text-gray-800 font-bold text-lg">Company</div>
         <div className="text-gray-800 font-bold text-lg">Job Title</div>
         <div className="text-gray-800 font-bold text-lg">Date Applied</div>
         <div className="text-gray-800 font-bold text-lg text-right">Status</div>
+        <div className="text-gray-800 font-bold text-lg text-center">Actions</div>
       </div>
       
       {/* Application Rows */}
-      {applications.slice(0, 5).map((application) => (
+      {applications.slice(0, 5).map((application, index) => (
         <div
           key={application.id}
-          className={`grid grid-cols-4 gap-4 p-4 rounded-xl bg-gradient-to-r ${getRowBgColor(application.status)} hover:shadow-md transition-all duration-200`}
+          className={`grid grid-cols-5 gap-4 p-4 rounded-xl bg-gradient-to-r ${getRowBgColor(application.status)} hover:shadow-md transition-all duration-200`}
         >
           <div className="flex items-center">
             <div className={`w-8 h-8 ${getCompanyColor(application.company?.name)} rounded-lg mr-3 flex items-center justify-center`}>
@@ -106,6 +107,15 @@ const ApplicationTracker = ({ applications }) => {
               {getStatusIcon(application.status)}
               {application.status ? application.status.charAt(0).toUpperCase() + application.status.slice(1) : 'Unknown'}
             </span>
+          </div>
+          <div className="flex justify-center">
+            <button
+              onClick={() => onDeleteApplication && onDeleteApplication(application.id, index)}
+              className="text-gray-500 hover:text-red-600 transition-colors duration-200 p-1 rounded hover:bg-red-50"
+              title="Delete Application"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
       ))}

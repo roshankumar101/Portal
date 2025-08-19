@@ -58,6 +58,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await signOut(auth);
+    // Redirect to landing page after logout
+    window.location.href = '/';
   };
 
   const loginWithGoogle = async () => {

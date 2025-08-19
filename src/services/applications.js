@@ -160,6 +160,49 @@ export const updateApplicationStatus = async (applicationId, newStatus, intervie
   }
 };
 
+// Delete an application
+export const deleteApplication = async (applicationId) => {
+  try {
+    const applicationRef = doc(db, 'applications', applicationId);
+    const applicationDoc = await getDoc(applicationRef);
+    
+    if (!applicationDoc.exists()) {
+      throw new Error('Application not found');
+    }
+    
+    const applicationData = applicationDoc.data();
+    const batch = writeBatch(db);
+    
+    // Delete the application
+    batch.delete(applicationRef);
+    
+    // Update student stats
+    const studentRef = doc(db, 'students', applicationData.studentId);
+    const studentDoc = await getDoc(studentRef);
+    
+    if (studentDoc.exists()) {
+      const currentStats = studentDoc.data().stats || { applied: 0, shortlisted: 0, interviewed: 0, offers: 0 };
+      
+      // Decrease the appropriate stat count
+      if (applicationData.status === 'applied') currentStats.applied = Math.max(0, currentStats.applied - 1);
+      else if (applicationData.status === 'shortlisted') currentStats.shortlisted = Math.max(0, currentStats.shortlisted - 1);
+      else if (applicationData.status === 'interviewed') currentStats.interviewed = Math.max(0, currentStats.interviewed - 1);
+      else if (applicationData.status === 'offered') currentStats.offers = Math.max(0, currentStats.offers - 1);
+      
+      batch.update(studentRef, {
+        stats: currentStats,
+        updatedAt: new Date()
+      });
+    }
+    
+    await batch.commit();
+    return true;
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    throw error;
+  }
+};
+
 // Get application statistics for a student
 export const getApplicationStats = async (studentId) => {
   try {

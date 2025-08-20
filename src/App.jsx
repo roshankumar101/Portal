@@ -27,6 +27,7 @@ import { useAuth } from './hooks/useAuth'
 import { AuthProvider } from './context/AuthContext'
 import AuthRedirect from './components/AuthRedirect'
 import DatabaseTest from './components/DatabaseTest'
+import MeetDevTeamPage from './components/meetDevTeam'
 
 // Landing page component
 function LandingPage() {

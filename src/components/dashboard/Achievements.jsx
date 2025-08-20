@@ -82,44 +82,47 @@ const Achievements = () => {
         <legend className="text-xl font-bold text-blue-600 px-2 bg-blue-100 rounded-full">
           Achievements & Certifications
         </legend>
-        
+
         <div className="my-3">
           <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
-            <div className="space-y-3">
-              {sortedAchievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between"
-                >
-                  {/* Left side - Achievement content */}
-                  <div className="flex-1 pr-4">
-                    <div className="flex items-start space-x-3">
-                      <Award className="h-5 w-5 text-yellow-600 mt-1 flex-shrink-0" />
-                      <div>
-                        <h4 className="text-lg font-bold text-gray-900 mb-2">
-                          {achievement.title}
-                        </h4>
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {achievement.description}
-                        </p>
+            {/* Scrollable container with fixed height for 5 items */}
+            <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
+              <div className="space-y-3">
+                {sortedAchievements.map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between"
+                  >
+                    {/* Left side - Achievement content */}
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-start space-x-3">
+                        <Award className="h-5 w-5 text-yellow-600 mt-1 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-lg font-bold text-gray-900 mb-2">
+                            {achievement.title}
+                          </h4>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {achievement.description}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Right side - View Certificate button - Only show if certificate exists */}
-                  {achievement.hasCertificate && (
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => handleViewCertificate(achievement)}
-                        className="flex items-center px-4 py-2 rounded-lg font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Certificate
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* Right side - View Certificate button - Only show if certificate exists */}
+                    {achievement.hasCertificate && (
+                      <div className="flex-shrink-0">
+                        <button
+                          onClick={() => handleViewCertificate(achievement)}
+                          className="flex items-center px-4 py-2 rounded-lg font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Certificate
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

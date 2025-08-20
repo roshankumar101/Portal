@@ -1,21 +1,27 @@
 import React from "react";
+import { FaMoneyBillWave, FaCalendarAlt, FaChartLine, FaHandshake, FaUserTie, FaLightbulb, FaMoneyCheckAlt } from "react-icons/fa";
+import { MdAttachMoney } from "react-icons/md";
 
 const stats = [
   {
     label: "Highest CTC Offered",
     value: "₹45 LPA",
+    icon: <FaMoneyBillWave className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Placement Drives",
     value: "85",
+    icon: <FaCalendarAlt className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Average CTC",
     value: "₹12.5 LPA",
+    icon: <MdAttachMoney className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Placement Percentage",
     value: "92%",
+    icon: <FaChartLine className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Global Internships",
@@ -24,28 +30,35 @@ const stats = [
   {
     label: "Ventures Launched",
     value: "7",
+    icon: <FaHandshake className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Exclusive Recruiters",
     value: "12",
+    icon: <FaUserTie className="inline-block mr-2 text-black text-xl" />,
   },
   {
-    label: "Average Internship Stipend",
-    value: "₹35K/m",
-  }
-  
+    label: "Startup Internships",
+    value: "95+",
+    icon: <FaLightbulb className="inline-block mr-2 text-black text-xl" />,
+  },
+  {
+    label: "Average Stipend",
+    value: "₹35K/month",
+    icon: <FaMoneyCheckAlt className="inline-block mr-2 text-black text-xl" />,
+  },
 ];
 
 const PlacementStats = () => {
   return (
-    <section className="relative py-12 px-4 flex flex-col items-center overflow-hidden">
+    <section className="relative py-8 px-4 flex flex-col items-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[#f5e5ca]"></div>
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl w-full">
         {/* Heading with sparkle effect */}
-        <h2 className="text-4xl font-bold mb-10 text-gray-900 text-center">
+        <h2 className="text-4xl font-bold mb-8 text-gray-900 text-center">
           Heard the WHY —{" "}
           <span
             className="relative px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat
@@ -114,10 +127,17 @@ const PlacementStats = () => {
           {stats.slice(0, 4).map((stat, index) => (
             <div
               key={index}
-              className="stat-card rounded-xl py-4 text-center flex flex-col items-center"
+              className="stat-card rounded-xl py-5 text-center flex flex-col items-center h-full min-h-[140px]"
             >
-              <div className="text-5xl font-extrabold text-black mt-4">
-                {stat.value}
+              <div className="text-5xl font-extrabold text-black mt-2">
+                {stat.label === "Average Stipend" ? (
+                  <>
+                    ₹35K
+                    <span className="text-base align-bottom ml-1 font-semibold text-black/70">/month</span>
+                  </>
+                ) : (
+                  stat.value
+                )}
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 {stat.label}
@@ -143,7 +163,6 @@ const PlacementStats = () => {
 
       {/* Sparkle Animation & Separator Styles */}
       <style>{`
-        /* Sparkle animation keyframes */
         @keyframes sparkle {
           0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(-10deg); }
           10% { opacity: 1; transform: scale(1.4) rotate(10deg); }
@@ -154,8 +173,6 @@ const PlacementStats = () => {
           animation: sparkle 2.5s infinite;
           pointer-events: none;
         }
-
-        /* Separator line styles */
         .placement-stats-grid {
           position: relative;
         }
@@ -163,41 +180,19 @@ const PlacementStats = () => {
           .placement-stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
+            row-gap: 0px; /* Further reduced gap between rows */
           }
           .stat-card {
             position: relative;
+            min-height: 140px;
           }
-          /* Vertical separator line - hide on 4th card (index 3) */
+          /* Vertical separator line - hide on 4th, 8th card */
           .stat-card:nth-child(1)::after,
           .stat-card:nth-child(2)::after,
-          .stat-card:nth-child(3)::after {
-            content: "";
-            position: absolute;
-            top: 20%;
-            right: 0px;
-            width: 2px;
-            height: 60%;
-            background: #a77029;
-            border-radius: 999px;
-            opacity: 0.7;
-            z-index: 1;
-          }
-        }
-        
-        /* Second row styles */
-        .placement-stats-grid-row2 {
-          position: relative;
-        }
-        @media (min-width: 640px) {
-          .placement-stats-grid-row2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-          }
-          .stat-card-row2 {
-            position: relative;
-          }
-          /* Vertical separator line for second row - only between the 2 columns */
-          .stat-card-row2:first-child::after {
+          .stat-card:nth-child(3)::after,
+          .stat-card:nth-child(5)::after,
+          .stat-card:nth-child(6)::after,
+          .stat-card:nth-child(7)::after {
             content: "";
             position: absolute;
             top: 20%;

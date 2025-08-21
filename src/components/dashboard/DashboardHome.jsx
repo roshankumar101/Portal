@@ -11,6 +11,7 @@ import Education from './Education';
 import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
+import StudentFooter from './StudentFooter';
 import { 
   Clock,
   AlertCircle,
@@ -197,6 +198,10 @@ const DashboardHome = () => {
       {/* Achievements & Certifications Section */}
       <Achievements />
 
+      {/* Student Footer */}
+      <div>
+        <StudentFooter />
+      </div>
       
     </div>
   );

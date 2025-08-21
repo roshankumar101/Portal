@@ -1,42 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import brandLogo from '../assets/brand_logo.webp';
-import placementPolicy from '../assets/Docs/PlacementPolicy.pdf';
 
 const PWIOIFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementPolicy }) => {
     const linkedinLink = "https://www.linkedin.com/school/pw-ioi/";
     const instagramLink = "https://www.instagram.com/pw_ioi/";
     const youtubeLink = "https://www.youtube.com/@PW-IOI";
-
-    const [formData, setFormData] = useState({
-        company: '',
-        email: '',
-        phone: ''
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        setTimeout(() => {
-            console.log('Form submitted:', formData);
-            setFormData({
-                company: '',
-                email: '',
-                phone: ''
-            });
-            setIsSubmitting(false);
-            alert('Thank you for your message! We will get back to you soon.');
-        }, 1000);
-    };
 
     return (
         <footer className="text-white py-5 relative overflow-hidden mt-10" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>

@@ -98,16 +98,14 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
                     key={job.id}
                     className="grid grid-cols-5 gap-6 p-4 rounded-xl bg-blue-50 hover:shadow-md transition-all duration-200"
                   >
-                    <div className="flex items-center">
+                    <div className='pl-[10%]'>
                       {/* Logo image */}
                       <img
                         src={logoUrl}
                         alt={`${job.company?.name} logo`}
-                        className="w-8 h-8 rounded-md mr-3 object-contain"
+                        className="w-[50%] h-8 rounded-md object-contain"
                       />
-                      <div className="text-sm font-semibold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-                        {job.company?.name || 'Unknown Company'}
-                      </div>
+                      
                     </div>
                     <div className="text-sm font-medium text-gray-700 flex items-center whitespace-nowrap overflow-hidden text-ellipsis pl-2">
                       {job.jobTitle || 'Unknown Position'}

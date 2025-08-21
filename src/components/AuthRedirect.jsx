@@ -20,10 +20,12 @@ export default function AuthRedirect() {
       const currentPath = location.pathname;
       console.log('AuthRedirect - User authenticated with role:', role, 'Current path:', currentPath);
       
-      // Don't redirect if user is on home page (allow them to stay after logout)
-      // or if already on the correct dashboard
-      if (currentPath === '/') {
-        console.log('AuthRedirect - User on home page, not redirecting');
+      // Public paths accessible to logged-in users without a redirect.
+      const publicPaths = ['/', '/dev-team', '/test'];
+
+      // Don't redirect if the user is on an allowed public page.
+      if (publicPaths.includes(currentPath)) {
+        console.log(`AuthRedirect - User on allowed public page (${currentPath}), not redirecting`);
         return;
       }
       

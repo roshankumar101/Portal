@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import DashboardHome from '../../components/dashboard/DashboardHome';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,14 +16,18 @@ import {
   Github,
   Youtube,
   ExternalLink,
-  LogOut
+  LogOut,
+  GripVertical
 } from 'lucide-react';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(20); // Default 20%
+  const [isDragging, setIsDragging] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const dragRef = useRef(null);
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -79,6 +83,49 @@ export default function StudentDashboard() {
       alert('Logout failed: ' + error.message);
     }
   };
+
+  // Drag functionality for resizing sidebar
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging) return;
+    
+    const windowWidth = window.innerWidth;
+    const newWidth = (e.clientX / windowWidth) * 100;
+    
+    // Constrain between 7% and 20%
+    const constrainedWidth = Math.min(Math.max(newWidth, 6), 20);
+    setSidebarWidth(constrainedWidth);
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Add global mouse event listeners
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -350,30 +397,37 @@ export default function StudentDashboard() {
 
   return (
     <DashboardLayout>
-      {/* 20% Sidebar / 80% Content Layout */}
-      <div className="flex min-h-screen">
-        {/* Left Sidebar - 20% - Navigation */}
-        <aside className="w-[20%] bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto">
+      {/* Resizable Sidebar Layout */}
+      <div className="flex min-h-screen relative">
+        {/* Left Sidebar - Resizable */}
+        <aside 
+          className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
+          style={{ width: `${sidebarWidth}%` }}
+        >
           <div className="p-4 h-full flex flex-col">
             {/* Navigation Section */}
             <div className="mb-6">
-              <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
+              {sidebarWidth >= 12 && (
+                <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
+              )}
               <nav className="space-y-1">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabClick(tab.id)}
-                      className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                          : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {tab.label}
-                    </button>
+                    <div key={tab.id} className="mb-1">
+                      <button
+                        onClick={() => handleTabClick(tab.id)}
+                        className={`w-full flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${
+                          activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                        } ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2.5'}`}
+                        title={sidebarWidth < 12 ? tab.label : ''}
+                      >
+                        <Icon className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''}`} />
+                        {sidebarWidth >= 12 && tab.label}
+                      </button>
+                    </div>
                   );
                 })}
               </nav>
@@ -381,20 +435,30 @@ export default function StudentDashboard() {
 
             {/* Skills & Credentials Section */}
             <div className="mb-6">
-              <h2 className="text-base font-bold text-gray-900 mb-3">Skills & Credentials</h2>
+              {sidebarWidth >= 12 && (
+                <h2 className="text-base font-bold text-gray-900 mb-3">Skills & Credentials</h2>
+              )}
               <nav className="space-y-1">
                 {skillsCredentials.map((skill) => {
                   const Icon = skill.icon;
                   return (
-                    <button
-                      key={skill.id}
-                      onClick={() => handleSkillClick(skill.id)}
-                      className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all duration-200 group"
-                    >
-                      <Icon className={`h-4 w-4 mr-2 ${skill.color}`} />
-                      <span className="flex-1 text-left">{skill.label}</span>
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
+                    <div key={skill.id} className="mb-1">
+                      <button
+                        onClick={() => handleSkillClick(skill.id)}
+                        className={`w-full flex items-center rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all duration-200 group ${
+                          sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
+                        }`}
+                        title={sidebarWidth < 12 ? skill.label : ''}
+                      >
+                        <Icon className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''} ${skill.color}`} />
+                        {sidebarWidth >= 12 && (
+                          <>
+                            <span className="flex-1 text-left">{skill.label}</span>
+                            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </>
+                        )}
+                      </button>
+                    </div>
                   );
                 })}
               </nav>
@@ -404,17 +468,38 @@ export default function StudentDashboard() {
             <div className="mt-auto pt-4 pb-[20%] border-t border-gray-300">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200"
+                className={`w-full flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${
+                  sidebarWidth < 12 ? 'justify-center px-2 py-2 mb-12' : 'px-3 py-2.5'
+                }`}
+                title={sidebarWidth < 12 ? 'Logout' : ''}
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                <LogOut className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''}`} />
+                {sidebarWidth >= 12 && 'Logout'}
               </button>
             </div>
           </div>
         </aside>
 
-        {/* Right Content Area - 80% */}
-        <main className="ml-[20%] w-[80%] bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen">
+        {/* Drag Handle */}
+        <div
+          ref={dragRef}
+          onMouseDown={handleMouseDown}
+          className="fixed top-0 h-screen w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize z-10 transition-colors duration-200 flex items-center justify-center group"
+          style={{ left: `${sidebarWidth}%` }}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
+            <GripVertical className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors duration-200" />
+          </div>
+        </div>
+
+        {/* Right Content Area */}
+        <main 
+          className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen transition-all duration-200 ease-in-out"
+          style={{ 
+            marginLeft: `${sidebarWidth}%`, 
+            width: `${100 - sidebarWidth}%` 
+          }}
+        >
           {/* Mobile Navigation Menu - Top of Right Section */}
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-b border-gray-200 shadow-lg">

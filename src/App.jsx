@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css'
 import Header from './components/Header'
 import Banner from './components/Banner'
@@ -31,6 +31,7 @@ import MeetDevTeamPage from './components/DevTeam'
 
 // Landing page component
 function LandingPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true)
   const [timelineAutoplay, setTimelineAutoplay] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -68,7 +69,7 @@ function LandingPage() {
 
   const handleMeetDevTeam = () => {
     // Navigate to DevTeam component
-    window.location.href = '/dev-team';
+    navigate('/dev-team');
   };
 
   const handleContactTeam = () => {

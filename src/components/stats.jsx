@@ -26,6 +26,7 @@ const stats = [
   {
     label: "Global Internships",
     value: "42+",
+    icon: <FaMoneyCheckAlt className="inline-block mr-2 text-black text-xl" />,
   },
   {
     label: "Ventures Launched",
@@ -38,13 +39,8 @@ const stats = [
     icon: <FaUserTie className="inline-block mr-2 text-black text-xl" />,
   },
   {
-    label: "Startup Internships",
-    value: "95+",
-    icon: <FaLightbulb className="inline-block mr-2 text-black text-xl" />,
-  },
-  {
     label: "Average Stipend",
-    value: "₹35K/month",
+    value: "₹35K",
     icon: <FaMoneyCheckAlt className="inline-block mr-2 text-black text-xl" />,
   },
 ];
@@ -125,22 +121,12 @@ const PlacementStats = () => {
         {/* Stats Grid with separators */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 placement-stats-grid bg-[#FFDE83]/80 rounded-t-xl">
           {stats.slice(0, 4).map((stat, index) => (
-            <div
-              key={index}
-              className="stat-card rounded-xl py-5 text-center flex flex-col items-center h-full min-h-[140px]"
-            >
-              <div className="text-5xl font-extrabold text-black mt-2">
-                {stat.label === "Average Stipend" ? (
-                  <>
-                    ₹35K
-                    <span className="text-base align-bottom ml-1 font-semibold text-black/70">/month</span>
-                  </>
-                ) : (
-                  stat.value
-                )}
+            <div key={index} className="stat-card rounded-xl py-4 text-center flex flex-col items-center">
+              <div className="text-5xl font-extrabold text-black mt-4">
+                {stat.value}
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                {stat.label}
+                {stat.icon}{stat.label}
               </div>
             </div>
           ))}
@@ -154,7 +140,7 @@ const PlacementStats = () => {
                 {stat.value}
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                {stat.label}
+                {stat.icon}{stat.label}
               </div>
             </div>
           ))}

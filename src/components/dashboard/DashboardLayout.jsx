@@ -1,31 +1,37 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import SOTbanner from '../../assets/SOTbanner.jpg';
+
 import {
-  User
+  User,
+  SquarePen
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Footer from '../Footer';
 
 export default function DashboardLayout({ children }) {
   const { user } = useAuth();
-  
+  const navigate = useNavigate();
+
   // Calculate profile completion percentage (50-100%)
   const calculateProfileCompletion = () => {
     if (!user) return 50;
-    
+
     let completion = 50; // Base completion
     const maxCompletion = 100;
     const stepValue = 10;
-    
+
     // Check various profile fields
     if (user.displayName) completion += stepValue;
     if (user.email) completion += stepValue;
     if (user.photoURL) completion += stepValue;
     // Add more checks based on your user model
-    
+
     return Math.min(completion, maxCompletion);
   };
-  
+
   const completionPercentage = calculateProfileCompletion();
-  
+
   // Get dynamic color based on completion percentage
   const getProgressColor = (percentage) => {
     if (percentage < 40) {
@@ -42,7 +48,10 @@ export default function DashboardLayout({ children }) {
       {/* Horizontal Navbar */}
       <nav className="bg-white border-b border-blue-100 sticky top-0 z-50">
         <div className="w-full px-2 sm:px-3 lg:px-4 sm:py-1 lg:py-2">
-          <div className="px-6 py-1 bg-blue-100 rounded-xl">
+          <div
+            className="px-6 py-1 rounded-xl bg-cover bg-center"
+            style={{ backgroundImage: `url(${SOTbanner})` }}
+          >
             <div className="flex justify-between items-center h-22">
               {/* Left Side - Student Details */}
               <div className="flex items-center flex-1">
@@ -77,7 +86,7 @@ export default function DashboardLayout({ children }) {
                       className="transition-all duration-1000 ease-out"
                     />
                   </svg>
-                  
+
                   {/* Profile Image */}
                   <div className="w-18 h-18 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                     <User className="h-8 w-8 text-white" />
@@ -86,10 +95,19 @@ export default function DashboardLayout({ children }) {
 
                 {/* Student Details */}
                 <div className="ml-4 space-y-1">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {user?.displayName || 'Student Name'}
+                  <div className="flex items-center">
+                    <h2 className="text-2xl font-bold text-white">
+                      {user?.displayName || 'Student Name'}
+                      <button
+                        onClick={() => navigate('/dashboard?tab=editProfile')}
+                        className="ml-1 p-1 text-black hover:text-blue-600 transition-colors rounded-full hover:bg-blue-50"
+                        aria-label="Edit profile"
+                      >
+                        <SquarePen className="h-4 w-4" />
+                      </button>
+                    </h2>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:space-x-6 text-sm text-gray-900">
+                  <div className="flex flex-col sm:flex-row sm:space-x-6 text-sm text-white">
                     <div>
                       <span className="font-medium text-gray-500">ID:</span> ENR123456789
                     </div>
@@ -108,8 +126,8 @@ export default function DashboardLayout({ children }) {
                 {/* Batch Image - Placeholder */}
                 <div className="hidden md:block">
                   <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400">
-                    <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/>
-                    <circle cx="12" cy="8" r="6"/>
+                    <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
+                    <circle cx="12" cy="8" r="6" />
                   </svg>
                 </div>
               </div>
@@ -119,8 +137,7 @@ export default function DashboardLayout({ children }) {
       </nav>
 
       {/* Main Content Area */}
-      <main className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen">
-
+      <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
         {children}
       </main>
     </div>

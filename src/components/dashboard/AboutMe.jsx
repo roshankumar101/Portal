@@ -4,7 +4,6 @@ import { Phone, Mail, Linkedin } from 'lucide-react';
 const AboutMe = ({ studentData, user }) => {
   const [isTextExpanded, setIsTextExpanded] = useState(false);
 
-  // Text truncation function
   const truncateText = (text, wordLimit = 40) => {
     const words = text.split(' ');
     if (words.length <= wordLimit) {

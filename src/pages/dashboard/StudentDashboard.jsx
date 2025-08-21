@@ -3,11 +3,14 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import DashboardHome from '../../components/dashboard/DashboardHome';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
+import { FaHackerrank, FaYoutube } from 'react-icons/fa';
 import { 
   Home, 
   Briefcase,
   FileText, 
   Calendar,
+  SquarePen,
   Code2,
   Trophy,
   Github,
@@ -28,16 +31,23 @@ export default function StudentDashboard() {
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'applications', label: 'Track Applications', icon: FileText },
     { id: 'resources', label: 'Placement Resources', icon: FileText },
-    { id: 'editProfile', label: 'Edit Profile', icon: Calendar },
+    { id: 'editProfile', label: 'Edit Profile', icon: SquarePen },
   ];
 
+  const LeetCodeIcon = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="m15.42 16.94-2.25 2.17a2.1 2.1 0 0 1-1.52.56 2.1 2.1 0 0 1-1.52-.56l-3.61-3.63a2.18 2.18 0 0 1-.58-1.55 2.07 2.07 0 0 1 .58-1.52l3.6-3.65a2.1 2.1 0 0 1 1.53-.54 2.08 2.08 0 0 1 1.52.55l2.25 2.17A1.14 1.14 0 0 0 17 9.33l-2.17-2.2a4.24 4.24 0 0 0-2-1.12l2.06-2.08a1.15 1.15 0 0 0-1.62-1.62l-8.43 8.42a4.48 4.48 0 0 0-1.24 3.2 4.57 4.57 0 0 0 1.24 3.23l3.63 3.63A4.38 4.38 0 0 0 11.66 22a4.45 4.45 0 0 0 3.2-1.25L17 18.56a1.14 1.14 0 0 0-1.61-1.62z"></path>
+      <path d="M19.34 12.84h-8.45a1.12 1.12 0 0 0 0 2.24h8.45a1.12 1.12 0 0 0 0-2.24"></path>
+    </svg>
+  );
+
   const skillsCredentials = [
-    { id: 'leetcode', label: 'LeetCode', icon: Code2, color: 'text-orange-600' },
-    { id: 'codeforces', label: 'Codeforces', icon: Trophy, color: 'text-blue-600' },
-    { id: 'gfg', label: 'GeeksforGeeks', icon: Code2, color: 'text-green-600' },
-    { id: 'hackerrank', label: 'HackerRank', icon: Trophy, color: 'text-emerald-600' },
+    { id: 'leetcode', label: 'LeetCode', icon: LeetCodeIcon, color: 'text-orange-600' },
+    { id: 'codeforces', label: 'Codeforces', icon: SiCodeforces, color: 'text-blue-600' },
+    { id: 'gfg', label: 'GeeksforGeeks', icon: SiGeeksforgeeks, color: 'text-green-600' },
+    { id: 'hackerrank', label: 'HackerRank', icon: FaHackerrank, color: 'text-emerald-600' },
     { id: 'github', label: 'GitHub', icon: Github, color: 'text-gray-700' },
-    { id: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
+    { id: 'youtube', label: 'YouTube', icon: FaYoutube, color: 'text-red-600' },
   ];
 
   const handleTabClick = (tabId) => {
@@ -441,5 +451,3 @@ export default function StudentDashboard() {
     </DashboardLayout>
   );
 }
-
-

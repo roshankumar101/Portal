@@ -23,7 +23,9 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
     department: '',
     skills: [],
     resumeUrl: '',
-    leetcodeProfile: ''
+    leetcodeProfile: '',
+    tagline: '', // "What describes you" field - headline below name
+    quote: '' // Dynamic quote field for banner
   });
   const [newSkill, setNewSkill] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
@@ -38,7 +40,9 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
         department: studentData.department || '',
         skills: studentData.skills || [],
         resumeUrl: studentData.resumeUrl || '',
-        leetcodeProfile: studentData.leetcodeProfile || ''
+        leetcodeProfile: studentData.leetcodeProfile || '',
+        tagline: studentData.tagline || '', // Initialize tagline
+        quote: studentData.quote || '' // Initialize quote
       });
     }
   }, [studentData]);
@@ -140,7 +144,9 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
         department: studentData.department || '',
         skills: studentData.skills || [],
         resumeUrl: studentData.resumeUrl || '',
-        leetcodeProfile: studentData.leetcodeProfile || ''
+        leetcodeProfile: studentData.leetcodeProfile || '',
+        tagline: studentData.tagline || '', // Reset tagline
+        quote: studentData.quote || '' // Reset quote
       });
     }
     setIsEditing(false);
@@ -175,6 +181,18 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
             <p className="text-sm font-medium text-orange-700">Department</p>
             <p className="text-gray-900">{formData.department || 'Not provided'}</p>
           </div>
+          {formData.tagline && (
+            <div>
+              <p className="text-sm font-medium text-orange-700">What describes you</p>
+              <p className="text-gray-900 italic">{formData.tagline}</p>
+            </div>
+          )}
+          {formData.quote && (
+            <div>
+              <p className="text-sm font-medium text-orange-700">Banner Quote</p>
+              <p className="text-gray-900 italic">{formData.quote}</p>
+            </div>
+          )}
           {formData.skills && formData.skills.length > 0 && (
             <div>
               <p className="text-sm font-medium text-orange-700 mb-2">Skills</p>
@@ -294,6 +312,35 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
             <option value="Chemical">Chemical</option>
             <option value="Other">Other</option>
           </select>
+        </div>
+
+        {/* What describes you - Headline below name */}
+        <div>
+          <label className="block text-sm font-medium text-orange-700 mb-1">What describes you *</label>
+          <input
+            type="text"
+            value={formData.tagline}
+            onChange={(e) => handleInputChange('tagline', e.target.value)}
+            className="w-full px-3 py-2 border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+            placeholder="e.g., Passionate developer, Creative problem solver, Team player, Innovative thinker"
+            maxLength={80}
+            required
+          />
+          <p className="text-xs text-gray-500 mt-1">This will appear as your headline below your name in the banner</p>
+        </div>
+
+        {/* Banner Quote */}
+        <div>
+          <label className="block text-sm font-medium text-orange-700 mb-1">Banner Quote</label>
+          <textarea
+            value={formData.quote}
+            onChange={(e) => handleInputChange('quote', e.target.value)}
+            className="w-full px-3 py-2 border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+            placeholder="Write a personal quote that will appear on your banner..."
+            rows="3"
+            maxLength={200}
+          />
+          <p className="text-xs text-gray-500 mt-1">This quote will appear on your dashboard banner</p>
         </div>
 
         {/* Skills */}

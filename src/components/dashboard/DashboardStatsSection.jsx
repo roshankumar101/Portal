@@ -8,37 +8,21 @@ const DashboardStatsSection = ({ studentData }) => {
     {
       label: 'Applied',
       count: stats?.applied || 0,
-      color: 'bg-blue-500',
-      bgColor: 'from-blue-50 to-blue-100',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-700',
       icon: Briefcase
     },
     {
       label: 'Shortlisted',
       count: stats?.shortlisted || 0,
-      color: 'bg-indigo-500',
-      bgColor: 'from-indigo-50 to-indigo-100',
-      borderColor: 'border-indigo-200',
-      textColor: 'text-indigo-700',
       icon: AlertCircle
     },
     {
       label: 'Interviewed',
       count: stats?.interviewed || 0,
-      color: 'bg-emerald-500',
-      bgColor: 'from-emerald-50 to-green-100',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-700',
       icon: CheckCircle
     },
     {
       label: 'Offers',
       count: stats?.offers || 0,
-      color: 'bg-orange-500',
-      bgColor: 'from-orange-50 to-orange-100',
-      borderColor: 'border-orange-200',
-      textColor: 'text-orange-700',
       icon: TrendingUp,
       percentage: true
     }
@@ -51,9 +35,9 @@ const DashboardStatsSection = ({ studentData }) => {
   };
 
   return (
-    <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
-        <legend className="text-xl font-bold text-white px-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full">
+    <div className="w-full font-inter">
+      <fieldset className="bg-white rounded-lg border-2 border-[#3c80a7] py-4 px-6 transition-all duration-200 shadow-md">
+        <legend className="text-xl font-bold text-white px-3 bg-gradient-to-r from-[#3c80a7] to-[#2d5f7a] rounded-full">
           Dashboard Stats
         </legend>
         <div className="my-3">
@@ -65,17 +49,30 @@ const DashboardStatsSection = ({ studentData }) => {
               return (
                 <div
                   key={index}
-                  className={`bg-gradient-to-br ${stat.bgColor} p-4 rounded-2xl border hover:shadow-yellow-300 hover:shadow-sm ${stat.borderColor} transition-all duration-200`}
+                  className="bg-white p-6 rounded-xl border border-slate-200 hover:shadow-lg hover:border-[#3c80a7] transition-all duration-300 group"
                 >
-                  <div className="flex items-center">
-                    <div className={`p-3 bg-gradient-to-br ${stat.color} to-opacity-80 rounded-xl`}>
-                      <Icon className="h-5 w-5 text-white" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-600 mb-1">{stat.label}</p>
+                      <p className="text-3xl font-bold text-slate-900">{displayValue}</p>
                     </div>
-                    <div className="ml-3">
-                      <p className={`text-xs font-semibold ${stat.textColor}`}>{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">{displayValue}</p>
+                    <div className="p-3 bg-slate-100 rounded-lg group-hover:bg-[#3c80a7]/10 transition-all duration-300">
+                      <Icon className="h-6 w-6 text-slate-800 group-hover:text-[#3c80a7]" />
                     </div>
                   </div>
+                  
+                  {/* Progress bar for offers */}
+                  {stat.percentage && (
+                    <div className="mt-4">
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-[#3c80a7] to-[#2d5f7a] h-2 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${Math.min(calculateOfferPercentage(), 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">Success Rate</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -87,3 +84,4 @@ const DashboardStatsSection = ({ studentData }) => {
 };
 
 export default DashboardStatsSection;
+

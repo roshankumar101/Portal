@@ -2,8 +2,8 @@ import React from 'react';
 import { Award, Eye } from 'lucide-react';
 
 const Achievements = () => {
-  // Achievements & Certifications data
-  const achievementsData = [
+  // Certifications data
+  const certificationsData = [
     {
       id: 1,
       title: "AWS Certified Solutions Architect - Associate",
@@ -27,34 +27,20 @@ const Achievements = () => {
     },
     {
       id: 4,
-      title: "Winner - National Coding Championship 2024",
-      description: "First place winner in the annual national coding competition with over 10,000 participants.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/coding-championship"
-    },
-    {
-      id: 5,
       title: "Microsoft Azure Fundamentals (AZ-900)",
       description: "Foundational knowledge of cloud services and how those services are provided with Microsoft Azure.",
       hasCertificate: false,
       certificateUrl: null
     },
     {
-      id: 6,
+      id: 5,
       title: "Scrum Master Professional Certificate",
       description: "Agile project management certification covering Scrum methodology, team leadership, and sprint planning.",
       hasCertificate: true,
       certificateUrl: "https://example.com/scrum-cert"
     },
     {
-      id: 7,
-      title: "Dean's List - Academic Excellence Award",
-      description: "Recognition for maintaining exceptional academic performance with GPA above 9.5 for consecutive semesters.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/deans-list"
-    },
-    {
-      id: 8,
+      id: 6,
       title: "Python Institute PCAP Certification",
       description: "Professional certification in Python programming covering advanced concepts and best practices.",
       hasCertificate: false,
@@ -63,66 +49,87 @@ const Achievements = () => {
   ];
 
   // Handle certificate viewing
-  const handleViewCertificate = (achievement) => {
-    if (achievement.hasCertificate && achievement.certificateUrl) {
-      window.open(achievement.certificateUrl, '_blank');
+  const handleViewCertificate = (certification) => {
+    if (certification.hasCertificate && certification.certificateUrl) {
+      window.open(certification.certificateUrl, '_blank');
     }
   };
 
-  // Sort achievements to show those with certificates first
-  const sortedAchievements = [...achievementsData].sort((a, b) => {
+  // Sort certifications to show those with certificates first
+  const sortedCertifications = [...certificationsData].sort((a, b) => {
     if (a.hasCertificate && !b.hasCertificate) return -1;
     if (!a.hasCertificate && b.hasCertificate) return 1;
     return 0;
   });
 
   return (
-    <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
-        <legend className="text-xl font-bold text-blue-600 px-2 bg-blue-100 rounded-full">
-          Achievements & Certifications
+    <div className="w-full relative font-inter">
+      {/* Embedded custom scrollbar styles */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9; /* Tailwind slate-100 */
+          border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #3c80a7;
+          border-radius: 8px;
+          transition: background 0.3s ease;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #2d5f7a;
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #3c80a7 #f1f5f9;
+        }
+      `}</style>
+
+      <fieldset className="bg-white rounded-lg border-2 border-[#3c80a7] py-4 px-6 transition-all duration-200 shadow-md">
+        <legend className="text-xl font-bold text-white px-3 bg-gradient-to-r from-[#3c80a7] to-[#2d5f7a] rounded-full">
+          Certifications
         </legend>
 
         <div className="my-3">
-          <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
-            {/* Scrollable container with fixed height for 5 items */}
-            <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 pr-2">
-              <div className="space-y-3">
-                {sortedAchievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between"
-                  >
-                    {/* Left side - Achievement content */}
-                    <div className="flex-1 pr-4">
-                      <div className="flex items-start space-x-3">
-                        <Award className="h-5 w-5 text-yellow-600 mt-1 flex-shrink-0" />
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-900 mb-2">
-                            {achievement.title}
-                          </h4>
-                          <p className="text-sm text-gray-700 leading-relaxed">
-                            {achievement.description}
-                          </p>
-                        </div>
+          {/* Scrollable container */}
+          <div className="max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3">
+              {sortedCertifications.map((certification) => (
+                <div
+                  key={certification.id}
+                  className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between border border-slate-200"
+                >
+                  {/* Left side - Certification content */}
+                  <div className="flex-1 pr-4">
+                    <div className="flex items-start space-x-3">
+                      <Award className="h-5 w-5 text-[#3c80a7] mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-lg font-bold text-slate-900 mb-2">
+                          {certification.title}
+                        </h4>
+                        <p className="text-sm text-slate-700 leading-relaxed">
+                          {certification.description}
+                        </p>
                       </div>
                     </div>
-
-                    {/* Right side - View Certificate button - Only show if certificate exists */}
-                    {achievement.hasCertificate && (
-                      <div className="flex-shrink-0">
-                        <button
-                          onClick={() => handleViewCertificate(achievement)}
-                          className="flex items-center px-4 py-2 rounded-lg font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Certificate
-                        </button>
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
+
+                  {/* Right side - View Certificate button (only if certificate exists) */}
+                  {certification.hasCertificate && (
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={() => handleViewCertificate(certification)}
+                        className="flex items-center px-4 py-2 rounded-lg font-medium text-sm bg-[#3c80a7] text-white hover:bg-[#2d5f7a] hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#3c80a7] focus:ring-opacity-50 transition-all duration-200"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Certificate
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

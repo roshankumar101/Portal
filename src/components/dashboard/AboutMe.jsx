@@ -23,20 +23,20 @@ const AboutMe = ({ studentData, user }) => {
   const { truncated, needsReadMore, fullText } = truncateText(aboutMeText);
 
   return (
-    <div className="w-full">
-      <fieldset className="bg-white rounded-lg border-2 border-blue-200 py-4 px-6 transition-all duration-200">
-        <legend className="text-xl font-bold text-yellow-300 px-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full">
+    <div className="w-full font-inter">
+      <fieldset className="bg-white rounded-lg border-2 border-[#3c80a7] py-4 px-6 transition-all duration-200 shadow-md">
+        <legend className="text-xl font-bold text-white px-3 bg-gradient-to-r from-[#3c80a7] to-[#2d5f7a] rounded-full">
           About Me
         </legend>
         
         {/* About Me Content */}
         <div className="my-3 space-y-4">
-          <div className="text-gray-700 leading-relaxed text-sm">
+          <div className="text-slate-700 leading-relaxed text-sm">
             <span>{isTextExpanded ? fullText : truncated}</span>
             {needsReadMore && (
               <button 
                 onClick={() => setIsTextExpanded(!isTextExpanded)}
-                className="ml-2 text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 underline"
+                className="ml-2 text-[#3c80a7] hover:text-[#2d5f7a] font-medium transition-colors duration-200 underline"
               >
                 {isTextExpanded ? 'Read less' : 'Read more'}
               </button>
@@ -44,24 +44,24 @@ const AboutMe = ({ studentData, user }) => {
           </div>
           
           {/* Contact Information - LinkedIn Style */}
-          <div className="pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-start text-gray-600">
+          <div className="pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-start text-slate-600">
               {/* Phone */}
               <span className="text-sm font-medium">{studentData?.personalInfo?.phone || '9876543210'}</span>
               
               {/* Dot separator */}
-              <span className="ml-4 mr-1 text-black">•</span>
+              <span className="ml-4 mr-1 text-slate-400">•</span>
               
               {/* Email */}
               <span className="text-sm font-medium">{studentData?.personalInfo?.email || user?.email || 'student@example.com'}</span>
               
               {/* Dot separator */}
-              <span className="ml-4 mr-1 text-black">•</span>
+              <span className="ml-4 mr-1 text-slate-400">•</span>
               
               {/* LinkedIn */}
               <button 
                 onClick={() => window.open(studentData?.personalInfo?.linkedinUrl || 'https://linkedin.com/in/student', '_blank')}
-                className="flex items-center p-1 rounded-sm border border-blue-600 bg-white text-blue-600 hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700 hover:scale-110 transition-all duration-200 shadow-sm hover"
+                className="flex items-center p-1 rounded-sm border border-[#3c80a7] bg-white text-[#3c80a7] hover:bg-[#3c80a7] hover:border-[#2d5f7a] hover:text-white hover:scale-110 transition-all duration-200 shadow-sm"
               >
                 <Linkedin className="h-3 w-3 fill-current" />
               </button>

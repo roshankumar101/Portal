@@ -4,6 +4,7 @@ import DashboardHome from '../../components/dashboard/DashboardHome';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
+import Resume from '../../components/dashboard/Resume';
 import { FaHackerrank, FaYoutube } from 'react-icons/fa';
 import {
   Home,
@@ -79,6 +80,7 @@ export default function StudentDashboard() {
     { id: 'applications', label: 'Track Applications', icon: ClipboardList },
     { id: 'resources', label: 'Placement Resources', icon: BookOpen },
     { id: 'editProfile', label: 'Edit Profile', icon: SquarePen },
+    { id: 'resume', label: 'Resume', icon: FileText },
   ];
 
   const LeetCodeIcon = (props) => (
@@ -337,6 +339,16 @@ export default function StudentDashboard() {
             </div>
           </div>
         );
+        case 'resume':
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Resume</h2>
+        <p className="text-gray-600">Your resume details will appear here.</p>
+      </div>
+    </div>
+  );
+
 
       default:
         return <DashboardHome />;

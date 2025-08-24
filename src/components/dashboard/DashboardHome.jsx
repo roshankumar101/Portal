@@ -12,6 +12,7 @@ import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
 import StudentFooter from './StudentFooter';
+import Resume from './Resume';
 import { 
   Clock,
   AlertCircle,
@@ -202,6 +203,7 @@ const DashboardHome = () => {
       <div>
         <StudentFooter />
       </div>
+     
       
     </div>
   );

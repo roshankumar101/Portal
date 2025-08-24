@@ -44,9 +44,16 @@ const AboutMe = ({ studentData, user }) => {
           </div>
 
           {/* Contact Information */}
+          
           <div className="pt-4 border-t border-[#3c80a7]/40">
             <div className="flex items-center justify-start text-gray-600">
               {/* Phone */}
+              <span className="ml-1 mr-1 text-black">•</span>
+              <span className="text-sm font-medium bg-gradient-to-r from-black to-black text-transparent bg-clip-text">
+                {studentData?.personalInfo?.phone || 'City,State'}
+              </span>
+
+              <span className="ml-4 mr-1 text-black">•</span>
               <span className="text-sm font-medium bg-gradient-to-r from-black to-black text-transparent bg-clip-text">
                 {studentData?.personalInfo?.phone || '9876543210'}
               </span>

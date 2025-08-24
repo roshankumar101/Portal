@@ -107,12 +107,12 @@ const DashboardHome = () => {
     }
   };
 
-  // Check if student has already applied to a job
+  // Check fir student has already applied to a job
   const hasApplied = (jobId) => {
     return applications.some(app => app.jobId === jobId);
   };
 
-  // Handle job details modal
+  //job details modal
   const handleKnowMore = (job) => {
     if (job.jdUrl) {
       window.open(job.jdUrl, '_blank');
@@ -121,11 +121,11 @@ const DashboardHome = () => {
     }
   };
 
-  // Check if student meets eligibility criteria
+  // whether a student meets eligibility criteria
   const meetsEligibility = (eligibilityCriteria) => {
     if (!studentData?.cgpa || !eligibilityCriteria) return true;
     
-    // Simple CGPA check (you can make this more sophisticated)
+    // CGPA check 
     const match = eligibilityCriteria.match(/CGPA\s*>=\s*(\d+\.?\d*)/i);
     if (match) {
       const requiredCGPA = parseFloat(match[1]);

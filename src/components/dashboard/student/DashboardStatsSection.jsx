@@ -70,7 +70,7 @@ const DashboardStatsSection = ({ studentData }) => {
               return (
                 <div
                   key={index}
-                  className={`bg-gradient-to-br ${stat.bgFrom} ${stat.bgTo} p-4 rounded-2xl border border-gray-200 hover:border-[#3c80a7] hover:shadow-md transition-all duration-200`}
+                  className={`bg-gradient-to-br ${stat.bgFrom} ${stat.bgTo} p-4 rounded-xl border border-gray-200 hover:border-[#3c80a7] hover:shadow-md transition-all duration-200`}
                 >
                   <div className="flex items-center">
                     <div className={`p-2 mr-3 flex items-center justify-center shadow-sm rounded-full ${stat.iconBgColor}`}>

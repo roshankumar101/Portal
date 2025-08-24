@@ -119,7 +119,7 @@ export default function AdminSlider() {
       email: "vikas@example.com"
     },
     { 
-      name: "Ms. Janishar Ali", 
+      name: "Mr. Janishar Ali", 
       image: CS4,
       position: "Position",
       linkedin: "https://linkedin.com/in/arjun",

@@ -3,30 +3,39 @@ import { FaLinkedin, FaHome } from "react-icons/fa";
 
 // Placeholder image for now
 const placeholderImg = "https://via.placeholder.com/224x224.png?text=Mentor+Image";
-
+import User from "../assets/CS4.png";
+import dev from "../assets/dev1.png";
+import dev2 from "../assets/dev2.png";
+import dev3 from "../assets/dev3.png";
+import dev4 from "../assets/dev4.png";
+import prof from "../assets/prof1.png";
 
 const devs = [
   {
     name: "Niraj",
     linkedin: "https://linkedin.com/in/niraj",
+    img: dev,
     role:
       "The brain behind the scenes. Manages the logic, data flow, and functionality that make the portal run like clockwork.",
   },
   {
     name: "Pratik",
     linkedin: "https://linkedin.com/in/pratik",
+    img: dev3,
     role:
       "The backbone of reliability. Works on databases, server-side processes, and making sure the system stays stable no matter what.",
   },
   {
     name: "Roshan",
     linkedin: "https://linkedin.com/in/roshan",
+    img: dev2,
     role:
       "Turns ideas into sleek, responsive designs and ensures every click feels smooth. Balances creativity with functionality to make the first impression count.",
   },
   {
     name: "Esha",
     linkedin: "https://linkedin.com/in/roshan",
+    img: dev4,
     role:
       "Turns ideas into sleek, responsive designs and ensures every click feels smooth. Balances creativity with functionality to make the first impression count.",
   },
@@ -35,16 +44,16 @@ const devs = [
 // Mentors data with descriptions
 const mentors = [
   {
-    name: "Shubham Sir",
+    name: "Prof. Shubham",
     linkedin: "#",
-    img: placeholderImg,
+    img: prof,
     description:
       "A visionary leader who guides the team with insight and experience, always pushing boundaries to achieve excellence.",
   },
   {
-    name: "Syed Zabi Ulla Sir",
+    name: "Prof. Syed Zabi Ulla",
     linkedin: "https://linkedin.com/in/syedzabiulla",
-    img: placeholderImg,
+    img: User,
     description:
       "Industry expert and master strategist. Quietly gives his time, energy, and comfort while envisioning beyond what we imagine.",
   },
@@ -58,13 +67,13 @@ const MentorHoverCard = ({ src, name, linkedin, description }) => (
         alt={name}
         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
-      {/* Description overlay, appears on hover with translucent black */}
+      {/* Description overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
         <p className="text-[#FFEEC3] font-caveat text-center text-lg italic select-none">
           {description}
         </p>
       </div>
-      {/* LinkedIn icon bottom right */}
+      {/* LinkedIn icon */}
       <a
         href={linkedin}
         target="_blank"
@@ -75,15 +84,23 @@ const MentorHoverCard = ({ src, name, linkedin, description }) => (
         <FaLinkedin size={24} />
       </a>
     </div>
-    {/* Name always visible below image */}
-    <span className="mt-3 text-gray-900 font-semibold font-inter text-center select-none">{name}</span>
+    {/* Name */}
+    <span className="mt-3 text-gray-900 font-semibold font-inter text-center select-none">
+      {name}
+    </span>
   </div>
 );
 
-const DevHoverCard = ({ name, linkedin }) => (
+const DevHoverCard = ({ src, name, linkedin }) => (
   <div className="relative group w-28 h-28 mx-auto bg-[#FFEEC3] rounded-full flex items-center justify-center shadow-lg border-4 border-[#f6e1a1] overflow-hidden">
-    <div className="w-14 h-14 rounded-full bg-gray-300"></div>
-    {/* Overlay: shadow + details */}
+    
+    <img
+      src={src}
+      alt={name}
+      className="block max-w-none w-auto h-full object-cover scale-150 group-hover:scale-160 transition-transform duration-300"
+      style={{ objectPosition: "center center" }}
+    />
+    {/* Overlay */}
     <div className="absolute inset-0 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
       <span className="text-base font-medium mb-2 text-white drop-shadow font-inter select-none">
         {name}
@@ -139,7 +156,7 @@ const MeetDevTeamPage = () => {
               key={dev.name}
               className="flex flex-col items-center text-center max-w-xs mx-auto"
             >
-              <DevHoverCard name={dev.name} linkedin={dev.linkedin} />
+              <DevHoverCard src={dev.img} name={dev.name} linkedin={dev.linkedin} />
               <p className="mt-4 text-gray-700 font-inter text-base leading-relaxed line-clamp-4">
                 {dev.role}
               </p>

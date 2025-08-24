@@ -65,6 +65,12 @@ const StudentFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementP
                     >
                         Placement Policy
                     </button>
+                    <button
+                        onClick={() => onPlacementPolicy && onPlacementPolicy()}
+                        className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
+                    >
+                        Contact Admin
+                    </button>
                 </div>
 
                 {/* Contact Info Section */}
@@ -74,7 +80,7 @@ const StudentFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementP
                     </h3>
                     <div className="space-y-3 mb-6">
                         <div className="flex items-center gap-3 text-gray-400 group hover:text-white cursor-pointer">
-                            <svg className="w-5 h-5 group-hover:text-gray-200" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 group-hover:text-red-700" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                             </svg>
                             <span>placement@pwioi.edu.in</span>
@@ -90,8 +96,13 @@ const StudentFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementP
             </div>
 
 
-            <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />
-            <div className="mt-5 pt-5 border-t border-white/30 text-gray-400 text-sm flex flex-col items-center gap-2">
+            {/*<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />*/}
+            <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap" rel="stylesheet"></link>
+            <div className="mt-5 pt-3 border-t border-white/30 text-gray-400 text-sm flex flex-col items-center gap-1">
+                <div className='font-caveat text-2xl text-gray-300'>
+                    Yatra Pratibha Avsara Prapnotihi {/*यत्र प्रतिभा अवसर प्राप्नोतिहि*/}
+                </div>
+                
                 <div className="w-full flex items-center justify-center gap-2">
                     <span className="hidden sm:block h-px w-12 bg-gray-400" />
                     <span className="text-center">© {new Date().getFullYear()} PW IOI - Placement Cell. All Rights Reserved.</span>

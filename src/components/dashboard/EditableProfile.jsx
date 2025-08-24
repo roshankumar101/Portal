@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { updateUser } from '../../services/users';
-import { 
-  Edit3, 
-  Save, 
-  X, 
-  Upload, 
-  FileText, 
+import {
+  Edit3,
+  Save,
+  X,
+  Upload,
+  FileText,
   Plus,
   Trash2,
   ExternalLink,
-  Loader
+  Loader,
 } from 'lucide-react';
 
 const EditableProfile = ({ studentData, onDataUpdate }) => {
@@ -23,14 +23,18 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
     department: '',
     skills: [],
     resumeUrl: '',
-    leetcodeProfile: ''
+    leetcodeProfile: '',
+    batch: '',
+    centre: '',
   });
   const [newSkill, setNewSkill] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [centreOptions, setCentreOptions] = useState([]);
 
-  // Initialize form data when studentData changes
   useEffect(() => {
+    // Initialize form data when studentData changes
     if (studentData) {
       setFormData({
         name: studentData.name || '',
@@ -38,15 +42,31 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
         department: studentData.department || '',
         skills: studentData.skills || [],
         resumeUrl: studentData.resumeUrl || '',
-        leetcodeProfile: studentData.leetcodeProfile || ''
+        leetcodeProfile: studentData.leetcodeProfile || '',
+        batch: studentData.batch || '',
+        centre: studentData.centre || '',
       });
     }
+
+    // Mock fetch batch and centre options (replace with real API)
+    const fetchBatchOptions = async () => {
+      await new Promise(r => setTimeout(r, 300)); // simulate delay
+      setBatchOptions(['2023-2027', '2024-2028', '2025-2029']);
+    };
+
+    const fetchCentreOptions = async () => {
+      await new Promise(r => setTimeout(r, 300)); // simulate delay
+      setCentreOptions(['Noida', 'Pune', 'Bangalore', 'Lucknow', 'Patna', 'Indore']);
+    };
+
+    fetchBatchOptions();
+    fetchCentreOptions();
   }, [studentData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -54,7 +74,7 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
     if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
       setFormData(prev => ({
         ...prev,
-        skills: [...prev.skills, newSkill.trim()]
+        skills: [...prev.skills, newSkill.trim()],
       }));
       setNewSkill('');
     }
@@ -63,39 +83,37 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
   const removeSkill = (skillToRemove) => {
     setFormData(prev => ({
       ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
+      skills: prev.skills.filter(skill => skill !== skillToRemove),
     }));
   };
 
   const handleResumeUpload = async (file) => {
     if (!file) return;
 
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
     if (!allowedTypes.includes(file.type)) {
       alert('Please upload a PDF or Word document');
       return;
     }
 
-    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be less than 5MB');
       return;
     }
 
     setUploadingResume(true);
-    
     try {
-      // For now, we'll create a mock URL. In production, you'd upload to Firebase Storage
-      // This is a placeholder - you'll need to implement actual file upload
+      // Mock upload, generate mock URL
       const mockUrl = `https://example.com/resumes/${user.uid}_${file.name}`;
-      
       setFormData(prev => ({
         ...prev,
-        resumeUrl: mockUrl
+        resumeUrl: mockUrl,
       }));
-      
-      alert('Resume uploaded successfully! (Note: This is a demo - implement actual file upload)');
+      alert('Resume uploaded successfully! (Demo upload)');
     } catch (error) {
       console.error('Resume upload failed:', error);
       alert('Failed to upload resume. Please try again.');
@@ -111,16 +129,15 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
     try {
       const updatedData = {
         ...formData,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       await updateUser(user.uid, updatedData);
-      
-      // Update parent component
+
       if (onDataUpdate) {
         onDataUpdate({ ...studentData, ...updatedData });
       }
-      
+
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
@@ -132,7 +149,6 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     if (studentData) {
       setFormData({
         name: studentData.name || '',
@@ -140,7 +156,9 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
         department: studentData.department || '',
         skills: studentData.skills || [],
         resumeUrl: studentData.resumeUrl || '',
-        leetcodeProfile: studentData.leetcodeProfile || ''
+        leetcodeProfile: studentData.leetcodeProfile || '',
+        batch: studentData.batch || '',
+        centre: studentData.centre || '',
       });
     }
     setIsEditing(false);
@@ -175,13 +193,21 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
             <p className="text-sm font-medium text-orange-700">Department</p>
             <p className="text-gray-900">{formData.department || 'Not provided'}</p>
           </div>
+          <div>
+            <p className="text-sm font-medium text-orange-700">Batch</p>
+            <p className="text-gray-900">{formData.batch || 'Not provided'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-orange-700">Centre</p>
+            <p className="text-gray-900">{formData.centre || 'Not provided'}</p>
+          </div>
           {formData.skills && formData.skills.length > 0 && (
             <div>
               <p className="text-sm font-medium text-orange-700 mb-2">Skills</p>
               <div className="flex flex-wrap gap-2">
-                {formData.skills.map((skill, index) => (
+                {formData.skills.map((skill, idx) => (
                   <span
-                    key={index}
+                    key={idx}
                     className="px-3 py-1 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 text-sm rounded-full border border-orange-200"
                   >
                     {skill}
@@ -241,11 +267,7 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
             disabled={loading}
             className="flex items-center px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg disabled:opacity-50"
           >
-            {loading ? (
-              <Loader className="animate-spin h-4 w-4 mr-2" />
-            ) : (
-              <Save size={16} className="mr-2" />
-            )}
+            {loading ? <Loader className="animate-spin h-4 w-4 mr-2" /> : <Save size={16} className="mr-2" />}
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -296,6 +318,40 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
           </select>
         </div>
 
+        {/* Batch */}
+        <div>
+          <label className="block text-sm font-medium text-orange-700 mb-1">Batch *</label>
+          <select
+            value={formData.batch}
+            onChange={(e) => handleInputChange('batch', e.target.value)}
+            className="w-full px-3 py-2 border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+          >
+            <option value="">Select Batch</option>
+            {batchOptions.map((batch) => (
+              <option key={batch} value={batch}>
+                {batch}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Centre */}
+        <div>
+          <label className="block text-sm font-medium text-orange-700 mb-1">Centre *</label>
+          <select
+            value={formData.centre}
+            onChange={(e) => handleInputChange('centre', e.target.value)}
+            className="w-full px-3 py-2 border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+          >
+            <option value="">Select Centre</option>
+            {centreOptions.map((centre) => (
+              <option key={centre} value={centre}>
+                {centre}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Skills */}
         <div>
           <label className="block text-sm font-medium text-orange-700 mb-1">Skills</label>
@@ -309,6 +365,7 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
                 <button
                   onClick={() => removeSkill(skill)}
                   className="ml-2 text-orange-600 hover:text-red-600"
+                  type="button"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -327,6 +384,7 @@ const EditableProfile = ({ studentData, onDataUpdate }) => {
             <button
               onClick={addSkill}
               className="px-3 py-2 bg-gradient-to-r from-orange-400 to-amber-500 text-white rounded-xl hover:from-orange-500 hover:to-amber-600 transition-colors"
+              type="button"
             >
               <Plus size={16} />
             </button>

@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { FaQuoteLeft, FaQuoteRight } from "react-icons/fa6";
 
-import R1 from "../assets/Rec1.png";
-import R2 from "../assets/Rec2.png";
-import R3 from "../assets/Rec3.png";
+import R1 from "../../assets/Rec1.png";
+import R2 from "../../assets/Rec2.png";
+import R3 from "../../assets/Rec3.png";
 
 // ----------------- Animated Testimonials -----------------
 const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {

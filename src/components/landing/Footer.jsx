@@ -1,5 +1,5 @@
 import React from 'react';
-import brandLogo from '../assets/brand_logo.webp';
+import brandLogo from '../../assets/brand_logo.webp';
 
 const PWIOIFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam }) => {
   const linkedinLink = "https://www.linkedin.com/school/pw-ioi/";
@@ -68,18 +68,24 @@ const PWIOIFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam }) => {
             Contact Info
           </h3>
           <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3 text-gray-400 group hover:text-white cursor-pointer">
+            <a
+              href="mailto:placement@pwioi.edu.in"
+              className="flex items-center gap-3 text-gray-400 group hover:text-white transition-colors"
+            >
               <svg className="w-5 h-5 group-hover:text-gray-200" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
               </svg>
               <span>placement@pwioi.edu.in</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-400 group hover:text-white cursor-pointer">
+            </a>
+            <a
+              href="tel:+918012345678"
+              className="flex items-center gap-3 text-gray-400 group hover:text-white transition-colors"
+            >
               <svg className="w-5 h-5 group-hover:text-green-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
               </svg>
               <span>+91 80 1234 5678</span>
-            </div>
+            </a>
             <a
               href="https://maps.google.com?q=PW+IOI+Bangalore+Campus"
               target="_blank"

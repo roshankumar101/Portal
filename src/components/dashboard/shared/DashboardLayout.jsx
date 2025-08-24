@@ -1,14 +1,13 @@
 import React from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import SOTbanner from '../../assets/SOTbanner.jpg';
-import PWIOILOGO from '../../assets/brand_logo.webp'
+import { useAuth } from '../../../hooks/useAuth';
+import SOTbanner from '../../../assets/SOTbanner.jpg';
+import PWIOILOGO from '../../../assets/brand_logo.webp'
 
-import {
+import { 
   User,
   SquarePen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../Footer';
 
 export default function DashboardLayout({ children }) {
   const { user } = useAuth();
@@ -74,11 +73,11 @@ export default function DashboardLayout({ children }) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
       {/* Horizontal Navbar */}
       <nav className="bg-white border-b border-blue-100 sticky top-0 z-50">
-        <div className="w-full px-2 sm:p-1 lg:p-2">
+        <div className="w-full px-2 py-1">
           <div
             className="px-6 py-1 rounded-xl bg-gradient-to-br from-white to-blue-300 border-2 border-gray-400"
           >
-            <div className="flex justify-between items-center h-25 gap-2 relative">
+            <div className="flex justify-between items-center h-23 gap-2 relative">
               {/* Left Side - Student Details */}
               <div className="flex items-center flex-1">
                 {/* Profile Image with Completion Indicator */}

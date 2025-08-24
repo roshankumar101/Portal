@@ -3,12 +3,12 @@ import { FaLinkedin, FaHome } from "react-icons/fa";
 
 // Placeholder image for now
 const placeholderImg = "https://via.placeholder.com/224x224.png?text=Mentor+Image";
-import User from "../assets/CS4.png";
-import dev from "../assets/dev1.png";
-import dev2 from "../assets/dev2.png";
-import dev3 from "../assets/dev3.png";
-import dev4 from "../assets/dev4.png";
-import prof from "../assets/prof1.png";
+import User from "../../assets/CS4.png";
+import dev from "../../assets/dev1.png";
+import dev2 from "../../assets/dev2.png";
+import dev3 from "../../assets/dev3.png";
+import dev4 from "../../assets/dev4.png";
+import prof from "../../assets/prof1.png";
 
 const devs = [
   {

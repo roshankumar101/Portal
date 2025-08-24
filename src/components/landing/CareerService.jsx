@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IconChevronLeft, IconChevronRight, IconBrandLinkedin, IconMail } from "@tabler/icons-react";
-import CS1 from '../assets/CS4.png';
-import CS2 from '../assets/CS2.webp';
-import CS3 from '../assets/CS3.webp';
-import CS4 from '../assets/CS1.webp';
-import CS5 from '../assets/CS5.png';
-import CS6 from '../assets/CS6.png';
+import CS1 from '../../assets/CS4.png';
+import CS2 from '../../assets/CS2.webp';
+import CS3 from '../../assets/CS3.webp';
+import CS4 from '../../assets/CS1.webp';
+import CS5 from '../../assets/CS5.png';
+import CS6 from '../../assets/CS6.png';
 
 // Spotlight Card Component focused on image
 const SpotlightCard = ({ children, className = "" }) => {

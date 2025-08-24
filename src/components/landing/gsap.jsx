@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import sidebarImg from "../assets/sidebar.jpg";
+import sidebarImg from "../../assets/sidebar.jpg";
 
 export default function SidebarCard() {
   // Quotes list

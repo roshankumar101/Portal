@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import MicrosoftLogo from '../assets/Microsoft-Logo.wine.svg';
-import GoogleLogo from '../assets/Google-Logo.wine.svg';
-import AmazonLogo from '../assets/Amazon_(company)-Logo.wine.svg';
-import TeslaLogo from '../assets/Tesla,_Inc.-Logo.wine.svg';
-import NetflixLogo from '../assets/Netflix-Logo.wine.svg';
-import AdobeLogo from '../assets/Adobe_Inc.-Logo.wine.svg';
-import IntelLogo from '../assets/Intel-Logo.wine.svg';
-import IBMLogo from '../assets/IBM-Logo.wine.svg';
-import OracleLogo from '../assets/Oracle_Corporation-Logo.wine.svg';
-import SalesforceLogo from '../assets/Salesforce.com-Logo.wine.svg';
+import MicrosoftLogo from '../../assets/Microsoft-Logo.wine.svg';
+import GoogleLogo from '../../assets/Google-Logo.wine.svg';
+import AmazonLogo from '../../assets/Amazon_(company)-Logo.wine.svg';
+import TeslaLogo from '../../assets/Tesla,_Inc.-Logo.wine.svg';
+import NetflixLogo from '../../assets/Netflix-Logo.wine.svg';
+import AdobeLogo from '../../assets/Adobe_Inc.-Logo.wine.svg';
+import IntelLogo from '../../assets/Intel-Logo.wine.svg';
+import IBMLogo from '../../assets/IBM-Logo.wine.svg';
+import OracleLogo from '../../assets/Oracle_Corporation-Logo.wine.svg';
+import SalesforceLogo from '../../assets/Salesforce.com-Logo.wine.svg';
 
-import AMDLogo from '../assets/Advanced_Micro_Devices-Logo.wine.svg';
-import AppleLogo from '../assets/Apple_Inc.-Logo.wine.svg';
-import LENOVOLogo from '../assets/Lenovo_K6_Power-Logo.wine.svg';
-import NvidiaLogo from '../assets/Nvidia-Logo.wine.svg';
-import PumaLogo from '../assets/Puma_(brand)-Logo.wine.svg';
-import ATnTLogo from '../assets/AT&T-Logo.wine.svg';
-import OLALogo from '../assets/Ola_Cabs-Logo.wine.svg';
-import SamsungLogo from '../assets/Samsung-Logo.wine.svg';
-import SkyscannerLogo from '../assets/Skyscanner-Logo.wine.svg';
-import TOYOTALogo from '../assets/Toyota_Canada_Inc.-Logo.wine.svg';
+import AMDLogo from '../../assets/Advanced_Micro_Devices-Logo.wine.svg';
+import AppleLogo from '../../assets/Apple_Inc.-Logo.wine.svg';
+import LENOVOLogo from '../../assets/Lenovo_K6_Power-Logo.wine.svg';
+import NvidiaLogo from '../../assets/Nvidia-Logo.wine.svg';
+import PumaLogo from '../../assets/Puma_(brand)-Logo.wine.svg';
+import ATnTLogo from '../../assets/AT&T-Logo.wine.svg';
+import OLALogo from '../../assets/Ola_Cabs-Logo.wine.svg';
+import SamsungLogo from '../../assets/Samsung-Logo.wine.svg';
+import SkyscannerLogo from '../../assets/Skyscanner-Logo.wine.svg';
+import TOYOTALogo from '../../assets/Toyota_Canada_Inc.-Logo.wine.svg';
 
 
 

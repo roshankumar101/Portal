@@ -1,5 +1,5 @@
 import React from 'react';
-import AwsLogoUrl from '../../assets/Amazon_Web_Services-Logo.wine.svg';
+import AwsLogoUrl from '../../../assets/Amazon_Web_Services-Logo.wine.svg';
 
 const companySvgs = {
   Google: (

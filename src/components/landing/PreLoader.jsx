@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import logo from '../assets/brand_logo.webp'; 
+import logo from '../../assets/brand_logo.webp'; 
 
 const Preloader = ({ onComplete }) => {
   const [showPreloader, setShowPreloader] = useState(true);

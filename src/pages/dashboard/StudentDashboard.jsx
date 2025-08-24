@@ -1,15 +1,15 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import DashboardLayout from '../../components/dashboard/DashboardLayout';
-import DashboardHome from '../../components/dashboard/DashboardHome';
+import SampleResume from '../../assets/Docs/Resume(1).pdf';
+import DashboardLayout from '../../components/dashboard/shared/DashboardLayout';
+import DashboardHome from '../../components/dashboard/student/DashboardHome';
 import { useAuth } from '../../hooks/useAuth';
+import { getStudentProfile, updateStudentProfile, createStudentProfile } from '../../services/students';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
-import Resume from '../../components/dashboard/Resume';
 import { FaHackerrank, FaYoutube } from 'react-icons/fa';
 import {
   Home,
   Briefcase,
-  FileText,
   Calendar,
   SquarePen,
   Code2,
@@ -20,7 +20,11 @@ import {
   LogOut,
   GripVertical,
   ClipboardList,
-  BookOpen
+  BookOpen,
+  FileText,
+  Trash2,
+  Upload,
+  FilePlus
 } from 'lucide-react';
 
 export default function StudentDashboard() {
@@ -28,7 +32,7 @@ export default function StudentDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(20); // Default 20%
   const [isDragging, setIsDragging] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dragRef = useRef(null);
@@ -36,8 +40,31 @@ export default function StudentDashboard() {
   const [center, setCenter] = useState('Bangalore');
 
 
+
   // New state for checkbox in Edit Profile
   const [isChecked, setIsChecked] = useState(false);
+
+  // Edit Profile form state
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [cgpa, setCgpa] = useState('');
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [tagline, setTagline] = useState('');
+  const [city, setCity] = useState('');
+  const [stateRegion, setStateRegion] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [leetcode, setLeetcode] = useState('');
+  const [codeforces, setCodeforces] = useState('');
+  const [gfg, setGfg] = useState('');
+  const [hackerrank, setHackerrank] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  // Local UI-only state for Resume tab (no DB)
+  const [hasResume, setHasResume] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState(null);
+  const resumeFileInputRef = useRef(null);
 
   // Handle URL parameters to set active tab
   useEffect(() => {
@@ -48,10 +75,11 @@ export default function StudentDashboard() {
       setActiveTab('editProfile');
     };
 
+
     window.addEventListener('editProfileClicked', handleEditProfileClick);
 
     // Only set tab from URL if it's a valid tab and not on page refresh
-    if (tab && ['dashboard', 'jobs', 'calendar', 'applications', 'resources', 'editProfile'].includes(tab)) {
+    if (tab && ['dashboard', 'jobs', 'calendar', 'applications', 'resources', 'resume', 'editProfile'].includes(tab)) {
       // Check if this is a fresh navigation (not a refresh)
       const isRefresh = window.performance.navigation?.type === 1 ||
         window.performance.getEntriesByType('navigation')[0]?.type === 'reload';
@@ -73,14 +101,93 @@ export default function StudentDashboard() {
     };
   }, [searchParams, navigate]);
 
+  // Load existing profile data for Edit Profile form
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.uid) return;
+      try {
+        const data = await getStudentProfile(user.uid);
+        if (data) {
+          setFullName(data.fullName || '');
+          setEmail(data.email || '');
+          setPhone(data.phone || '');
+          setCgpa(data.cgpa?.toString?.() || '');
+          setBatch(data.batch || batch);
+          setCenter(data.center || center);
+          setBio(data.bio || '');
+          setTagline(data.tagline || '');
+          setCity(data.city || '');
+          setStateRegion(data.state || '');
+          setLinkedin(data.linkedin || '');
+          setLeetcode(data.leetcode || '');
+          setCodeforces(data.codeforces || '');
+          setGfg(data.gfg || '');
+          setHackerrank(data.hackerrank || '');
+          setGithubUrl(data.github || '');
+          setYoutubeUrl(data.youtube || '');
+          // Load resume if present on profile
+          if (data.resumeUrl) setResumeUrl(data.resumeUrl);
+        }
+      } catch (err) {
+        console.warn('Failed to load profile for edit form', err);
+      }
+    };
+    loadProfile();
+  }, [user]);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!user?.uid) {
+      alert('You must be logged in to save your profile.');
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload = {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        cgpa: cgpa ? Number(cgpa) : null,
+        batch,
+        center,
+        bio: bio.trim(),
+        tagline: tagline.trim(),
+        city: city.trim(),
+        state: stateRegion.trim(),
+        linkedin: linkedin.trim(),
+        leetcode: leetcode.trim(),
+        codeforces: codeforces.trim(),
+        gfg: gfg.trim(),
+        hackerrank: hackerrank.trim(),
+        github: githubUrl.trim(),
+        youtube: youtubeUrl.trim(),
+      };
+
+      const existing = await getStudentProfile(user.uid);
+      if (existing) {
+        await updateStudentProfile(user.uid, payload);
+      } else {
+        await createStudentProfile(user.uid, payload);
+      }
+      // Go back to dashboard to see the updates
+      setActiveTab('dashboard');
+      alert('Profile saved successfully');
+    } catch (err) {
+      console.error('Failed to save profile', err);
+      alert(err.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'jobs', label: 'Explore Jobs', icon: Briefcase },
+    { id: 'resume', label: 'Resume', icon: FileText },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'applications', label: 'Track Applications', icon: ClipboardList },
     { id: 'resources', label: 'Placement Resources', icon: BookOpen },
     { id: 'editProfile', label: 'Edit Profile', icon: SquarePen },
-    { id: 'resume', label: 'Resume', icon: FileText },
   ];
 
   const LeetCodeIcon = (props) => (
@@ -233,28 +340,152 @@ export default function StudentDashboard() {
           </div>
         );
 
+      case 'resume':
+        return (
+          <div className="space-y-6">
+            {/* Outer card matching Edit Profile style */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              {/* Heading inside the card */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  Resume
+                </h2>
+              </div>
+              {/* Subheading row with actions on the right */}
+              <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-sm text-gray-600">
+                  You can Create/Analyze your resume here
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => resumeFileInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
+                    title={hasResume ? 'Choose a PDF to replace your resume' : 'Choose a PDF to add'}
+                  >
+                    <Upload className="h-4 w-4" /> {hasResume ? 'Replace Resume' : 'Add Resume'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alert('Resume builder coming soon')}
+                    className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md bg-white hover:bg-gray-50 text-sm"
+                    title="Create resume"
+                  >
+                    <FilePlus className="h-4 w-4" /> Create Resume
+                  </button>
+                </div>
+              </div>
+
+              {/* Dropzone area */}
+              <div
+                className={`relative w-full h-[80vh] border-2 border-dashed border-gray-300 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden ${!hasResume ? 'cursor-pointer' : ''}`}
+                onClick={() => {
+                  if (!hasResume) {
+                    resumeFileInputRef.current?.click();
+                  }
+                }}
+              >
+                {/* Conditional delete button in top-right when resume exists */}
+                {hasResume && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(resumeUrl);
+                      }
+                      setHasResume(false);
+                      setResumeUrl(null);
+                    }}
+                    className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+                    title="Delete Resume"
+                    aria-label="Delete resume"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+                {/* Empty state text */}
+                {!hasResume && (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                    <p className="text-gray-700 font-medium">Drag & drop your resume here</p>
+                    <p className="text-gray-500 text-sm">Or click 'Add Resume' below to select a file.</p>
+                  </div>
+                )}
+                {/* When a resume is present, render inline preview (no PDF controls) */}
+                {hasResume && resumeUrl && (
+                  <iframe
+                    src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                    title="Resume preview"
+                    className="w-[70%] h-full rounded shadow"
+                  />
+                )}
+              </div>
+
+              {/* Hidden file input for uploads */}
+              <input
+                ref={resumeFileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  if (file) {
+                    // Revoke old blob if present
+                    if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                      URL.revokeObjectURL(resumeUrl);
+                    }
+                    const blobUrl = URL.createObjectURL(file);
+                    setResumeUrl(blobUrl);
+                    setHasResume(true);
+                  }
+                }}
+              />
+
+              {/* Action buttons moved to subheading row above */}
+            </div>
+          </div>
+        );
+
       case 'editProfile':
         return (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h2>
-              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-6" onSubmit={handleSaveProfile}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your full name" />
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" />
+                    <input
+                      type="email"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input type="tel" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your phone number" />
+                    <input
+                      type="tel"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your phone number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100" value="ENR123456789" disabled />
+                    <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100" value={user?.uid || ''} disabled />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">School</label>
@@ -264,69 +495,197 @@ export default function StudentDashboard() {
                       <option className='bg-blue-50'>School of HealthCare</option>
                     </select>
                   </div>
-                
 
-{/* Inside your form, add: */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
-  <select
-    value={batch}
-    onChange={(e) => setBatch(e.target.value)}
-    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="2023-2027">2023-2027</option>
-    <option value="2024-2028">2024-2028</option>
-    <option value="2025-2029">2025-2029</option>
-  </select>
-</div>
 
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">Center</label>
-  <select
-    value={center}
-    onChange={(e) => setCenter(e.target.value)}
-    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="Bangalore">Bangalore</option>
-    <option value="Noida">Noida</option>
-    <option value="Lucknow">Lucknow</option>
-    <option value="Pune">Pune</option>
-  </select>
-</div>
+                  {/* Inside your form, add: */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
+                    <select
+                      value={batch}
+                      onChange={(e) => setBatch(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="2023-2027">2023-2027</option>
+                      <option value="2024-2028">2024-2028</option>
+                      <option value="2025-2029">2025-2029</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Center</label>
+                    <select
+                      value={center}
+                      onChange={(e) => setCenter(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Bangalore">Bangalore</option>
+                      <option value="Noida">Noida</option>
+                      <option value="Lucknow">Lucknow</option>
+                      <option value="Pune">Pune</option>
+                    </select>
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">CGPA</label>
-                    <input type="number" step="0.01" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your CGPA" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="10"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your CGPA"
+                      value={cgpa}
+                      onChange={(e) => setCgpa(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Full-Stack Developer | Open Source Enthusiast"
+                      value={tagline}
+                      onChange={(e) => setTagline(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your state"
+                        value={stateRegion}
+                        onChange={(e) => setStateRegion(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://linkedin.com/in/username"
+                        value={linkedin}
+                        onChange={(e) => setLinkedin(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">GitHub</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://github.com/username"
+                        value={githubUrl}
+                        onChange={(e) => setGithubUrl(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://youtube.com/@channel"
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">LeetCode</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://leetcode.com/u/username"
+                        value={leetcode}
+                        onChange={(e) => setLeetcode(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Codeforces</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://codeforces.com/profile/username"
+                        value={codeforces}
+                        onChange={(e) => setCodeforces(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">GeeksforGeeks</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://auth.geeksforgeeks.org/user/username"
+                        value={gfg}
+                        onChange={(e) => setGfg(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">HackerRank</label>
+                    <input
+                      type="url"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://www.hackerrank.com/profile/username"
+                      value={hackerrank}
+                      onChange={(e) => setHackerrank(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                    <textarea
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="4"
+                      placeholder="Write a brief bio about yourself"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                    ></textarea>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                  <textarea className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="Write a brief bio about yourself"></textarea>
-                </div>
-
                 <div className="space-x-2 px-4 mb-2 text-xs">
-  <input
-    type="checkbox"
-    id="editCheckbox"
-    checked={isChecked}
-    onChange={() => setIsChecked(!isChecked)}
-  />
-  <label htmlFor="editCheckbox">
-    I acknowledge that the information provided on this dashboard is accurate to the best of the institution’s knowledge. I understand that the institution shall not be held liable for any errors, omissions, or discrepancies.
-  </label>
-</div>
+                  <input
+                    type="checkbox"
+                    id="editCheckbox"
+                    checked={isChecked}
+                    onChange={() => setIsChecked(!isChecked)}
+                  />
+                  <label htmlFor="editCheckbox">
+                    I acknowledge that the information provided on this dashboard is accurate to the best of the institution’s knowledge. I understand that the institution shall not be held liable for any errors, omissions, or discrepancies.
+                  </label>
+                </div>
 
                 <div className="flex space-x-4 justify-center">
                   <button
                     type="submit"
                     id='editSaveBtn'
-                    disabled={!isChecked}
-                    className={`px-6 py-2 rounded-md text-white transition-colors ${
-                      isChecked ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'
-                    }`}
+                    disabled={!isChecked || saving}
+                    className={`px-6 py-2 rounded-md text-white transition-colors ${(!isChecked || saving) ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
                   >
-                    Save Changes
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     type="button"
@@ -339,16 +698,6 @@ export default function StudentDashboard() {
             </div>
           </div>
         );
-        case 'resume':
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Resume</h2>
-        <p className="text-gray-600">Your resume details will appear here.</p>
-      </div>
-    </div>
-  );
-
 
       default:
         return <DashboardHome />;

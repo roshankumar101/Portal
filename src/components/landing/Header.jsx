@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Login from './Login';
-import brandLogo from '../assets/brand_logo.webp';
+import brandLogo from '../../assets/brand_logo.webp';
 import { TypeWriter } from './TextStyle';
 import { useNavigate } from 'react-router-dom';
 

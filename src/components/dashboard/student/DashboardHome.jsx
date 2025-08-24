@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { getStudentProfile } from '../../services/students';
-import { listJobs } from '../../services/jobs';
-import { getStudentApplications } from '../../services/applications';
+import { useAuth } from '../../../hooks/useAuth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../firebase';
+import { listJobs } from '../../../services/jobs';
+import { getStudentApplications } from '../../../services/applications';
 import AboutMe from './AboutMe';
 import DashboardStatsSection from './DashboardStatsSection';
 import ApplicationTrackerSection from './ApplicationTrackerSection';
@@ -12,7 +13,6 @@ import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
 import StudentFooter from './StudentFooter';
-import Resume from './Resume';
 import { 
   Clock,
   AlertCircle,
@@ -30,21 +30,23 @@ const DashboardHome = () => {
   const [error, setError] = useState('');
   const [applying, setApplying] = useState({});
 
-  // Fetch student profile data
+  // Subscribe to student profile in real-time
   useEffect(() => {
-    const fetchStudentData = async () => {
-      if (!user?.uid) return;
-      
-      try {
-        const userData = await getStudentProfile(user.uid);
-        setStudentData(userData);
-      } catch (err) {
-        console.error('Error fetching student data:', err);
-        setError('Failed to load profile data');
-      }
-    };
+    if (!user?.uid) return;
 
-    fetchStudentData();
+    const ref = doc(db, 'students', user.uid);
+    const unsubscribe = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setStudentData({ id: snap.id, ...snap.data() });
+      } else {
+        setStudentData(null);
+      }
+    }, (err) => {
+      console.error('Error subscribing to profile:', err);
+      setError('Failed to load profile data');
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   // Fetch jobs and applications
@@ -88,7 +90,7 @@ const DashboardHome = () => {
     
     try {
       setApplying(prev => ({ ...prev, [jobId]: true }));
-      const { applyToJob } = await import('../../services/applications');
+      const { applyToJob } = await import('../../../services/applications');
       await applyToJob(user.uid, jobId, companyId);
       
       // Refresh applications and student data
@@ -120,6 +122,18 @@ const DashboardHome = () => {
     } else {
       alert('Job description not available');
     }
+  };
+
+  // Footer actions
+  const openPlacementPolicy = () => {
+    window.open(
+      'https://docs.google.com/document/d/1umgfuxaRYNI_bqzw70RMrzzG6evMJyKGi1O18AJ7gXU/edit?usp=sharing',
+      '_blank'
+    );
+  };
+
+  const contactAdmin = () => {
+    window.location.href = 'mailto:placement@pwioi.edu.in';
   };
 
   // whether a student meets eligibility criteria
@@ -201,7 +215,10 @@ const DashboardHome = () => {
 
       {/* Student Footer */}
       <div>
-        <StudentFooter />
+        <StudentFooter
+          onPlacementPolicy={openPlacementPolicy}
+          onContactTeam={contactAdmin}
+        />
       </div>
      
       

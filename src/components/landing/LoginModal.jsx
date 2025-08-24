@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { gsap } from 'gsap';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
 
 function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {

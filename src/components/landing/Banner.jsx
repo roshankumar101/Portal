@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import BannerImage1 from '../assets/IndiaMapBlend.png'
-import '../index.css'
+import BannerImage1 from '../../assets/IndiaMapBlend.png'
+import '../../index.css'
 import { TypeWriter, ScribbledText } from "./TextStyle";
-import r2 from '../assets/r2.png'
+import r2 from '../../assets/r2.png'
 
 
 // Load Lottie web component

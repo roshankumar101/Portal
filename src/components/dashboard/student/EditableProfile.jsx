@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { updateUser } from '../../services/users';
+import { useAuth } from '../../../hooks/useAuth';
+import { updateUser } from '../../../services/users';
 import {
   Edit3,
   Save,

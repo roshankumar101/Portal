@@ -11,7 +11,7 @@ const AboutMe = ({ studentData, user }) => {
       return { truncated: text, needsReadMore: false };
     }
     return {
-      truncated: words.slice(0, wordLimit).join(' ') + '...',  // Add ellipsis here
+      truncated: words.slice(0, wordLimit).join(' ') + '...', 
       needsReadMore: true,
       fullText: text
     };

@@ -24,7 +24,8 @@ import {
   FileText,
   Trash2,
   Upload,
-  FilePlus
+  FilePlus,
+  ScanLine
 } from 'lucide-react';
 
 export default function StudentDashboard() {
@@ -65,6 +66,18 @@ export default function StudentDashboard() {
   const [hasResume, setHasResume] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
   const resumeFileInputRef = useRef(null);
+  
+  // Education (UI-only) state
+  const [educationEntries, setEducationEntries] = useState([]); // up to 4
+  const [currentEdu, setCurrentEdu] = useState({
+    institute: '',
+    city: '',
+    state: '',
+    branch: '',
+    yop: '',
+    scoreType: 'CGPA',
+    score: ''
+  });
 
   // Handle URL parameters to set active tab
   useEffect(() => {
@@ -126,7 +139,10 @@ export default function StudentDashboard() {
           setGithubUrl(data.github || '');
           setYoutubeUrl(data.youtube || '');
           // Load resume if present on profile
-          if (data.resumeUrl) setResumeUrl(data.resumeUrl);
+          if (data.resumeUrl) {
+            setResumeUrl(data.resumeUrl);
+            setHasResume(true);
+          }
         }
       } catch (err) {
         console.warn('Failed to load profile for edit form', err);
@@ -246,8 +262,8 @@ export default function StudentDashboard() {
     const windowWidth = window.innerWidth;
     const newWidth = (e.clientX / windowWidth) * 100;
 
-    // Constrain between 6% and 18%
-    const constrainedWidth = Math.min(Math.max(newWidth, 6), 18);
+    // Constrain between 6% and 15%
+    const constrainedWidth = Math.min(Math.max(newWidth, 5), 15);
     setSidebarWidth(constrainedWidth);
   }, [isDragging]);
 
@@ -310,36 +326,6 @@ export default function StudentDashboard() {
           </div>
         );
 
-      case 'calendar':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Academic Calendar</h2>
-              {/* Calendar content omitted for brevity */}
-            </div>
-          </div>
-        );
-
-      case 'applications':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Track Applications</h2>
-              {/* Applications content omitted for brevity */}
-            </div>
-          </div>
-        );
-
-      case 'resources':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Placement Resources</h2>
-              {/* Resources content omitted for brevity */}
-            </div>
-          </div>
-        );
-
       case 'resume':
         return (
           <div className="space-y-6">
@@ -368,7 +354,7 @@ export default function StudentDashboard() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => alert('Resume builder coming soon')}
+                    onClick={() => window.open('https://www.open-resume.com/resume-import', '_blank', 'noopener')}
                     className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md bg-white hover:bg-gray-50 text-sm"
                     title="Create resume"
                   >
@@ -385,8 +371,54 @@ export default function StudentDashboard() {
                     resumeFileInputRef.current?.click();
                   }
                 }}
+                onDragOver={(e) => {
+                  // Allow dropping files
+                  e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer?.files?.[0];
+                  if (file && (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
+                    if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                      URL.revokeObjectURL(resumeUrl);
+                    }
+                    const blobUrl = URL.createObjectURL(file);
+                    setResumeUrl(blobUrl);
+                    setHasResume(true);
+                  }
+                }}
+                onPaste={(e) => {
+                  // Support paste-from-clipboard if a PDF is present
+                  const items = e.clipboardData?.items || [];
+                  for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file') {
+                      const file = item.getAsFile();
+                      if (file && (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
+                        if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                          URL.revokeObjectURL(resumeUrl);
+                        }
+                        const blobUrl = URL.createObjectURL(file);
+                        setResumeUrl(blobUrl);
+                        setHasResume(true);
+                        break;
+                      }
+                    }
+                  }
+                }}
               >
                 {/* Conditional delete button in top-right when resume exists */}
+                {hasResume && (
+                  <button
+                    type="button"
+                    className="absolute top-3 right-12 mr-2 inline-flex items-center justify-center p-2 rounded-md bg-green-200 hover:bg-green-700 hover:text-white"
+                    title="Resume Analyzer"
+                    aria-label="Scan resume"
+                    onClick={() => { /* static placeholder */ }}
+                  >
+                    <ScanLine className="h-4 w-4" />
+                  </button>
+                )}
                 {hasResume && (
                   <button
                     type="button"
@@ -397,7 +429,7 @@ export default function StudentDashboard() {
                       setHasResume(false);
                       setResumeUrl(null);
                     }}
-                    className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+                    className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-200 text-red-500 hover:bg-red-700 hover:text-white"
                     title="Delete Resume"
                     aria-label="Delete resume"
                   >
@@ -408,7 +440,7 @@ export default function StudentDashboard() {
                 {!hasResume && (
                   <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
                     <p className="text-gray-700 font-medium">Drag & drop your resume here</p>
-                    <p className="text-gray-500 text-sm">Or click 'Add Resume' below to select a file.</p>
+                    <p className="text-gray-500 text-sm">Or click 'Add Resume' above to select a file.</p>
                   </div>
                 )}
                 {/* When a resume is present, render inline preview (no PDF controls) */}
@@ -442,6 +474,36 @@ export default function StudentDashboard() {
               />
 
               {/* Action buttons moved to subheading row above */}
+            </div>
+          </div>
+        );
+
+      case 'calendar':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Academic Calendar</h2>
+              {/* Calendar content omitted for brevity */}
+            </div>
+          </div>
+        );
+
+      case 'applications':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Track Applications</h2>
+              {/* Applications content omitted for brevity */}
+            </div>
+          </div>
+        );
+
+      case 'resources':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Placement Resources</h2>
+              {/* Resources content omitted for brevity */}
             </div>
           </div>
         );
@@ -665,6 +727,149 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
+                {/* Education Section */}
+                <div className="mt-8 border-t pt-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Education</h3>
+                  {/* Existing entries list */}
+                  {educationEntries.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      {educationEntries.map((edu, idx) => (
+                        <div key={idx} className="flex items-start justify-between gap-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+                          <div className="text-sm text-gray-700">
+                            <div className="font-medium">{edu.institute} - {edu.branch}</div>
+                            <div className="text-gray-600">{edu.city}, {edu.state} • YOP: {edu.yop} • {edu.scoreType}: {edu.score}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                            title="Delete"
+                            aria-label={`Delete education ${idx + 1}`}
+                            onClick={() => setEducationEntries((prev) => prev.filter((_, i) => i !== idx))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {educationEntries.length < 4 ? (
+                    <div className="rounded-lg border border-gray-200 p-4">
+                      {/* Row 1: Institute (wider), City, State */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div className="lg:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Institute Name</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter institute name"
+                            value={currentEdu.institute}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, institute: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="City"
+                            value={currentEdu.city}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, city: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="State"
+                            value={currentEdu.state}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, state: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Row 2: Branch, YOP, ScoreType dropdown, Score */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., CSE, 12th, 10th"
+                            value={currentEdu.branch}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, branch: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Year of Passing</label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min="1900"
+                            max="2099"
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="YYYY"
+                            value={currentEdu.yop}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, yop: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Score Type</label>
+                          <select
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={currentEdu.scoreType}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, scoreType: e.target.value })}
+                          >
+                            <option value="CGPA">CGPA</option>
+                            <option value="Percentage">Percentage</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">{currentEdu.scoreType}</label>
+                          <input
+                            type="number"
+                            step={currentEdu.scoreType === 'CGPA' ? '0.01' : '0.1'}
+                            min={currentEdu.scoreType === 'CGPA' ? '0' : '0'}
+                            max={currentEdu.scoreType === 'CGPA' ? '10' : '100'}
+                            required
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={currentEdu.scoreType === 'CGPA' ? 'e.g., 8.4' : 'e.g., 80.4'}
+                            value={currentEdu.score}
+                            onChange={(e) => setCurrentEdu({ ...currentEdu, score: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-600">Entry {educationEntries.length + 1} of 4</p>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+                          onClick={() => {
+                            // Validate required fields before adding
+                            const { institute, city, state, branch, yop, scoreType, score } = currentEdu;
+                            if (!institute || !city || !state || !branch || !yop || !scoreType || !score) return;
+                            setEducationEntries((prev) => [...prev, currentEdu]);
+                            setCurrentEdu({ institute: '', city: '', state: '', branch: '', yop: '', scoreType: 'CGPA', score: '' });
+                          }}
+                        >
+                          Save Education
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">You have added the maximum of 4 education records.</p>
+                  )}
+                </div>
+
                 <div className="space-x-2 px-4 mb-2 text-xs">
                   <input
                     type="checkbox"
@@ -711,9 +916,9 @@ export default function StudentDashboard() {
           className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
           style={{ width: `${sidebarWidth}%` }}
         >
-          <div className="p-4 h-full flex flex-col">
+          <div className="p-3 h-full flex flex-col">
             <div className="mb-6">
-              {sidebarWidth >= 12 && (
+              {sidebarWidth >= 10 && (
                 <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
               )}
               <nav className="space-y-1">
@@ -723,14 +928,14 @@ export default function StudentDashboard() {
                     <div key={tab.id} className="mb-1">
                       <button
                         onClick={() => handleTabClick(tab.id)}
-                        className={`w-full flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
+                        className={`w-full flex items-center rounded-lg text-xs font-medium transition-all duration-200 ${activeTab === tab.id
                           ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
                           : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-                          } ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2.5'}`}
-                        title={sidebarWidth < 12 ? tab.label : ''}
+                          } ${sidebarWidth < 10 ? 'justify-center px-2 py-2' : 'px-2 py-2.5'}`}
+                        title={sidebarWidth < 10 ? tab.label : ''}
                       >
-                        <Icon className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''}`} />
-                        {sidebarWidth >= 12 && tab.label}
+                        <Icon className={`h-4 w-4 ${sidebarWidth >= 10 ? 'mr-2' : ''}`} />
+                        {sidebarWidth >= 10 && tab.label}
                       </button>
                     </div>
                   );
@@ -739,7 +944,7 @@ export default function StudentDashboard() {
             </div>
 
             <div className="mb-6">
-              {sidebarWidth >= 12 && (
+              {sidebarWidth >= 10 && (
                 <h2 className="text-base font-bold text-gray-900 mb-3">Skills & Credentials</h2>
               )}
               <nav className="space-y-1">
@@ -749,12 +954,12 @@ export default function StudentDashboard() {
                     <div key={skill.id} className="mb-1">
                       <button
                         onClick={() => handleSkillClick(skill.id)}
-                        className={`w-full flex items-center rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
+                        className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
                           }`}
-                        title={sidebarWidth < 12 ? skill.label : ''}
+                        title={sidebarWidth < 10 ? skill.label : ''}
                       >
-                        <Icon className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''} ${skill.color}`} />
-                        {sidebarWidth >= 12 && (
+                        <Icon className={`h-4 w-4 ${sidebarWidth >= 10 ? 'mr-2' : ''} ${skill.color}`} />
+                        {sidebarWidth >= 10 && (
                           <>
                             <span className="flex-1 text-left">{skill.label}</span>
                             <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -772,10 +977,10 @@ export default function StudentDashboard() {
                 onClick={handleLogout}
                 className={`w-full flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${sidebarWidth < 12 ? 'justify-center px-2 py-2 mb-15' : 'px-3 py-2.5'
                   }`}
-                title={sidebarWidth < 12 ? 'Logout' : ''}
+                title={sidebarWidth < 10 ? 'Logout' : ''}
               >
                 <LogOut className={`h-4 w-4 ${sidebarWidth >= 12 ? 'mr-2' : ''}`} />
-                {sidebarWidth >= 12 && 'Logout'}
+                {sidebarWidth >= 10 && 'Logout'}
               </button>
             </div>
           </div>

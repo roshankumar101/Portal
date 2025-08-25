@@ -50,7 +50,7 @@ const AboutMe = ({ studentData, user }) => {
               {/* Phone */}
               <span className="ml-1 mr-1 text-black">•</span>
               <span className="text-sm font-medium bg-gradient-to-r from-black to-black text-transparent bg-clip-text">
-                {studentData?.personalInfo?.phone || 'City,State'}
+                {studentData?.personalInfo?.phone || 'YamunaNagar, Haryana'}
               </span>
 
               <span className="ml-4 mr-1 text-black">•</span>

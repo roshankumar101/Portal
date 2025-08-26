@@ -1,84 +1,162 @@
-import React, { useState } from 'react';
-import { ExternalLink, Edit2, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ExternalLink, Edit2, Plus, Github, Trash2 } from 'lucide-react';
+import { useAuth } from '../../../hooks/useAuth';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../../../firebase';
+import {
+  addProject,
+  deleteProject,
+  updateProject
+} from '../../../services/students';
 
 const ProjectsSection = () => {
-  const [projects, setProjects] = useState([
-    {
-      projectName: 'E-Commerce Website',
-      description:
-        'A full-stack e-commerce platform built with React and Node.js. Features include user authentication, product catalog, shopping cart, payment integration, and admin dashboard. Implemented responsive design and optimized for performance.',
-      projectUrl: 'https://github.com/username/ecommerce-website',
-    },
-    {
-      projectName: 'Task Management App',
-      description:
-        'A collaborative task management application using React, Firebase, and Material-UI. Users can create projects, assign tasks, set deadlines, and track progress. Real-time updates and notifications keep teams synchronized.',
-      projectUrl: 'https://github.com/username/task-manager',
-    },
-    {
-      projectName: 'Weather Dashboard',
-      description:
-        'Interactive weather dashboard with location-based forecasts, historical data visualization, and weather alerts. Built using React, Chart.js, and OpenWeather API. Features include dark/light themes and mobile responsiveness.',
-      projectUrl: 'https://github.com/username/weather-dashboard',
-    },
-    {
-      projectName: 'Social Media Platform',
-      description:
-        'A comprehensive social media platform with real-time messaging, post sharing, user profiles, and friend connections. Built with React, Socket.io, and MongoDB. Features include image/video uploads and privacy controls.',
-      projectUrl: 'https://github.com/username/social-platform',
-    },
-    {
-      projectName: 'AI Chatbot Assistant',
-      description:
-        'An intelligent chatbot built using Python, TensorFlow, and natural language processing. Capable of answering queries, providing recommendations, and learning from user interactions.',
-      projectUrl: 'https://github.com/username/ai-chatbot',
-    },
-    {
-      projectName: 'Finance Tracker',
-      description:
-        'Personal finance management application with expense tracking, budget planning, and financial goal setting. Includes data visualization and automated categorization of transactions.',
-      projectUrl: 'https://github.com/username/finance-tracker',
-    },
-  ]);
-
+  const { user } = useAuth();
+  const [projects, setProjects] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [isAddButtonActive, setIsAddButtonActive] = useState(false);
   const [editedProject, setEditedProject] = useState({
-    projectName: '',
+    title: '',
     description: '',
-    projectUrl: '',
+    liveUrl: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Real-time projects data listener
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    setLoading(true);
+    const q = query(
+      collection(db, 'projects'),
+      where('studentId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const projectsData = [];
+      querySnapshot.forEach((doc) => {
+        projectsData.push({ id: doc.id, ...doc.data() });
+      });
+      setProjects(projectsData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error in projects real-time listener:', error);
+      setError('Failed to load projects. Please try again.');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Normalize URL helper
+  const normalizeUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
+  };
 
   const startEditing = (index) => {
     setEditingIndex(index);
-    setEditedProject({ ...projects[index] });
+    const project = projects[index];
+    setEditedProject({
+      title: project.title,
+      description: project.description,
+      liveUrl: project.liveUrl || ''
+    });
   };
 
   const handleChange = (field, value) => {
     setEditedProject((prev) => ({ ...prev, [field]: value }));
   };
 
-  const saveProject = () => {
-    setProjects((prev) =>
-      prev.map((proj, idx) => (idx === editingIndex ? editedProject : proj))
-    );
-    setEditingIndex(null);
-  };
+  const saveProject = async () => {
+    if (!editedProject.title.trim() || !editedProject.description.trim()) {
+      setError('Please fill in all required fields.');
+      return;
+    }
 
-  const deleteProject = (index) => {
-    setProjects((prev) => prev.filter((_, idx) => idx !== index));
-    if (editingIndex === index) {
+    try {
+      setLoading(true);
+      setError('');
+
+      const projectData = {
+        title: editedProject.title,
+        description: editedProject.description,
+        liveUrl: editedProject.liveUrl ? normalizeUrl(editedProject.liveUrl) : '',
+        studentId: user.uid
+      };
+
+      if (editingIndex !== null && editingIndex < projects.length) {
+        // Update existing project
+        const existingProject = projects[editingIndex];
+        await updateProject(existingProject.id, projectData);
+        setSuccess('Project updated successfully!');
+      } else {
+        // Add new project
+        await addProject(projectData);
+        setSuccess('Project added successfully!');
+      }
+
+      // Projects will auto-reload via real-time listener
       setEditingIndex(null);
+      setIsAddButtonActive(false);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error saving project:', error);
+      if (error.code === 'permission-denied') {
+        setError('You do not have permission to save projects. Please contact support.');
+      } else {
+        setError('Failed to save project. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addProject = () => {
-    setProjects((prev) => [...prev, { projectName: '', description: '', projectUrl: '' }]);
-    setEditingIndex(projects.length);
-    setEditedProject({ projectName: '', description: '', projectUrl: '' });
+  const handleDeleteProject = async (index) => {
+    const project = projects[index];
+    if (!window.confirm(`Are you sure you want to delete "${project.title}"?`)) return;
+
+    try {
+      setLoading(true);
+      await deleteProject(project.id);
+      // Projects will auto-reload via real-time listener
+      setSuccess('Project deleted successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+
+      if (editingIndex === index) {
+        setEditingIndex(null);
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      setError('Failed to delete project. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addNewProject = () => {
+    const isCurrentlyAdding = editingIndex === projects.length;
+    if (isCurrentlyAdding) {
+      // Cancel adding
+      setEditingIndex(null);
+      setIsAddButtonActive(false);
+    } else {
+      // Start adding
+      setEditingIndex(projects.length);
+      setEditedProject({ title: '', description: '', liveUrl: '' });
+      setIsAddButtonActive(true);
+    }
   };
 
   const cancelEditing = () => {
     setEditingIndex(null);
+    setIsAddButtonActive(false);
+    setError('');
   };
 
   return (
@@ -90,16 +168,75 @@ const ProjectsSection = () => {
 
         <div className="flex justify-end mb-3 mr-[-1%]">
           <button
-            onClick={addProject}
+            onClick={addNewProject}
             aria-label="Add new project"
-            className="bg-[#8ec5ff] rounded-full p-2 shadow hover:bg-[#5e9ad6] transition"
+            className={`rounded-full p-2 shadow transition disabled:opacity-50 ${
+              isAddButtonActive 
+                ? 'bg-[#5e9ad6] hover:bg-[#4a7bb8]' 
+                : 'bg-[#8ec5ff] hover:bg-[#5e9ad6]'
+            }`}
+            disabled={loading}
           >
             <Plus size={18} className="text-white" />
           </button>
         </div>
 
+        {/* Error and Success Messages */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+            {success}
+          </div>
+        )}
+
         <div className="my-2">
           <div className="max-h-[480px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+            {/* Add new project form when editingIndex equals projects.length */}
+            {editingIndex === projects.length && (
+              <div className="rounded-lg px-4 py-3 bg-gradient-to-r from-[#f0f8fa] to-[#e6f3f8]">
+                <input
+                  type="text"
+                  value={editedProject.title}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  placeholder="Project Title *"
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
+                />
+                <textarea
+                  value={editedProject.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Project Description *"
+                  rows={3}
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded resize-none"
+                />
+                <input
+                  type="url"
+                  value={editedProject.liveUrl}
+                  onChange={(e) => handleChange('liveUrl', e.target.value)}
+                  placeholder="Project URL"
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
+                />
+                <div className="flex space-x-2 justify-end">
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveProject}
+                    className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {projects.map((project, index) =>
               editingIndex === index ? (
                 <div
@@ -108,29 +245,30 @@ const ProjectsSection = () => {
                 >
                   <input
                     type="text"
-                    value={editedProject.projectName}
-                    onChange={(e) => handleChange('projectName', e.target.value)}
-                    placeholder="Project Name"
+                    value={editedProject.title}
+                    onChange={(e) => handleChange('title', e.target.value)}
+                    placeholder="Project Title *"
                     className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
                   />
                   <textarea
                     value={editedProject.description}
                     onChange={(e) => handleChange('description', e.target.value)}
-                    placeholder="Project Description"
+                    placeholder="Project Description *"
                     rows={3}
                     className="w-full mb-2 px-2 py-1 border border-gray-300 rounded resize-none"
                   />
                   <input
                     type="url"
-                    value={editedProject.projectUrl}
-                    onChange={(e) => handleChange('projectUrl', e.target.value)}
+                    value={editedProject.liveUrl}
+                    onChange={(e) => handleChange('liveUrl', e.target.value)}
                     placeholder="Project URL"
                     className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
                   />
                   <div className="flex space-x-2 justify-end">
                     <button
-                      onClick={() => deleteProject(index)}
-                      className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => handleDeleteProject(index)}
+                      className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                      disabled={loading}
                     >
                       Delete
                     </button>
@@ -142,48 +280,52 @@ const ProjectsSection = () => {
                     </button>
                     <button
                       onClick={saveProject}
-                      className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                      className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                      disabled={loading}
                     >
-                      Save
+                      {loading ? 'Saving...' : 'Save'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <ul
+                <div
                   key={index}
-                  className={`rounded-lg px-4 py-3 transition-all duration-200 hover:shadow-md bg-gradient-to-r ${
-                    index % 2 !== 0 ? 'from-gray-50 to-gray-100' : 'from-[#f0f8fa] to-[#e6f3f8]'
-                  }`}
+                  className={`rounded-lg px-4 py-3 transition-all duration-200 hover:shadow-md bg-gradient-to-r ${index % 2 !== 0 ? 'from-gray-50 to-gray-100' : 'from-[#f0f8fa] to-[#e6f3f8]'
+                    }`}
                 >
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-lg font-bold text-black mb-2">{project.projectName}</h4>
-                    <button
-                      onClick={() => startEditing(index)}
-                      aria-label={`Edit project ${project.projectName}`}
-                      className="text-gray-600 hover:text-blue-600 transition"
-                    >
-                      <Edit2 size={15} />
-                    </button>
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="text-lg font-bold text-black">{project.title}</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEditing(index)}
+                        aria-label={`Edit project ${project.title}`}
+                        className="text-gray-600 hover:text-blue-600 transition disabled:opacity-50"
+                        disabled={loading}
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                    </div>
                   </div>
 
-                  <li className="mb-1 ml-4 list-none">
-                    <span className="font-semibold text-gray-800">Project Description: </span>
+                  <div className="mb-2 pl-3">
+                    <span className="font-semibold text-gray-800">Description: </span>
                     <span className="text-sm text-gray-600 leading-relaxed">{project.description}</span>
-                  </li>
+                  </div>
 
-                  <li className="ml-4 list-none">
-                    <span className="font-semibold text-gray-800">Project URL: </span>
-                    <a
-                      href={project.projectUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-[#3c80a7] hover:text-[#2f6786] text-sm font-medium transition-colors"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View Project
-                    </a>
-                  </li>
-                </ul>
+                  {project.liveUrl && (
+                    <div className="flex gap-4 text-sm pl-3">
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-[#3c80a7] hover:text-[#2f6786] font-medium transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Project URL
+                      </a>
+                    </div>
+                  )}
+                </div>
               )
             )}
           </div>

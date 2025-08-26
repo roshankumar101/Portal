@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
-const ApplicationTrackerSection = ({ applications }) => {
+const ApplicationTrackerSection = ({ applications, onTrackAll }) => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'applied': return 'bg-[#3c80a7]/20 text-[#3c80a7]';
@@ -85,7 +85,7 @@ const ApplicationTrackerSection = ({ applications }) => {
               </div>
 
               {/* Rows */}
-              {applications.slice(0, 5).map((application) => (
+              {applications.slice(0, 3).map((application) => (
                 <div
                   key={application.id}
                   className={`grid grid-cols-4 gap-4 p-4 rounded-xl bg-gradient-to-r ${getRowBgColor(application.status)} hover:shadow-md transition-all duration-200`}
@@ -117,25 +117,20 @@ const ApplicationTrackerSection = ({ applications }) => {
                 </div>
               ))}
 
-              {applications.length > 5 && (
-                <div className="text-center pt-4">
-                  <p className="text-sm text-gray-500">
-                    Showing 5 of {applications.length} applications
-                  </p>
+              {applications.length > 3 && (
+                <div className="flex justify-end pt-1">
+                  <button 
+                    onClick={() => onTrackAll && onTrackAll()}
+                    className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-medium rounded-sm hover:bg-[#3c80a7] hover:text-white transition-all duration-200 shadow-md transform hover:scale-105 text-sm"
+                  >
+                    Track All
+                  </button>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Track All Button */}
-        {applications && applications.length > 5 && (
-          <div className="mt-6 flex justify-end">
-            <button className="px-4 py-2 border border-[#3c80a7] bg-white text-[#3c80a7] font-medium rounded-lg hover:bg-[#3c80a7] hover:text-white transition-all duration-200 shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#3c80a7] focus:ring-opacity-50 text-sm">
-              Track All
-            </button>
-          </div>
-        )}
       </fieldset>
     </div>
   );

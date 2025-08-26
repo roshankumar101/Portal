@@ -4,11 +4,12 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { listJobs } from '../../../services/jobs';
 import { getStudentApplications } from '../../../services/applications';
+import { getStudentProfile } from '../../../services/students';
 import AboutMe from './AboutMe';
 import DashboardStatsSection from './DashboardStatsSection';
 import ApplicationTrackerSection from './ApplicationTrackerSection';
 import JobPostingsSection from './JobPostingsSection';
-import Education from './Education';
+import EducationSection from './EducationSection';
 import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
@@ -86,26 +87,49 @@ const DashboardHome = () => {
 
   // Handle job application
   const handleApplyToJob = async (jobId, companyId) => {
-    if (!user?.uid) return;
+    console.log('handleApplyToJob called with:', { jobId, companyId, userId: user?.uid });
+    
+    if (!user?.uid) {
+      console.error('No user ID available');
+      return;
+    }
+    
+    if (!jobId || !companyId) {
+      console.error('Missing jobId or companyId:', { jobId, companyId });
+      alert('Missing job or company information. Please try again.');
+      return;
+    }
     
     try {
+      console.log('Setting applying state to true for job:', jobId);
       setApplying(prev => ({ ...prev, [jobId]: true }));
+      
+      console.log('Importing applyToJob service...');
       const { applyToJob } = await import('../../../services/applications');
+      
+      console.log('Calling applyToJob service...');
       await applyToJob(user.uid, jobId, companyId);
+      console.log('applyToJob completed successfully');
       
       // Refresh applications and student data
+      console.log('Refreshing applications...');
       const updatedApplications = await getStudentApplications(user.uid);
       setApplications(updatedApplications);
+      console.log('Applications refreshed:', updatedApplications.length);
       
       // Update student stats
+      console.log('Refreshing student data...');
       const updatedStudentData = await getStudentProfile(user.uid);
       setStudentData(updatedStudentData);
+      console.log('Student data refreshed');
       
       alert('Application submitted successfully!');
     } catch (err) {
       console.error('Error applying to job:', err);
+      console.error('Error details:', err.message, err.code);
       alert(err.message || 'Failed to submit application. Please try again.');
     } finally {
+      console.log('Setting applying state to false for job:', jobId);
       setApplying(prev => ({ ...prev, [jobId]: false }));
     }
   };
@@ -190,19 +214,29 @@ const DashboardHome = () => {
 
 
       {/* About Me Section */}
-      <AboutMe studentData={studentData} user={user} />
+      <AboutMe />
 
       {/* Student Stats Section */}
       <DashboardStatsSection studentData={studentData} />
 
       {/* Live Application Tracker Section */}
-      <ApplicationTrackerSection applications={applications} />
+      <ApplicationTrackerSection 
+        applications={applications} 
+        onTrackAll={() => window.dispatchEvent(new CustomEvent('navigateToApplications'))}
+      />
 
       {/* Latest Job Postings Section */}
-      <JobPostingsSection jobs={jobs} onKnowMore={handleKnowMore} />
+      <JobPostingsSection 
+        jobs={jobs} 
+        onKnowMore={handleKnowMore} 
+        onApply={handleApplyToJob}
+        hasApplied={hasApplied}
+        applying={applying}
+        onExploreMore={() => window.dispatchEvent(new CustomEvent('navigateToJobs'))}
+      />
 
       {/* Education Section */}
-      <Education />
+      <EducationSection />
 
       {/* Skills Section */}
       <SkillsSection />

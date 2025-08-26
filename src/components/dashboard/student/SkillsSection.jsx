@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, Plus } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faJava, faPython, faJs, faReact, faNodeJs, faCss3Alt, faGithub,
 } from '@fortawesome/free-brands-svg-icons';
 import { faDatabase, faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../../hooks/useAuth';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../../../firebase';
+import {
+  addOrUpdateSkill,
+  deleteSkill
+} from '../../../services/students';
 
 function getPointOnQuadraticBezier(t, p0, p1, p2) {
   const x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
@@ -23,47 +30,117 @@ const iconsMap = {
   Git: faGithub,
 };
 
-const SkillsSection = () => {
-  const initialSkills = [
-    { name: 'Java', rating: 4, icon: faJava },
-    { name: 'Python', rating: 5, icon: faPython },
-    { name: 'JavaScript', rating: 3, icon: faJs },
-    { name: 'React', rating: 4, icon: faReact },
-    { name: 'Node.js', rating: 3, icon: faNodeJs },
-    { name: 'SQL', rating: 4, icon: faDatabase },
-    { name: 'CSS', rating: 5, icon: faCss3Alt },
-    { name: 'Git', rating: 4, icon: faGithub },
-  ];
+// Helper function for case-insensitive icon lookup
+const getSkillIcon = (skillName) => {
+  if (!skillName) return faJs;
+  
+  // First try exact match
+  if (iconsMap[skillName]) return iconsMap[skillName];
+  
+  // Then try case-insensitive match
+  const lowerSkillName = skillName.toLowerCase();
+  const matchedKey = Object.keys(iconsMap).find(key => key.toLowerCase() === lowerSkillName);
+  
+  return matchedKey ? iconsMap[matchedKey] : faJs;
+};
 
-  const [skills, setSkills] = useState(initialSkills);
+const SkillsSection = () => {
+  const { user } = useAuth();
+  const [skills, setSkills] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [currentSkill, setCurrentSkill] = useState({ name: '', rating: 0, icon: faJs });
+  const [isAddButtonActive, setIsAddButtonActive] = useState(false);
+  const [currentSkill, setCurrentSkill] = useState({ skillName: '', rating: 1 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Real-time skills data listener
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    setLoading(true);
+    const q = query(
+      collection(db, 'skills'),
+      where('studentId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      console.log('Skills query snapshot received, size:', querySnapshot.size);
+      const skillsData = [];
+      querySnapshot.forEach((doc) => {
+        const docData = doc.data();
+        console.log('Skills doc:', doc.id, docData);
+        skillsData.push({ id: doc.id, ...docData });
+      });
+      
+      console.log('Skills data before icon mapping:', skillsData);
+      
+      console.log('Final skills data:', skillsData);
+      setSkills(skillsData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error in skills real-time listener:', error);
+      setError('Failed to load skills. Please try again.');
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const handleAddClick = () => {
-    setCurrentSkill({ name: '', rating: 0, icon: faJs });
-    setEditingIndex(null);
-    setShowForm(true);
+    if (showForm && editingIndex === null) {
+      // Cancel adding
+      setShowForm(false);
+      setIsAddButtonActive(false);
+    } else {
+      // Start adding
+      setCurrentSkill({ skillName: '', rating: 1 });
+      setEditingIndex(null);
+      setShowForm(true);
+      setIsAddButtonActive(true);
+    }
   };
 
   const toggleEditMode = () => {
     setEditMode(!editMode);
     setShowForm(false);
     setEditingIndex(null);
+    setIsAddButtonActive(false);
   };
 
   const handleEditClick = (index) => {
-    setCurrentSkill(skills[index]);
+    const skill = skills[index];
+    setCurrentSkill({ 
+      skillName: skill.skillName, 
+      rating: skill.rating
+    });
     setEditingIndex(index);
     setShowForm(true);
   };
 
-  const handleDeleteClick = (index) => {
-    setSkills(skills.filter((_, i) => i !== index));
-    if (editingIndex === index) {
-      setShowForm(false);
-      setEditingIndex(null);
+  const handleDeleteClick = async (index) => {
+    const skill = skills[index];
+    if (!window.confirm(`Are you sure you want to delete ${skill.skillName}?`)) return;
+    
+    try {
+      setLoading(true);
+      await deleteSkill(skill.id);
+      // Real-time listener will automatically update the data
+      setSuccess('Skill deleted successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+      
+      if (editingIndex === index) {
+        setShowForm(false);
+        setEditingIndex(null);
+      }
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      setError('Failed to delete skill. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,26 +152,54 @@ const SkillsSection = () => {
     setCurrentSkill((prev) => ({ ...prev, rating }));
   };
 
-  const saveSkill = () => {
-    if (!currentSkill.name.trim()) {
-      alert('Skill name cannot be empty');
+  const saveSkill = async () => {
+    if (!currentSkill.skillName.trim()) {
+      setError('Skill name cannot be empty');
       return;
     }
-    const updatedSkill = { ...currentSkill, icon: iconsMap[currentSkill.name] || faJs };
-    let updatedSkills = [...skills];
-    if (editingIndex !== null) {
-      updatedSkills[editingIndex] = updatedSkill;
-    } else {
-      updatedSkills.push(updatedSkill);
+    
+    try {
+      setLoading(true);
+      setError('');
+      
+      const skillData = {
+        skillName: currentSkill.skillName,
+        rating: currentSkill.rating,
+        studentId: user.uid
+      };
+      
+      if (editingIndex !== null) {
+        // Update existing skill
+        const existingSkill = skills[editingIndex];
+        await addOrUpdateSkill({ ...skillData, id: existingSkill.id });
+      } else {
+        // Add new skill
+        await addOrUpdateSkill(skillData);
+      }
+      // Real-time listener will automatically update the data
+      setShowForm(false);
+      setEditingIndex(null);
+      setCurrentSkill({ skillName: '', rating: 1 });
+      setIsAddButtonActive(false);
+      
+      setSuccess(editingIndex !== null ? 'Skill updated successfully!' : 'Skill added successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error saving skill:', error);
+      if (error.code === 'permission-denied') {
+        setError('You do not have permission to save skills. Please contact support.');
+      } else {
+        setError('Failed to save skill. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-    setSkills(updatedSkills);
-    setShowForm(false);
-    setEditingIndex(null);
   };
 
   const cancelEdit = () => {
     setShowForm(false);
     setEditingIndex(null);
+    setIsAddButtonActive(false);
   };
 
   return (
@@ -144,7 +249,11 @@ const SkillsSection = () => {
               <button
                 onClick={handleAddClick}
                 aria-label="Add new skill"
-                className="bg-[#8ec5ff] rounded-full p-2 shadow hover:bg-[#5e9ad6] transition"
+                className={`rounded-full p-2 shadow transition ${
+                  isAddButtonActive 
+                    ? 'bg-[#5e9ad6] hover:bg-[#4a7bb8]' 
+                    : 'bg-[#8ec5ff] hover:bg-[#5e9ad6]'
+                }`}
               >
                 <Plus size={18} className="text-white" />
               </button>
@@ -160,15 +269,26 @@ const SkillsSection = () => {
             </div>
           </div>
 
+          {/* Error and Success Messages */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+              {success}
+            </div>
+          )}
+
           {showForm && (
             <div className="mb-4 p-4 border border-gray-300 rounded bg-gray-50">
               <input
                 type="text"
                 placeholder="Skill Name"
-                value={currentSkill.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                value={currentSkill.skillName}
+                onChange={(e) => handleInputChange('skillName', e.target.value)}
                 className="border border-gray-400 rounded px-2 py-1 mb-2 w-full"
-                disabled={!editMode}
               />
               <div className="flex items-center mb-2 space-x-1">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -176,7 +296,7 @@ const SkillsSection = () => {
                     key={star}
                     size={24}
                     className={star <= currentSkill.rating ? 'text-yellow-400 cursor-pointer' : 'text-gray-300 cursor-pointer'}
-                    onClick={() => editMode && handleRatingChange(star)}
+                    onClick={() => handleRatingChange(star)}
                   />
                 ))}
               </div>
@@ -189,9 +309,10 @@ const SkillsSection = () => {
                 </button>
                 <button
                   onClick={saveSkill}
-                  className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                  className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                  disabled={loading}
                 >
-                  Save
+                  {loading ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>
@@ -202,8 +323,8 @@ const SkillsSection = () => {
               <div
                 key={index}
                 className="skill-badge relative w-33 h-40 cursor-pointer transition-transform transform group"
-                onClick={() => editMode && handleEditClick(index)}
-                title={editMode ? 'Click to edit skill' : skill.name}
+                onClick={() => handleEditClick(index)}
+                title={`Click to edit ${skill.skillName}`}
               >
                 <svg viewBox="0 0 512 512" className="absolute inset-0 w-full h-full z-0">
                   {/* Shield */}
@@ -293,22 +414,23 @@ const SkillsSection = () => {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center gap-1 justify-start z-10 top-[8%]">
                   <FontAwesomeIcon
-                    icon={skill.icon}
+                    icon={getSkillIcon(skill.skillName)}
                     className="text-3xl mb-2 text-yellow-300 drop-shadow"
                   />
                   <div className="inset-x-0 text-center z-20">
                     <span className="font-bold text-white text-sm tracking-wide drop-shadow">
-                      {skill.name}
+                      {skill.skillName}
                     </span>
                   </div>
                   {editMode && (
                     <button
-                      aria-label={`Delete skill ${skill.name}`}
+                      aria-label={`Delete skill ${skill.skillName}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteClick(index);
                       }}
-                      className="absolute top-1 right-1 text-red-500 hover:text-red-700"
+                      className="absolute top-1 right-1 text-red-500 hover:text-red-700 disabled:opacity-50"
+                      disabled={loading}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </button>

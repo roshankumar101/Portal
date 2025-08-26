@@ -52,7 +52,7 @@ const companySvgs = {
   ),
 };
 
-const JobPostingsSection = ({ jobs, onKnowMore }) => {
+export default function JobPostingsSection({ jobs, onApply, hasApplied, applying, onExploreMore }) {
   const getCompanySvg = (companyName) => {
     return companyName && companySvgs[companyName] ? companySvgs[companyName] : null;
   };
@@ -142,9 +142,26 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
                         Know More
                       </button>
                       <button
-                        className="px-2 py-1 border border-green-600 bg-[#268812] text-white font-medium rounded-sm hover:bg-green-600 transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
+                        onClick={() => {
+                          console.log('Apply button clicked for job:', job);
+                          console.log('Job ID:', job.id, 'Company ID:', job.companyId || job.company?.id);
+                          onApply && onApply(job.id, job.companyId || job.company?.id);
+                        }}
+                        disabled={hasApplied && hasApplied(job.id) || applying && applying[job.id]}
+                        className={`px-2 py-1 font-medium rounded-sm transition-all duration-200 shadow-sm text-xs whitespace-nowrap ${
+                          hasApplied && hasApplied(job.id)
+                            ? 'border border-gray-400 bg-gray-300 text-gray-600 cursor-not-allowed'
+                            : applying && applying[job.id]
+                            ? 'border border-blue-400 bg-blue-200 text-blue-700 cursor-wait'
+                            : 'border border-green-600 bg-[#268812] text-white hover:bg-green-600'
+                        }`}
                       >
-                        Apply Now
+                        {hasApplied && hasApplied(job.id) 
+                          ? 'Applied' 
+                          : applying && applying[job.id] 
+                          ? 'Applying...' 
+                          : 'Apply Now'
+                        }
                       </button>
                     </div>
                   </div>
@@ -153,7 +170,10 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
 
               {jobsWithSvgs.length > 3 && (
                 <div className="flex justify-end pt-1">
-                  <button className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-medium rounded-sm hover:bg-[#3c80a7] hover:text-white transition-all duration-200 shadow-md transform hover:scale-105 text-sm">
+                  <button 
+                    onClick={() => onExploreMore && onExploreMore()}
+                    className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-medium rounded-sm hover:bg-[#3c80a7] hover:text-white transition-all duration-200 shadow-md transform hover:scale-105 text-sm"
+                  >
                     Explore More
                   </button>
                 </div>
@@ -166,4 +186,3 @@ const JobPostingsSection = ({ jobs, onKnowMore }) => {
   );
 };
 
-export default JobPostingsSection;

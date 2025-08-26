@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../../firebase';
 import SOTbanner from '../../../assets/SOTbanner.jpg';
 import PWIOILOGO from '../../../assets/brand_logo.webp'
 
@@ -12,6 +14,42 @@ import { useNavigate } from 'react-router-dom';
 export default function DashboardLayout({ children }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Real-time student profile data listener
+  useEffect(() => {
+    if (!user?.uid) {
+      console.log('No user UID available');
+      setLoading(false);
+      return;
+    }
+
+    console.log('Setting up real-time listener for user:', user.uid);
+    const docRef = doc(db, 'students', user.uid);
+    
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const profileData = { id: docSnap.id, ...docSnap.data() };
+        console.log('Real-time profile update:', profileData);
+        setStudentProfile(profileData);
+      } else {
+        console.log('No profile document found');
+        setStudentProfile(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error in real-time listener:', error);
+      setStudentProfile(null);
+      setLoading(false);
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      console.log('Cleaning up real-time listener');
+      unsubscribe();
+    };
+  }, [user?.uid]);
 
   // School-specific header texts
   const getSchoolHeaderText = (school) => {
@@ -25,24 +63,41 @@ export default function DashboardLayout({ children }) {
     return schoolTexts[school] || schoolTexts['SOT'];
   };
 
-  // Get student's school
+  // Normalize school value to standardized codes: SOT, SOM, SOH
+  const normalizeSchool = (value) => {
+    if (!value) return 'SOT';
+    const v = String(value).trim().toUpperCase();
+    if (v === 'SOT' || v === 'SCHOOL OF TECHNOLOGY') return 'SOT';
+    if (v === 'SOM' || v === 'SCHOOL OF MANAGEMENT') return 'SOM';
+    if (v === 'SOH' || v === 'SCHOOL OF HEALTHCARE' || v === 'SCHOOL OF HEALTH CARE') return 'SOH';
+    return 'SOT';
+  };
+
+  // Get student's school (supports both full names and abbreviations)
   const getStudentSchool = () => {
-    return user?.school || 'SOM';
+    const raw = studentProfile?.school || user?.school || 'SOT';
+    return normalizeSchool(raw);
   };
 
   // Calculate profile completion percentage (50-100%)
   const calculateProfileCompletion = () => {
-    if (!user) return 50;
+    if (!studentProfile) return 50;
 
     let completion = 50; // Base completion
     const maxCompletion = 100;
-    const stepValue = 10;
+    const stepValue = 5;
 
     // Check various profile fields
-    if (user.displayName) completion += stepValue;
-    if (user.email) completion += stepValue;
-    if (user.photoURL) completion += stepValue;
-    // Add more checks based on your user model
+    if (studentProfile.fullName) completion += stepValue;
+    if (studentProfile.email) completion += stepValue;
+    if (studentProfile.phone) completion += stepValue;
+    if (studentProfile.enrollmentId) completion += stepValue;
+    if (studentProfile.school) completion += stepValue;
+    if (studentProfile.batch) completion += stepValue;
+    if (studentProfile.cgpa) completion += stepValue;
+    if (studentProfile.tagline) completion += stepValue;
+    if (studentProfile.bio) completion += stepValue;
+    if (studentProfile.city) completion += stepValue;
 
     return Math.min(completion, maxCompletion);
   };
@@ -134,8 +189,7 @@ export default function DashboardLayout({ children }) {
                 <div className="ml-4 space-y-0">
                   <div className="flex items-center">
                     <h2 className="text-2xl font-bold text-black flex items-center">
-                      {user?.displayName || 'Esha Bajaj'}
-                      
+                      {loading ? 'Loading...' : (studentProfile?.fullName || user?.displayName || user?.email?.split('@')[0] || 'Student Name')}
 
                       <button
                         onClick={() => {
@@ -168,17 +222,14 @@ export default function DashboardLayout({ children }) {
                   </div>
 
                   <div className='ml-2 -mt-0 mb-1 italic'>
-                    <p>Aspiring Software Engineer</p>
+                    <p>{loading ? 'Loading...' : (studentProfile?.tagline || 'Complete your profile to add a tagline')}</p>
                   </div>
                   <div className="ml-2 mt-2 flex flex-col sm:flex-row sm:space-x-6 text-sm text-black">
                     <div>
-                      <span className="font-medium text-gray-700 ">ID:</span> ENR123456789
+                      <span className="font-medium text-gray-700 ">ID:</span> {loading ? 'Loading...' : (studentProfile?.enrollmentId || 'Click edit to set')}
                     </div>
-                    {/* <div>
-                      <span className="font-medium text-gray-700">School:</span> SOT
-                    </div> */}
                     <div>
-                      <span className="font-medium text-gray-700">CGPA:</span> 8.5
+                      <span className="font-medium text-gray-700">CGPA:</span> {loading ? 'Loading...' : (studentProfile?.cgpa || 'Click edit to set')}
                     </div>
                   </div>
                 </div>
@@ -193,7 +244,7 @@ export default function DashboardLayout({ children }) {
               <div className="flex items-center">
                 {/* Batch Image - Placeholder */}
                 <div className="hidden md:block">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
                     <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
                     <circle cx="12" cy="8" r="6" />
                   </svg>

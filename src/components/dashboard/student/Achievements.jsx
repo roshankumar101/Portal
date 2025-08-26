@@ -1,59 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award, Eye, Edit2, Plus, Trash2, Save, X } from 'lucide-react';
+import { useAuth } from '../../../hooks/useAuth';
+import { getStudentAchievements, addAchievement, updateAchievement, deleteAchievement } from '../../../services/students';
+import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 const Achievements = () => {
-  // Initial data
-  const [achievements, setAchievements] = useState([
-    {
-      id: 1,
-      title: "AWS Certified Solutions Architect - Associate",
-      description: "Comprehensive certification covering AWS core services, architecture best practices, and cloud security fundamentals.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/aws-cert"
-    },
-    {
-      id: 2,
-      title: "React Professional Developer Certification",
-      description: "Advanced certification in React.js development including hooks, context, performance optimization, and testing.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/react-cert"
-    },
-    {
-      id: 3,
-      title: "Google Analytics Individual Qualification (IQ)",
-      description: "Certification demonstrating proficiency in Google Analytics including data analysis and reporting.",
-      hasCertificate: false,
-      certificateUrl: null
-    },
-    {
-      id: 4,
-      title: "Winner - National Coding Championship 2024",
-      description: "First place winner in the annual national coding competition with over 10,000 participants.",
-      hasCertificate: false,
-      certificateUrl: null
-    },
-    {
-      id: 5,
-      title: "Microsoft Azure Fundamentals (AZ-900)",
-      description: "Foundational knowledge of cloud services and how those services are provided with Microsoft Azure.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/azure-cert"
-    },
-    {
-      id: 6,
-      title: "Scrum Master Professional Certificate",
-      description: "Agile project management certification covering Scrum methodology, team leadership, and sprint planning.",
-      hasCertificate: true,
-      certificateUrl: "https://example.com/scrum-cert"
-    },
-    {
-      id: 7,
-      title: "Dean's List - Academic Excellence Award",
-      description: "Recognition for maintaining exceptional academic performance with GPA above 9.5 for consecutive semesters.",
-      hasCertificate: false,
-      certificateUrl: null
-    }
-  ]);
+  const { user } = useAuth();
+  const [achievements, setAchievements] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [editingId, setEditingId] = useState(null);
   const [editedAchievement, setEditedAchievement] = useState({
@@ -62,23 +19,81 @@ const Achievements = () => {
     hasCertificate: false,
     certificateUrl: ""
   });
+  const [isAwardAddButtonActive, setIsAwardAddButtonActive] = useState(false);
+  const [isCertAddButtonActive, setIsCertAddButtonActive] = useState(false);
+
+  // Real-time listener for achievements
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const q = query(
+      collection(db, 'achievements'),
+      where('studentId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const achievementsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setAchievements(achievementsData);
+    }, (error) => {
+      console.error('Error fetching achievements:', error);
+      setError('Failed to load achievements');
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // URL normalization helper
+  const normalizeUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
+  // Handle input changes
+  const handleChange = (field, value) => {
+    setEditedAchievement(prev => ({ ...prev, [field]: value }));
+  };
 
   // Split groups
   const certificates = achievements.filter(item => item.hasCertificate);
   const awardsAndAchievements = achievements.filter(item => !item.hasCertificate);
 
   // Add achievement or certificate
-  const addAchievement = (isCertificate = false) => {
-    const newAchievement = {
-      id: Date.now(),
-      title: "",
-      description: "",
-      hasCertificate: isCertificate,
-      certificateUrl: ""
-    };
-    setAchievements(prev => [...prev, newAchievement]);
-    setEditingId(newAchievement.id);
-    setEditedAchievement(newAchievement);
+  const addNewAchievement = (isCertificate = false) => {
+    const isCurrentlyAdding = editingId === 'new' && editedAchievement.hasCertificate === isCertificate;
+    
+    if (isCurrentlyAdding) {
+      // Cancel adding
+      setEditingId(null);
+      if (isCertificate) {
+        setIsCertAddButtonActive(false);
+      } else {
+        setIsAwardAddButtonActive(false);
+      }
+    } else {
+      // Start adding
+      const newAchievement = {
+        title: "",
+        description: "",
+        hasCertificate: isCertificate,
+        certificateUrl: ""
+      };
+      setEditingId('new');
+      setEditedAchievement(newAchievement);
+      if (isCertificate) {
+        setIsCertAddButtonActive(true);
+        setIsAwardAddButtonActive(false);
+      } else {
+        setIsAwardAddButtonActive(true);
+        setIsCertAddButtonActive(false);
+      }
+    }
   };
 
   // Start editing
@@ -88,22 +103,87 @@ const Achievements = () => {
   };
 
   // Save edited achievement
-  const saveAchievement = () => {
-    setAchievements(prev =>
-      prev.map(item => item.id === editingId ? { ...editedAchievement } : item)
-    );
-    setEditingId(null);
+  const saveAchievement = async () => {
+    if (!editedAchievement.title.trim() || !editedAchievement.description.trim()) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      const achievementData = {
+        title: editedAchievement.title,
+        description: editedAchievement.description,
+        hasCertificate: editedAchievement.hasCertificate,
+        certificateUrl: editedAchievement.certificateUrl ? normalizeUrl(editedAchievement.certificateUrl) : '',
+        studentId: user.uid
+      };
+
+      if (editingId === 'new') {
+        // Add new achievement
+        await addAchievement(achievementData);
+        setSuccess('Achievement added successfully!');
+      } else {
+        // Update existing achievement
+        await updateAchievement(editingId, achievementData);
+        setSuccess('Achievement updated successfully!');
+      }
+      
+      // Achievements will auto-reload via real-time listener
+      setEditingId(null);
+      setIsAwardAddButtonActive(false);
+      setIsCertAddButtonActive(false);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error saving achievement:', error);
+      if (error.code === 'permission-denied') {
+        setError('You do not have permission to save achievements. Please contact support.');
+      } else {
+        setError('Failed to save achievement. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete achievement
-  const deleteAchievement = (id) => {
-    setAchievements(prev => prev.filter(item => item.id !== id));
-    if (editingId === id) setEditingId(null);
+  const handleDeleteAchievement = async (id) => {
+    if (id === 'new') {
+      // Just cancel editing for new items
+      setEditingId(null);
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this achievement?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      await deleteAchievement(id);
+      setSuccess('Achievement deleted successfully!');
+      
+      if (editingId === id) {
+        setEditingId(null);
+      }
+      
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error deleting achievement:', error);
+      setError('Failed to delete achievement. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Cancel editing
   const cancelEditing = () => {
     setEditingId(null);
+    setIsAwardAddButtonActive(false);
+    setIsCertAddButtonActive(false);
   };
 
   // View certificate url
@@ -115,7 +195,7 @@ const Achievements = () => {
 
   // Render single item (edit or view)
   const renderItem = (achievement) => {
-    if (editingId === achievement.id) {
+    if (editingId === achievement.id || (editingId === 'new' && achievement.isNew)) {
       return (
         <div
           key={achievement.id}
@@ -146,22 +226,24 @@ const Achievements = () => {
           )}
           <div className="flex space-x-2 justify-end">
             <button
-              onClick={() => deleteAchievement(achievement.id)}
-              className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+              onClick={() => handleDeleteAchievement(achievement.id)}
+              className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+              disabled={loading}
             >
-              <Trash2 size={14} />
+              Delete
             </button>
             <button
               onClick={cancelEditing}
               className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
             >
-              <X size={14} />
+              Cancel
             </button>
             <button
               onClick={saveAchievement}
-              className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+              className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              disabled={loading}
             >
-              <Save size={14} />
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
@@ -226,6 +308,18 @@ const Achievements = () => {
       `}</style>
 
       <div className="w-full relative space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+        {/* Success Message */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-700 text-sm">
+            {success}
+          </div>
+        )}
         {/* Awards & Achievements */}
         <fieldset className="bg-white rounded-lg border-2 border-[#8ec5ff] py-1 px-6 shadow-lg">
           <legend className="text-xl font-bold px-2 bg-gradient-to-r from-[#211868] to-[#b5369d] text-transparent bg-clip-text">
@@ -234,9 +328,13 @@ const Achievements = () => {
 
           <div className="flex justify-end mb-3 mr-[-1%]">
             <button
-              onClick={() => addAchievement(false)}
+              onClick={() => addNewAchievement(false)}
               aria-label="Add new award"
-              className="bg-[#8ec5ff] rounded-full p-2 shadow hover:bg-[#5e9ad6] transition"
+              className={`rounded-full p-2 shadow transition ${
+                isAwardAddButtonActive 
+                  ? 'bg-[#5e9ad6] hover:bg-[#4a7bb8]' 
+                  : 'bg-[#8ec5ff] hover:bg-[#5e9ad6]'
+              }`}
             >
               <Plus size={18} className="text-white" />
             </button>
@@ -249,6 +347,40 @@ const Achievements = () => {
                 : ""
             }`}
           >
+            {/* Add new award form when editing */}
+            {editingId === 'new' && !editedAchievement.hasCertificate && (
+              <div className="bg-gradient-to-r from-[#f0f8fa] to-[#e6f3f8] rounded-lg p-4">
+                <input
+                  type="text"
+                  value={editedAchievement.title}
+                  onChange={e => handleChange('title', e.target.value)}
+                  placeholder="Award Title *"
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
+                />
+                <textarea
+                  value={editedAchievement.description}
+                  onChange={e => handleChange('description', e.target.value)}
+                  placeholder="Award Description *"
+                  rows={3}
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded resize-none"
+                />
+                <div className="flex space-x-2 justify-end">
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveAchievement}
+                    className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            )}
             {awardsAndAchievements.map(renderItem)}
           </div>
         </fieldset>
@@ -261,9 +393,13 @@ const Achievements = () => {
 
           <div className="flex justify-end mb-3 mr-[-1%]">
             <button
-              onClick={() => addAchievement(true)}
+              onClick={() => addNewAchievement(true)}
               aria-label="Add new certificate"
-              className="bg-[#8ec5ff] rounded-full p-2 shadow hover:bg-[#5e9ad6] transition"
+              className={`rounded-full p-2 shadow transition ${
+                isCertAddButtonActive 
+                  ? 'bg-[#5e9ad6] hover:bg-[#4a7bb8]' 
+                  : 'bg-[#8ec5ff] hover:bg-[#5e9ad6]'
+              }`}
             >
               <Plus size={18} className="text-white" />
             </button>
@@ -276,6 +412,47 @@ const Achievements = () => {
                 : ""
             }`}
           >
+            {/* Add new certificate form when editing */}
+            {editingId === 'new' && editedAchievement.hasCertificate && (
+              <div className="bg-gradient-to-r from-[#f0f8fa] to-[#e6f3f8] rounded-lg p-4">
+                <input
+                  type="text"
+                  value={editedAchievement.title}
+                  onChange={e => handleChange('title', e.target.value)}
+                  placeholder="Title *"
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
+                />
+                <textarea
+                  value={editedAchievement.description}
+                  onChange={e => handleChange('description', e.target.value)}
+                  placeholder="Description *"
+                  rows={3}
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded resize-none"
+                />
+                <input
+                  type="url"
+                  value={editedAchievement.certificateUrl}
+                  onChange={e => handleChange('certificateUrl', e.target.value)}
+                  placeholder="Certificate URL"
+                  className="w-full mb-2 px-2 py-1 border border-gray-300 rounded"
+                />
+                <div className="flex space-x-2 justify-end">
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveAchievement}
+                    className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            )}
             {certificates.map(renderItem)}
           </div>
         </fieldset>

@@ -41,7 +41,8 @@ import {
   Loader
 } from 'lucide-react';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import ResumeSplitView from '../../components/resume/ResumeSplitView';
+import PDFLivePreview from '../../components/resume/PDFLivePreview';
+import ResumeEnhancer from '../../components/resume/ResumeEnhancer';
 import { upsertResume, getResume } from '../../services/resumes';
 
 export default function StudentDashboard() {
@@ -87,6 +88,7 @@ export default function StudentDashboard() {
   const [hasResume, setHasResume] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
   const resumeFileInputRef = useRef(null);
+  const [resumeActiveTab, setResumeActiveTab] = useState('editor');
   
   // Skills state
   const [skillsEntries, setSkillsEntries] = useState([]);
@@ -779,62 +781,113 @@ export default function StudentDashboard() {
                   Resume
                 </h2>
               </div>
-              {/* Subheading row with actions on the right */}
-              <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-                <p className="text-sm text-gray-600">
-                  You can Create/Analyze your resume here
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => resumeFileInputRef.current?.click()}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
-                    title={hasResume ? 'Choose a PDF to replace your resume' : 'Choose a PDF to add'}
-                  >
-                    <Upload className="h-4 w-4" /> {hasResume ? 'Replace Resume' : 'Add Resume'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.open('https://www.open-resume.com/resume-import', '_blank', 'noopener')}
-                    className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md bg-white hover:bg-gray-50 text-sm"
-                    title="Create resume"
-                  >
-                    <FilePlus className="h-4 w-4" /> Create Resume
-                  </button>
+              
+              {/* Tab Navigation */}
+              <div className="mb-6">
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex space-x-8">
+                    <button
+                      onClick={() => setResumeActiveTab('editor')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        resumeActiveTab === 'editor'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Live Preview
+                    </button>
+                    <button
+                      onClick={() => setResumeActiveTab('enhancer')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        resumeActiveTab === 'enhancer'
+                          ? 'border-purple-500 text-purple-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      AI Enhancer
+                    </button>
+                    <button
+                      onClick={() => setResumeActiveTab('upload')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        resumeActiveTab === 'upload'
+                          ? 'border-green-500 text-green-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Upload & Manage
+                    </button>
+                  </nav>
                 </div>
               </div>
 
-              {/* Dropzone area */}
-              <div
-                className={`relative w-full h-[80vh] border-2 border-dashed border-gray-300 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden ${!hasResume ? 'cursor-pointer' : ''}`}
-                onClick={() => {
-                  if (!hasResume) {
-                    resumeFileInputRef.current?.click();
-                  }
-                }}
-                onDragOver={(e) => {
-                  // Allow dropping files
-                  e.preventDefault();
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const file = e.dataTransfer?.files?.[0];
-                  if (file && (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
-                    if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                      URL.revokeObjectURL(resumeUrl);
-                    }
-                    const blobUrl = URL.createObjectURL(file);
-                    setResumeUrl(blobUrl);
-                    setHasResume(true);
-                  }
-                }}
-                onPaste={(e) => {
-                  // Support paste-from-clipboard if a PDF is present
-                  const items = e.clipboardData?.items || [];
-                  for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    if (item.kind === 'file') {
-                      const file = item.getAsFile();
+              {/* Tab Content */}
+              {resumeActiveTab === 'editor' && (
+                <div className="w-full h-[70vh]">
+                  <ErrorBoundary>
+                    {user?.uid && (
+                      <PDFLivePreview 
+                        uid={user.uid} 
+                        resumeId="default"
+                        resumeUrl={resumeUrl}
+                        hasResume={hasResume}
+                        onUploadClick={() => resumeFileInputRef.current?.click()}
+                      />
+                    )}
+                  </ErrorBoundary>
+                </div>
+              )}
+
+              {resumeActiveTab === 'enhancer' && (
+                <div className="w-full h-[70vh]">
+                  <ErrorBoundary>
+                    {user?.uid && (
+                      <ResumeEnhancer uid={user.uid} resumeId="default" />
+                    )}
+                  </ErrorBoundary>
+                </div>
+              )}
+
+              {resumeActiveTab === 'upload' && (
+                <div className="space-y-4">
+                  {/* Subheading row with actions */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <p className="text-sm text-gray-600">
+                      Upload and manage your resume files
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => resumeFileInputRef.current?.click()}
+                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
+                        title={hasResume ? 'Choose a PDF to replace your resume' : 'Choose a PDF to add'}
+                      >
+                        <Upload className="h-4 w-4" /> {hasResume ? 'Replace Resume' : 'Add Resume'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.open('https://www.open-resume.com/resume-import', '_blank', 'noopener')}
+                        className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md bg-white hover:bg-gray-50 text-sm"
+                        title="Create resume"
+                      >
+                        <FilePlus className="h-4 w-4" /> Create Resume
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dropzone area */}
+                  <div
+                    className={`relative w-full h-[60vh] border-2 border-dashed border-gray-300 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden ${!hasResume ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (!hasResume) {
+                        resumeFileInputRef.current?.click();
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer?.files?.[0];
                       if (file && (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
                         if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
                           URL.revokeObjectURL(resumeUrl);
@@ -842,96 +895,61 @@ export default function StudentDashboard() {
                         const blobUrl = URL.createObjectURL(file);
                         setResumeUrl(blobUrl);
                         setHasResume(true);
-                        break;
-                      }
-                    }
-                  }
-                }}
-              >
-                {/* Conditional delete button in top-right when resume exists */}
-                {hasResume && (
-                  <button
-                    type="button"
-                    className="absolute top-3 right-12 mr-2 inline-flex items-center justify-center p-2 rounded-md bg-green-200 hover:bg-green-700 hover:text-white"
-                    title="Resume Analyzer"
-                    aria-label="Scan resume"
-                    onClick={async () => {
-                      try {
-                        if (!user?.uid) return;
-                        const current = await getResume(user.uid, 'default');
-                        const nextMode = current?.previewMode === 'enhanced' ? 'original' : 'enhanced';
-                        await upsertResume(user.uid, 'default', { previewMode: nextMode });
-                      } catch (e) {
-                        console.warn('Failed to toggle preview mode', e);
                       }
                     }}
                   >
-                    <ScanLine className="h-4 w-4" />
-                  </button>
-                )}
-                {/* Real-time 50/50 editor + live preview (preserves outer card styles) */}
-                <div className="mt-6 w-full h-[70vh]">
-                  <ErrorBoundary>
-                    {user?.uid && (
-                      <ResumeSplitView uid={user.uid} resumeId="default" />
+                    {hasResume && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                            URL.revokeObjectURL(resumeUrl);
+                          }
+                          setHasResume(false);
+                          setResumeUrl(null);
+                        }}
+                        className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-200 text-red-500 hover:bg-red-700 hover:text-white"
+                        title="Delete Resume"
+                        aria-label="Delete resume"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     )}
-                  </ErrorBoundary>
-                </div>
-                {hasResume && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                        URL.revokeObjectURL(resumeUrl);
-                      }
-                      setHasResume(false);
-                      setResumeUrl(null);
-                    }}
-                    className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-200 text-red-500 hover:bg-red-700 hover:text-white"
-                    title="Delete Resume"
-                    aria-label="Delete resume"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
-                {/* Empty state text */}
-                {!hasResume && (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                    <p className="text-gray-700 font-medium">Drag & drop your resume here</p>
-                    <p className="text-gray-500 text-sm">Or click 'Add Resume' above to select a file.</p>
+                    {!hasResume && (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                        <p className="text-gray-700 font-medium">Drag & drop your resume here</p>
+                        <p className="text-gray-500 text-sm">Or click 'Add Resume' above to select a file.</p>
+                      </div>
+                    )}
+                    {hasResume && resumeUrl && (
+                      <iframe
+                        src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                        title="Resume preview"
+                        className="w-[70%] h-full rounded shadow"
+                      />
+                    )}
                   </div>
-                )}
-                {/* When a resume is present, render inline preview (no PDF controls) */}
-                {hasResume && resumeUrl && (
-                  <iframe
-                    src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                    title="Resume preview"
-                    className="w-[70%] h-full rounded shadow"
+
+                  {/* Hidden file input for uploads */}
+                  <input
+                    ref={resumeFileInputRef}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      if (file) {
+                        if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
+                          URL.revokeObjectURL(resumeUrl);
+                        }
+                        const blobUrl = URL.createObjectURL(file);
+                        setResumeUrl(blobUrl);
+                        setHasResume(true);
+                      }
+                    }}
                   />
-                )}
-              </div>
-
-              {/* Hidden file input for uploads */}
-              <input
-                ref={resumeFileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files && e.target.files[0];
-                  if (file) {
-                    // Revoke old blob if present
-                    if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                      URL.revokeObjectURL(resumeUrl);
-                    }
-                    const blobUrl = URL.createObjectURL(file);
-                    setResumeUrl(blobUrl);
-                    setHasResume(true);
-                  }
-                }}
-              />
-
-              {/* Action buttons moved to subheading row above */}
+                </div>
+              )}
             </div>
           </div>
         );
@@ -1203,7 +1221,7 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Headline</label>
                     <input
                       type="text"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"

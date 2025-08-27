@@ -14,6 +14,20 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    // Companies collection - allow read for all authenticated users, write for recruiters
+    match /companies/{companyId} {
+      allow read: if request.auth != null;
+      
+      // Allow recruiters to create/update their company profiles
+      allow create, update: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      
+      // Allow company owner to update/delete their own company
+      allow update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.ownerId;
+    }
+
     // Jobs collection - allow read for all authenticated users, write for recruiters
     match /jobs/{jobId} {
       allow read: if request.auth != null;
@@ -105,6 +119,12 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       // Owner can read/update/delete their resume doc(s)
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+
+      // Analyses subcollection - owner-only
+      match /analyses/{analysisId} {
+        allow create: if request.auth != null && request.auth.uid == userId;
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

@@ -194,7 +194,7 @@ const Achievements = () => {
   };
 
   // Render single item (edit or view)
-  const renderItem = (achievement) => {
+  const renderItem = (achievement, itemIndex = null) => {
     if (editingId === achievement.id || (editingId === 'new' && achievement.isNew)) {
       return (
         <div
@@ -250,10 +250,16 @@ const Achievements = () => {
       );
     }
 
+    // Use itemIndex if provided (for proper alternating in filtered arrays), otherwise find index
+    const index = itemIndex !== null ? itemIndex : achievements.findIndex(a => a.id === achievement.id);
+    const bgStyle = index % 2 === 0 
+      ? 'from-[#f0f8fa] to-[#e6f3f8]' 
+      : 'from-gray-50 to-gray-100';
+
     return (
-      <div
-        key={achievement.id}
-        className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 flex justify-between items-start"
+      <div 
+        key={achievement.id} 
+        className={`flex justify-between items-start p-4 rounded-lg transition-all duration-200 hover:shadow-md bg-gradient-to-r ${bgStyle}`}
       >
         <div className="flex items-start space-x-3">
           <Award className="h-5 w-5 text-[#3c80a7] mt-1 flex-shrink-0" />
@@ -287,16 +293,20 @@ const Achievements = () => {
       {/* Scrollbar styles */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
+          height: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #f3f4f6;
-          border-radius: 8px;
+          border-radius: 4px;
+          margin: 4px 0;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #3c80a7;
-          border-radius: 8px;
+          border-radius: 4px;
           transition: background 0.3s ease;
+          border: 2px solid transparent;
+          background-clip: content-box;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #2f6786;
@@ -304,6 +314,7 @@ const Achievements = () => {
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: #3c80a7 #f3f4f6;
+          padding-right: 4px;
         }
       `}</style>
 
@@ -321,12 +332,12 @@ const Achievements = () => {
           </div>
         )}
         {/* Awards & Achievements */}
-        <fieldset className="bg-white rounded-lg border-2 border-[#8ec5ff] py-1 px-6 shadow-lg">
+        <fieldset className="bg-white rounded-lg border-2 border-[#8ec5ff] pt-1 pb-5 px-6 transition-all duration-200 shadow-lg">
           <legend className="text-xl font-bold px-2 bg-gradient-to-r from-[#211868] to-[#b5369d] text-transparent bg-clip-text">
             Awards & Achievements
           </legend>
 
-          <div className="flex justify-end mb-3 mr-[-1%]">
+          <div className="flex justify-end mb-4 mr-[-1%]">
             <button
               onClick={() => addNewAchievement(false)}
               aria-label="Add new award"
@@ -341,9 +352,9 @@ const Achievements = () => {
           </div>
 
           <div
-            className={`pr-2 space-y-3 pb-6 ${
-              awardsAndAchievements.length > 3
-                ? "max-h-[300px] overflow-y-auto custom-scrollbar"
+            className={`space-y-3 pb-4 ${
+              awardsAndAchievements.length > 0
+                ? "max-h-[300px] overflow-y-auto custom-scrollbar pr-2"
                 : ""
             }`}
           >
@@ -381,12 +392,12 @@ const Achievements = () => {
                 </div>
               </div>
             )}
-            {awardsAndAchievements.map(renderItem)}
+            {awardsAndAchievements.map((achievement, index) => renderItem(achievement, index))}
           </div>
         </fieldset>
 
         {/* Certifications */}
-        <fieldset className="bg-white rounded-lg border-2 border-[#8ec5ff] py-1 px-6 shadow-lg">
+        <fieldset className="bg-white rounded-lg border-2 border-[#8ec5ff] pt-1 pb-4 px-6 transition-all duration-200 shadow-lg">
           <legend className="text-xl font-bold px-2 bg-gradient-to-r from-[#211868] to-[#b5369d] text-transparent bg-clip-text">
             Certifications
           </legend>
@@ -406,9 +417,9 @@ const Achievements = () => {
           </div>
 
           <div
-            className={`pr-2 space-y-3 pb-6 ${
-              certificates.length > 3
-                ? "max-h-[300px] overflow-y-auto custom-scrollbar"
+            className={`space-y-3 pb-4 ${
+              certificates.length > 0
+                ? "max-h-[300px] overflow-y-auto custom-scrollbar pr-2"
                 : ""
             }`}
           >
@@ -453,7 +464,7 @@ const Achievements = () => {
                 </div>
               </div>
             )}
-            {certificates.map(renderItem)}
+            {certificates.map((certificate, index) => renderItem(certificate, index))}
           </div>
         </fieldset>
       </div>

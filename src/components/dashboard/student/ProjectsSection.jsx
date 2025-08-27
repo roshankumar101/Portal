@@ -194,7 +194,33 @@ const ProjectsSection = () => {
         )}
 
         <div className="my-2">
-          <div className="max-h-[480px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+          <div className="space-y-2 pr-2 custom-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+            <style jsx>{`
+              .custom-scrollbar::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-track {
+                background: #f3f4f6;
+                border-radius: 4px;
+                margin: 4px 0;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #3c80a7;
+                border-radius: 4px;
+                transition: background 0.3s ease;
+                border: 2px solid transparent;
+                background-clip: content-box;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #2f6786;
+              }
+              .custom-scrollbar {
+                scrollbar-width: thin;
+                scrollbar-color: #3c80a7 #f3f4f6;
+                padding-right: 4px;
+              }
+            `}</style>
             {/* Add new project form when editingIndex equals projects.length */}
             {editingIndex === projects.length && (
               <div className="rounded-lg px-4 py-3 bg-gradient-to-r from-[#f0f8fa] to-[#e6f3f8]">
@@ -237,7 +263,7 @@ const ProjectsSection = () => {
               </div>
             )}
 
-            {projects.map((project, index) =>
+            {projects.map((project, index) => (
               editingIndex === index ? (
                 <div
                   key={index}
@@ -290,8 +316,9 @@ const ProjectsSection = () => {
               ) : (
                 <div
                   key={index}
-                  className={`rounded-lg px-4 py-3 transition-all duration-200 hover:shadow-md bg-gradient-to-r ${index % 2 !== 0 ? 'from-gray-50 to-gray-100' : 'from-[#f0f8fa] to-[#e6f3f8]'
-                    }`}
+                  className={`rounded-lg px-4 py-3 transition-all duration-200 hover:shadow-md bg-gradient-to-r ${
+                    index % 2 !== 0 ? 'from-gray-50 to-gray-100' : 'from-[#f0f8fa] to-[#e6f3f8]'
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="text-lg font-bold text-black">{project.title}</h4>
@@ -306,28 +333,27 @@ const ProjectsSection = () => {
                       </button>
                     </div>
                   </div>
-
-                  <div className="mb-2 pl-3">
-                    <span className="font-semibold text-gray-800">Description: </span>
-                    <span className="text-sm text-gray-600 leading-relaxed">{project.description}</span>
-                  </div>
-
+                  
+                  <p className="text-sm text-gray-700 mt-2">
+                    {project.description}
+                  </p>
+                  
                   {project.liveUrl && (
-                    <div className="flex gap-4 text-sm pl-3">
+                    <div className="mt-2">
                       <a
                         href={project.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center text-[#3c80a7] hover:text-[#2f6786] font-medium transition-colors"
+                        className="text-blue-600 hover:underline text-sm flex items-center"
                       >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Project URL
+                        <ExternalLink size={14} className="mr-1" />
+                        View Project
                       </a>
                     </div>
                   )}
                 </div>
               )
-            )}
+            ))}
           </div>
         </div>
       </fieldset>

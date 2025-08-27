@@ -1183,7 +1183,7 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Headline</label>
                     <input
                       type="text"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -212,7 +212,7 @@ const EducationSection = () => {
           Education
         </legend>
 
-        <div className="flex items-center justify-end mb-1 mr-[-1%]">
+        <div className="flex items-center justify-end mr-[-1%]">
           <div className="flex gap-2">
             <button
               onClick={handleAddClick}
@@ -233,7 +233,7 @@ const EducationSection = () => {
                 editMode ? 'bg-[#5e9ad6]' : ''
               }`}
             >
-              <Edit3 size={16} className="text-white" />
+              <Edit3 size={17} className="text-white" />
             </button>
           </div>
         </div>
@@ -252,7 +252,7 @@ const EducationSection = () => {
 
         {/* Education Table Format */}
         {console.log('Rendering education entries:', educationEntries) || educationEntries.filter(edu => edu.institute && edu.institute.trim()).length > 0 && (
-          <div className="mb-3 mt-1">
+          <div className="mb-3">
             <div className="space-y-2">
               {/* Column Headers */}
               <div className="grid grid-cols-4 gap-4 mb-0 p-4">
@@ -283,21 +283,21 @@ const EducationSection = () => {
               >
                 {/* Institute with Location */}
                 <div className="flex flex-col">
-                  <span className="text-base font-semibold text-black">
+                  <span className="text-base font-semibold text-black mt-2">
                     {education.institute}
                   </span>
-                  <span className="text-sm italic text-gray-600">
+                  <span className="text-sm italic text-gray-700">
                     {[education.city, education.state].filter(Boolean).join(', ')}
                   </span>
                 </div>
 
-                <div className="pl-7 text-base font-semibold text-black flex items-center">
+                <div className="pl-6 text-base font-semibold text-black flex items-center -mt-2">
                   {education.branch}
                 </div>
-                <div className="pl-6 text-sm font-medium text-gray-700 flex items-center">
+                <div className="pl-6 text-md font-semibold text-black flex items-center -mt-2">
                   {education.yop}
                 </div>
-                <div className="pl-6 text-sm font-medium text-gray-700 flex items-center">
+                <div className="pl-6 text-md font-semibold text-black flex items-center -mt-2">
                   {education.score && education.scoreType ? `${education.score} ${education.scoreType === 'CGPA' ? 'CGPA' : '%'}` : 'N/A'}
                 </div>
                 

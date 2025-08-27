@@ -321,7 +321,7 @@ const ProjectsSection = () => {
                   }`}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="text-lg font-bold text-black">{project.title}</h4>
+                    <h4 className="text-xl font-bold text-black">{project.title}</h4>
                     <div className="flex gap-2">
                       <button
                         onClick={() => startEditing(index)}
@@ -334,19 +334,21 @@ const ProjectsSection = () => {
                     </div>
                   </div>
                   
-                  <p className="text-sm text-gray-700 mt-2">
+                  <p className="text-md text-gray-700 pl-3">
+                    <span className="font-semibold text-black text-lg">Description: </span>
                     {project.description}
                   </p>
                   
                   {project.liveUrl && (
-                    <div className="mt-2">
+                    <div className="mt-1 text-md text-gray-700 flex items-center pl-3">
+                      <span className="font-semibold mr-1 text-lg text-black">Project URL:</span>
                       <a
                         href={project.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm flex items-center"
+                        className="text-blue-600 hover:text-blue-800 inline-flex items-center break-all"
                       >
-                        <ExternalLink size={14} className="mr-1" />
+                        <ExternalLink size={16} className="mr-1" />
                         View Project
                       </a>
                     </div>

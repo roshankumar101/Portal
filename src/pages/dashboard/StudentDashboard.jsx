@@ -78,7 +78,7 @@ export default function StudentDashboard() {
   const [cgpa, setCgpa] = useState('');
   const [bio, setBio] = useState('');
   const [saving, setSaving] = useState(false);
-  const [tagline, setTagline] = useState('');
+  const [Headline, setHeadline] = useState('');
   const [city, setCity] = useState('');
   const [stateRegion, setStateRegion] = useState('');
   const [linkedin, setLinkedin] = useState('');
@@ -175,7 +175,7 @@ export default function StudentDashboard() {
         setBatch(data.batch || batch);
         setCenter(data.center || center);
         setBio(data.bio || '');
-        setTagline(data.tagline || '');
+        setHeadline(data.Headline || '');
         setCity(data.city || '');
         setStateRegion(data.stateRegion || data.state || '');
         setLinkedin(data.linkedin || '');
@@ -485,7 +485,7 @@ export default function StudentDashboard() {
         batch,
         center,
         bio: bio.trim(),
-        tagline: tagline.trim(),
+        Headline: Headline.trim(),
         city: city.trim(),
         stateRegion: stateRegion.trim(),
         linkedin: linkedin.trim(),
@@ -759,19 +759,19 @@ export default function StudentDashboard() {
 
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          className="px-3 py-1.5 border border-blue-600 bg-blue-50 text-blue-700 font-medium rounded-md hover:bg-blue-100 transition-all duration-200 text-xs whitespace-nowrap"
+                          className="px-2 py-1 border border-[#3c80a7] bg-[#8ec5ff] text-black font-medium rounded-sm hover:bg-[#2563eb] transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
                         >
                           Know More
                         </button>
                         <button
                           onClick={() => handleApplyToJob(job)}
                           disabled={hasApplied(job.id) || applying[job.id]}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                          className={`px-2 py-1 rounded-sm text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                             hasApplied(job.id)
                               ? 'bg-green-100 text-green-700 cursor-not-allowed border border-green-300'
                               : applying[job.id]
                               ? 'bg-blue-100 text-blue-700 cursor-not-allowed border border-blue-300'
-                              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md border border-blue-600'
+                              : 'border border-green-600 bg-[#268812] text-white hover:bg-green-600'
                           }`}
                         >
                           {hasApplied(job.id) ? (
@@ -1175,7 +1175,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
                     <input
@@ -1202,19 +1202,6 @@ export default function StudentDashboard() {
                       value={enrollmentId}
                       onChange={(e) => setEnrollmentId(e.target.value)}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Job Flexibility</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={jobFlexibility}
-                      onChange={(e) => setJobFlexibility(e.target.value)}
-                    >
-                      <option value="">Select Flexibility</option>
-                      <option value="open-to-relocation">Open to Relocation</option>
-                      <option value="no-relocation">No Relocation</option>
-                      <option value="hybrid">Hybrid/Remote Preferred</option>
-                    </select>
                   </div>
                 </div>
 
@@ -1273,13 +1260,13 @@ export default function StudentDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Headline</label>
                     <input
                       type="text"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Your professional tagline"
-                      value={tagline}
-                      onChange={(e) => setTagline(e.target.value)}
+                      placeholder="Your professional Headline"
+                      value={Headline}
+                      onChange={(e) => setHeadline(e.target.value)}
                     />
                   </div>
                   <div>

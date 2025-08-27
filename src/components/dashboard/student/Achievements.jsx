@@ -262,10 +262,10 @@ const Achievements = () => {
         className={`flex justify-between items-start p-4 rounded-lg transition-all duration-200 hover:shadow-md bg-gradient-to-r ${bgStyle}`}
       >
         <div className="flex items-start space-x-3">
-          <Award className="h-5 w-5 text-[#3c80a7] mt-1 flex-shrink-0" />
+          <Award className="h-5 w-5 text-yellow-400 mt-1 flex-shrink-0" />
           <div>
-            <h4 className="text-lg font-bold text-black mb-2">{achievement.title}</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{achievement.description}</p>
+            <h4 className="text-lg font-bold text-black mb-1">{achievement.title}</h4>
+            <p className="text-md text-gray-700 leading-relaxed">{achievement.description}</p>
           </div>
         </div>
         <div className="flex-shrink-0 flex space-x-2">

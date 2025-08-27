@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle, Loader } from 'lucide-react';
 import AwsLogoUrl from '../../../assets/Amazon_Web_Services-Logo.wine.svg';
 
 const companySvgs = {
@@ -150,18 +151,25 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                         disabled={hasApplied && hasApplied(job.id) || applying && applying[job.id]}
                         className={`px-2 py-1 font-medium rounded-sm transition-all duration-200 shadow-sm text-xs whitespace-nowrap ${
                           hasApplied && hasApplied(job.id)
-                            ? 'border border-gray-400 bg-gray-300 text-gray-600 cursor-not-allowed'
+                            ? 'bg-green-100 text-green-700 cursor-not-allowed border border-green-300'
                             : applying && applying[job.id]
-                            ? 'border border-blue-400 bg-blue-200 text-blue-700 cursor-wait'
+                            ? 'bg-blue-100 text-blue-700 cursor-not-allowed border border-blue-300'
                             : 'border border-green-600 bg-[#268812] text-white hover:bg-green-600'
                         }`}
                       >
-                        {hasApplied && hasApplied(job.id) 
-                          ? 'Applied' 
-                          : applying && applying[job.id] 
-                          ? 'Applying...' 
-                          : 'Apply Now'
-                        }
+                        {hasApplied && hasApplied(job.id) ? (
+                          <>
+                            <CheckCircle className="h-3 w-3 inline mr-1" />
+                            Applied
+                          </>
+                        ) : applying && applying[job.id] ? (
+                          <>
+                            <Loader className="h-3 w-3 inline mr-1 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          'Apply Now'
+                        )}
                       </button>
                     </div>
                   </div>

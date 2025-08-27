@@ -40,6 +40,9 @@ import {
   XCircle,
   Loader
 } from 'lucide-react';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+import ResumeSplitView from '../../components/resume/ResumeSplitView';
+import { upsertResume, getResume } from '../../services/resumes';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -852,11 +855,28 @@ export default function StudentDashboard() {
                     className="absolute top-3 right-12 mr-2 inline-flex items-center justify-center p-2 rounded-md bg-green-200 hover:bg-green-700 hover:text-white"
                     title="Resume Analyzer"
                     aria-label="Scan resume"
-                    onClick={() => { /* static placeholder */ }}
+                    onClick={async () => {
+                      try {
+                        if (!user?.uid) return;
+                        const current = await getResume(user.uid, 'default');
+                        const nextMode = current?.previewMode === 'enhanced' ? 'original' : 'enhanced';
+                        await upsertResume(user.uid, 'default', { previewMode: nextMode });
+                      } catch (e) {
+                        console.warn('Failed to toggle preview mode', e);
+                      }
+                    }}
                   >
                     <ScanLine className="h-4 w-4" />
                   </button>
                 )}
+                {/* Real-time 50/50 editor + live preview (preserves outer card styles) */}
+                <div className="mt-6 w-full h-[70vh]">
+                  <ErrorBoundary>
+                    {user?.uid && (
+                      <ResumeSplitView uid={user.uid} resumeId="default" />
+                    )}
+                  </ErrorBoundary>
+                </div>
                 {hasResume && (
                   <button
                     type="button"

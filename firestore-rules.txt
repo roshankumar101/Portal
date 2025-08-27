@@ -48,5 +48,63 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
         request.auth.uid == get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.recruiterId;
     }
+
+    // Students collection - allow each authenticated user to manage their own profile
+    match /students/{studentId} {
+      // Read own profile or by admins
+      allow read: if request.auth != null && (
+        request.auth.uid == studentId || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        )
+      );
+
+      // Create/Update/Delete only own profile or by admins
+      allow create: if request.auth != null && request.auth.uid == studentId;
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == studentId || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        )
+      );
+    }
+
+    // Skills collection - per-student access control
+    match /skills/{skillId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
+    }
+
+    // Projects collection - per-student access control
+    match /projects/{projectId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
+    }
+
+    // Coding profiles collection - per-student access control
+    match /coding_profiles/{profileId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
+    }
+
+    // Educational background collection - per-student access control
+    match /educational_background/{educationId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
+    }
+
+    // Achievements collection - per-student access control
+    match /achievements/{achievementId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
+    }
+
+    // Users/{userId}/resumes subcollection - per-user access control
+    match /users/{userId}/resumes/{resumeId} {
+      // Owner can create their resume doc(s)
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Owner can read/update/delete their resume doc(s)
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

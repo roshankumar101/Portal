@@ -29,7 +29,7 @@ export default function AdminLayout({ children }) {
 
   // Profile image sizing (reuse simplified config)
   const profileConfig = {
-    imageSize: 20,
+    imageSize: 16,
     iconSize: 8,
   };
 
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }) {
       <nav className="bg-white border-b border-blue-100 sticky top-0 z-50">
         <div className="w-full px-2 py-1">
           <div className="px-6 py-1 rounded-xl bg-gradient-to-br from-white to-blue-300 border-2 border-gray-400">
-            <div className="flex justify-between items-center h-23 gap-2 relative">
+            <div className="flex justify-between items-center h-20 gap-2 relative">
               {/* Left Side - Admin avatar and name (no progress ring) */}
               <div className="flex items-center flex-1">
                 {/* Simple Profile Image (no completion circle) */}
@@ -72,7 +72,7 @@ export default function AdminLayout({ children }) {
               </div>
 
               {/* Center - PWIOI logo and school-specific motto */}
-              <div className="absolute top-1 start-1/2 -translate-x-1/5 w-fit flex flex-col items-center gap-2">
+              <div className="absolute top-1 start-1/2 -translate-x-1/5 w-fit flex flex-col items-center gap-1">
                 <img src={PWIOILOGO} alt="Brand" className="w-30" />
                 <h1 className="text-nowrap text-3xl text-black-300 opacity-90 font-caveat">{getSchoolHeaderText(getUserSchool())}</h1>
               </div>

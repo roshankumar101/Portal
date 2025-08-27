@@ -3,13 +3,17 @@ import AdminLayout from '../../components/dashboard/shared/AdminLayout';
 import AdminHome from '../../components/dashboard/admin/AdminHome';
 import CreateJob from '../../components/dashboard/admin/CreateJob';
 import ManageJobs from '../../components/dashboard/admin/ManageJobs';
-import { Home, FilePlus2, Briefcase, GripVertical } from 'lucide-react';
+import { Home, FilePlus2, Briefcase, GripVertical, LogOut } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarWidth, setSidebarWidth] = useState(15); // % width, 5-15 like student
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef(null);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -52,6 +56,18 @@ export default function AdminDashboard() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  const handleLogout = async () => {
+    try {
+      console.log('Attempting logout...');
+      await logout();
+      console.log('Logout successful - navigating to home');
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Logout failed: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -67,45 +83,76 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="flex">
-        {/* Sidebar */}
+      <div className="flex min-h-screen relative">
         <aside
-          className="bg-white border-r border-gray-200 min-h-[calc(100vh-5rem)]"
+          className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
           style={{ width: `${sidebarWidth}%` }}
         >
-          <div className="p-4">
-            <nav className="space-y-1">
-              {tabs.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm border transition-all ${
-                    activeTab === id
-                      ? 'bg-blue-600 text-white border-blue-600 shadow'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" /> {label}
-                </button>
-              ))}
-            </nav>
+          <div className="p-3 h-full flex flex-col">
+            <div className="mb-6">
+              {sidebarWidth >= 9 && (
+                <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
+              )}
+              <nav className="space-y-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <div key={tab.id} className="mb-1">
+                      <button
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center rounded-lg text-xs font-medium transition-all duration-200 ${
+                          activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                        } ${sidebarWidth < 9 ? 'justify-center px-2 py-2' : 'px-2 py-3'}`}
+                        title={sidebarWidth < 9 ? tab.label : ''}
+                      >
+                        <Icon className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
+                        {sidebarWidth >= 9 && tab.label}
+                      </button>
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="mt-auto pt-4 pb-[35%] border-t border-gray-300">
+              <button
+                onClick={handleLogout}
+                className={`w-full flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${
+                  sidebarWidth < 12 ? 'justify-center px-2 py-2 mb-15' : 'px-3 py-2.5'
+                }`}
+                title={sidebarWidth < 9 ? 'Logout' : ''}
+              >
+                <LogOut className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
+                {sidebarWidth >= 9 && 'Logout'}
+              </button>
+            </div>
           </div>
         </aside>
 
-        {/* Draggable handle */}
         <div
           ref={dragRef}
           onMouseDown={handleMouseDown}
-          className="w-2 cursor-col-resize bg-gradient-to-b from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 flex items-center justify-center"
-          title="Drag to resize"
+          className="fixed top-0 h-screen w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize z-10 transition-colors duration-200 flex items-center justify-center group"
+          style={{ left: `${sidebarWidth}%` }}
         >
-          <GripVertical className="w-3 h-3 text-gray-400" />
+          <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
+            <GripVertical className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors duration-200" />
+          </div>
         </div>
 
-        {/* Main content */}
-        <section className="flex-1 p-4">
-          {renderContent()}
-        </section>
+        <main
+          className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen transition-all duration-200 ease-in-out"
+          style={{
+            marginLeft: `${sidebarWidth}%`,
+            width: `${100 - sidebarWidth}%`
+          }}
+        >
+          <div className="p-8">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     </AdminLayout>
   );

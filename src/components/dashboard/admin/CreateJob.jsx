@@ -40,6 +40,7 @@ export default function CreateJob({ onCreated }) {
   const hiddenDateRef = useRef(null);
   const [websiteError, setWebsiteError] = useState('');
   const [savedPositions, setSavedPositions] = useState([]); // locally saved (company, jobTitle)
+  const [selectedPositions, setSelectedPositions] = useState(new Set()); // track which positions are selected
   const [collapsedSections, setCollapsedSections] = useState(new Set());
   const [gapInputMode, setGapInputMode] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState({ serviceAgreement: false, blockingPeriod: false });
@@ -310,12 +311,15 @@ export default function CreateJob({ onCreated }) {
     const jobType = form.jobType;
     const workMode = form.workMode;
     if (companyName && jobTitle) {
+      const newPositionIndex = savedPositions.length;
       setSavedPositions((list) => [...list, { 
         company: companyName, 
         jobTitle, 
         jobType, 
         workMode 
       }]);
+      // Auto-select the new position
+      setSelectedPositions(prev => new Set([...prev, newPositionIndex]));
     }
     // Reset while cloning certain fields for faster next entry
     resetForm({
@@ -920,6 +924,20 @@ export default function CreateJob({ onCreated }) {
                 </div>
                 <div className="flex justify-end items-center">
                   <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedPositions.has(i)}
+                      onChange={(e) => {
+                        const newSelected = new Set(selectedPositions);
+                        if (e.target.checked) {
+                          newSelected.add(i);
+                        } else {
+                          newSelected.delete(i);
+                        }
+                        setSelectedPositions(newSelected);
+                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
                     <button 
                       type="button"
                       onClick={() => {

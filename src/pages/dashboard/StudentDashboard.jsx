@@ -714,88 +714,74 @@ export default function StudentDashboard() {
                   <p className="text-gray-600">No jobs available at the moment.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  {/* Column Headers */}
+                  <div className="grid grid-cols-5 gap-4 mb-3 py-3 px-4 bg-gray-50 rounded-lg">
+                    <div className="text-gray-700 font-semibold text-sm">Company</div>
+                    <div className="text-gray-700 font-semibold text-sm">Job Title</div>
+                    <div className="text-gray-700 font-semibold text-sm">Location</div>
+                    <div className="text-gray-700 font-semibold text-sm">Salary (CTC)</div>
+                    <div></div>
+                  </div>
+
+                  {/* Job Listings */}
                   {jobs.map((job) => (
-                    <div key={job.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-blue-300">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg text-gray-900 mb-1">{job.jobTitle}</h3>
-                          <p className="text-blue-600 font-medium text-sm">{job.company?.name || 'Company'}</p>
+                    <div
+                      key={job.id}
+                      className="grid grid-cols-5 gap-4 p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:shadow-md transition-all duration-200 border border-gray-200"
+                    >
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 ${getCompanyColor(job.company?.name)}`}>
+                          {getCompanyInitial(job.company?.name)}
                         </div>
-                        <div className="text-right">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {job.jobType}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium">Location:</span>
-                          <span className="ml-1">{job.location}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium">Experience:</span>
-                          <span className="ml-1">{job.experienceLevel}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium">Salary:</span>
-                          <span className="ml-1 text-green-600 font-semibold">
-                            ₹{(job.salary / 100000).toFixed(1)} LPA
-                          </span>
-                        </div>
-                        {job.eligibilityCriteria && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <span className="font-medium">Eligibility:</span>
-                            <span className="ml-1">{job.eligibilityCriteria}</span>
-                          </div>
-                        )}
+                        <span className="text-sm font-medium text-gray-900 truncate">
+                          {job.company?.name || 'Company'}
+                        </span>
                       </div>
 
-                      {job.skills && job.skills.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Skills Required:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {job.skills.slice(0, 3).map((skill, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                            {job.skills.length > 3 && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
-                                +{job.skills.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-800 truncate">
+                          {job.jobTitle}
+                        </span>
+                      </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="text-xs text-gray-500">
-                          Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}
-                        </div>
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-600 truncate">
+                          {job.location}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-green-600">
+                          ₹{(job.salary / 100000).toFixed(1)} LPA
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          className="px-3 py-1.5 border border-blue-600 bg-blue-50 text-blue-700 font-medium rounded-md hover:bg-blue-100 transition-all duration-200 text-xs whitespace-nowrap"
+                        >
+                          Know More
+                        </button>
                         <button
                           onClick={() => handleApplyToJob(job)}
                           disabled={hasApplied(job.id) || applying[job.id]}
-                          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 whitespace-nowrap ${
                             hasApplied(job.id)
-                              ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                              ? 'bg-green-100 text-green-700 cursor-not-allowed border border-green-300'
                               : applying[job.id]
-                              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md'
+                              ? 'bg-blue-100 text-blue-700 cursor-not-allowed border border-blue-300'
+                              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md border border-blue-600'
                           }`}
                         >
                           {hasApplied(job.id) ? (
                             <>
-                              <CheckCircle className="h-4 w-4 inline mr-1" />
+                              <CheckCircle className="h-3 w-3 inline mr-1" />
                               Applied
                             </>
                           ) : applying[job.id] ? (
                             <>
-                              <Loader className="h-4 w-4 inline mr-1 animate-spin" />
+                              <Loader className="h-3 w-3 inline mr-1 animate-spin" />
                               Applying...
                             </>
                           ) : (

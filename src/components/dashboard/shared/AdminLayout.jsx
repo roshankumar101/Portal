@@ -9,7 +9,7 @@ export default function AdminLayout({ children }) {
   // School-specific header texts (same as DashboardLayout)
   const getSchoolHeaderText = (school) => {
     const schoolTexts = {
-      SOT: 'Building with Code. Empowering with Innovation.',
+      SOT: 'Fostering Innovation. Strengthening Foundations',
       SOM: 'Leading with Vision. Strategizing with Innovation.',
       SOH: 'Healing with Science. Caring with Innovation.',
     };
@@ -68,6 +68,7 @@ export default function AdminLayout({ children }) {
                       {user?.displayName || user?.email?.split('@')[0] || 'Admin'}
                     </h2>
                   </div>
+                  <p className='font-medium'><span className='text-gray-600'>Role:</span> Admin</p>
                 </div>
               </div>
 

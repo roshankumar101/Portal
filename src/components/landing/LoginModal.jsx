@@ -369,9 +369,16 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
               <div className="flex items-center justify-between mt-3 text-sm">
                 <button 
                   onClick={()=>setMode(mode==='login' ? 'register' : 'login')} 
-                  className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 hover:underline"
+                  className="text-blue-600 font-semibold hover:text-blue-800 transition-colors duration-200 hover:underline text-center"
                 >
-                  {mode==='login' ? 'Create account' : 'Have an account? Sign in'}
+                  {mode==='login' 
+                    ? 'Create account' 
+                    : (
+                      <>
+                        <span className="block">Have an account?</span>
+                        <span className="block">Sign in</span>
+                      </>
+                    )}
                 </button>
                 <button 
                   onClick={()=>setMode('forgot')} 

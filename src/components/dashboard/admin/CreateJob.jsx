@@ -356,12 +356,12 @@ export default function CreateJob({ onCreated }) {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Company:</label>
+                  <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
                   <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-blue-600 font-medium">Website:</label>
+                  <label className="text-sm text-blue-600 font-medium">Website <span className="text-red-500">*</span>:</label>
                   <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${websiteError ? 'border-red-400 bg-red-50' : form.website?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="https://company.com" value={form.website} onChange={(e) => onWebsiteChange(e.target.value)} required />
                   {websiteError && <p className="text-xs text-red-600 mt-1">{websiteError}</p>}
                 </div>
@@ -369,7 +369,7 @@ export default function CreateJob({ onCreated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Job Type:</label>
+              <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
               <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobType ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)}>
                 <option>Internship</option>
                 <option>Full-Time</option>
@@ -379,17 +379,17 @@ export default function CreateJob({ onCreated }) {
             {form.jobType === 'Internship' ? (
               <>
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Stipend:</label>
+                  <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
                   <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => update({ stipend: e.target.value })} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Duration:</label>
+                  <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
                   <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => update({ duration: e.target.value })} />
                 </div>
               </>
             ) : (
               <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-sm text-black font-medium">Salary (CTC):</label>
+                <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
                 <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => update({ salary: e.target.value })} />
               </div>
             )}
@@ -397,11 +397,11 @@ export default function CreateJob({ onCreated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Job Title:</label>
+              <label className="text-sm text-black font-medium">Job Title <span className="text-red-500">*</span>:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Work Mode:</label>
+              <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
               <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.workMode ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
                 <option>On-site</option>
                 <option>Hybrid</option>
@@ -412,7 +412,7 @@ export default function CreateJob({ onCreated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className="text-sm text-black font-medium">Company Location:</label>
+              <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => update({ companyLocation: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
@@ -526,7 +526,7 @@ export default function CreateJob({ onCreated }) {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Drive Date:</label>
+              <label className="text-sm text-black font-medium">Drive Date <span className="text-red-500">*</span>:</label>
               <div className="relative">
                 <input
                   className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${driveDraft.driveDateText?.trim() ? 'bg-green-100' : 'bg-gray-100'}`}
@@ -547,7 +547,7 @@ export default function CreateJob({ onCreated }) {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Drive Venue:</label>
+              <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
               <div className="relative">
                 <button type="button" className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full text-left ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} onClick={() => setShowVenues((v) => !v)}>
                   {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'}
@@ -594,7 +594,7 @@ export default function CreateJob({ onCreated }) {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Qualification:</label>
+              <label className="text-sm text-black font-medium">Qualification <span className="text-red-500">*</span>:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
@@ -602,17 +602,17 @@ export default function CreateJob({ onCreated }) {
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Year of Passing:</label>
+              <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025" value={form.yop} onChange={(e) => update({ yop: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Minimum CGPA/Percentage:</label>
+              <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 CGPA or 70%" value={form.minCgpa} onChange={(e) => update({ minCgpa: e.target.value })} />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-black font-medium">Skills:</label>
+            <label className="text-sm text-black font-medium">Skills <span className="text-red-500">*</span>:</label>
             <div className={`relative border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[42px] flex flex-wrap items-center gap-1 ${form.skills.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
               {form.skills.map((s, idx) => (
                 <span key={`${s}-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
@@ -635,7 +635,7 @@ export default function CreateJob({ onCreated }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600">Year Gaps:</label>
+              <label className="text-sm text-black font-medium">Year Gaps <span className="text-red-500">*</span>:</label>
               <div className="relative">
                 {!gapInputMode ? (
                   <>
@@ -705,7 +705,7 @@ export default function CreateJob({ onCreated }) {
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600">Active Backlogs:</label>
+              <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
               <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.backlogs !== 'Not Allowed' ? 'bg-green-50' : 'bg-gray-50'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })}>
                 <option>Allowed</option>
                 <option>Not Allowed</option>
@@ -741,7 +741,7 @@ export default function CreateJob({ onCreated }) {
           <div className="flex flex-wrap items-center gap-4">
             {[0,1,2].map((i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="text-xs font-medium text-black whitespace-nowrap">{['I Round','II Round','III Round'][i]}</div>
+                <div className="text-xs font-medium text-black whitespace-nowrap">{['I Round','II Round','III Round'][i]} <span className="text-red-500">*</span></div>
                 <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${form.baseRoundDetails[i]?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Online test, DS&A" value={form.baseRoundDetails[i]} onChange={(e) => updateBaseRoundDetail(i, e.target.value)} required />
                 {i < 2 && <span className="text-slate-300">—</span>}
               </div>

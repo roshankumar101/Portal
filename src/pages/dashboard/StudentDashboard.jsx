@@ -43,6 +43,11 @@ import {
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Scroll to top when activeTab changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(15); // Default 15% (within 5%-15%)
   const [isDragging, setIsDragging] = useState(false);
@@ -80,6 +85,8 @@ export default function StudentDashboard() {
   const [githubUrl, setGithubUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [school, setSchool] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState('');
+  const [jobFlexibility, setJobFlexibility] = useState('');
   // Local UI-only state for Resume tab (no DB)
   const [hasResume, setHasResume] = useState(false);
   const [resumeUrl, setResumeUrl] = useState(null);
@@ -174,6 +181,8 @@ export default function StudentDashboard() {
         setGithubUrl(data.githubUrl || data.github || '');
         setYoutubeUrl(data.youtubeUrl || data.youtube || '');
         setSchool(data.school || '');
+        setProfilePhoto(data.profilePhoto || '');
+        setJobFlexibility(data.jobFlexibility || '');
         // Load resume if present on profile
         if (data.resumeUrl) {
           setResumeUrl(data.resumeUrl);
@@ -292,14 +301,33 @@ export default function StudentDashboard() {
 
   const validateProfile = () => {
     const errors = [];
+    const missingFields = [];
 
-    // Required field validations
-    if (!fullName.trim()) errors.push('Full name is required');
-    if (!email.trim()) errors.push('Email is required');
-    else if (!validateEmail(email.trim())) errors.push('Please enter a valid email address');
+    // Required field validations with field tracking
+    if (!fullName.trim()) {
+      errors.push('Full name is required');
+      missingFields.push({ field: 'fullName', section: 'basic' });
+    }
+    if (!email.trim()) {
+      errors.push('Email is required');
+      missingFields.push({ field: 'email', section: 'basic' });
+    } else if (!validateEmail(email.trim())) {
+      errors.push('Please enter a valid email address');
+      missingFields.push({ field: 'email', section: 'basic' });
+    }
     
-    if (!phone.trim()) errors.push('Phone number is required');
-    else if (!validatePhone(phone.trim())) errors.push('Please enter a valid phone number');
+    if (!phone.trim()) {
+      errors.push('Phone number is required');
+      missingFields.push({ field: 'phone', section: 'basic' });
+    } else if (!validatePhone(phone.trim())) {
+      errors.push('Please enter a valid phone number');
+      missingFields.push({ field: 'phone', section: 'basic' });
+    }
+
+    if (!school.trim()) {
+      errors.push('School selection is required');
+      missingFields.push({ field: 'school', section: 'academic' });
+    }
 
     // Optional field validations
     if (cgpa && !validateCGPA(cgpa)) errors.push('CGPA must be between 0 and 10');
@@ -309,7 +337,7 @@ export default function StudentDashboard() {
     if (githubUrl && !validateURL(githubUrl)) errors.push('Please enter a valid GitHub URL');
     if (youtubeUrl && !validateURL(youtubeUrl)) errors.push('Please enter a valid YouTube URL');
 
-    return errors;
+    return { errors, missingFields };
   };
 
   // Real-time field validation
@@ -425,9 +453,18 @@ export default function StudentDashboard() {
     }
 
     // Validate form data
-    const validationErrors = validateProfile();
-    if (validationErrors.length > 0) {
-      alert('Please fix the following errors:\n\n' + validationErrors.join('\n'));
+    const validation = validateProfile();
+    if (validation.errors.length > 0) {
+      // Focus on first missing field and scroll to its section
+      if (validation.missingFields.length > 0) {
+        const firstMissing = validation.missingFields[0];
+        const fieldElement = document.getElementById(firstMissing.field);
+        if (fieldElement) {
+          fieldElement.focus();
+          fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      alert('Please fix the following errors:\n\n' + validation.errors.join('\n'));
       return;
     }
 
@@ -454,6 +491,8 @@ export default function StudentDashboard() {
         gfg: gfg.trim(),
         hackerrank: hackerrank.trim(),
         school: school.trim(),
+        profilePhoto: profilePhoto.trim(),
+        jobFlexibility: jobFlexibility.trim(),
       };
 
       const existing = await getStudentProfile(user.uid);
@@ -465,6 +504,9 @@ export default function StudentDashboard() {
       
       // Reload profile data to show real-time updates
       await loadProfile();
+      
+      // Reset checkbox after successful save
+      setIsChecked(false);
       
       // Go back to dashboard to see the updates
       setActiveTab('dashboard');
@@ -1044,16 +1086,41 @@ export default function StudentDashboard() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h2>
               <form className="space-y-6" onSubmit={handleSaveProfile}>
+                {/* Profile Photo Section - Top Row */}
+                <div className="flex gap-6">
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (e) => setProfilePhoto(e.target.result);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </div>
+                  {profilePhoto && (
+                    <div className="w-1/2 flex items-center justify-center">
+                      <div className="text-center">
+                        <img src={profilePhoto} alt="Profile Preview" className="w-23 h-23 rounded-full object-cover mx-auto border-4 border-gray-200 shadow-lg" />
+                        <p className="text-sm text-gray-600 mt-2">Profile Preview</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name <span className="text-red-500">*</span></label>
                     <input
+                      id="fullName"
                       type="text"
-                      className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
-                        validationErrors.fullName 
-                          ? 'border-red-300 focus:ring-red-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your full name"
                       value={fullName}
                       onChange={(e) => {
@@ -1062,18 +1129,15 @@ export default function StudentDashboard() {
                       }}
                     />
                     {validationErrors.fullName && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.fullName}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.fullName}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
                     <input
+                      id="email"
                       type="email"
-                      className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
-                        validationErrors.email 
-                          ? 'border-red-300 focus:ring-red-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your email"
                       value={email}
                       onChange={(e) => {
@@ -1082,18 +1146,18 @@ export default function StudentDashboard() {
                       }}
                     />
                     {validationErrors.email && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
                     )}
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
                     <input
+                      id="phone"
                       type="tel"
-                      className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
-                        validationErrors.phone 
-                          ? 'border-red-300 focus:ring-red-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your phone number"
                       value={phone}
                       onChange={(e) => {
@@ -1102,72 +1166,35 @@ export default function StudentDashboard() {
                       }}
                     />
                     {validationErrors.phone && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.phone}</p>
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Enrollment ID</label>
-                    <input 
-                      type="text" 
-                      className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
-                        validationErrors.enrollmentId 
-                          ? 'border-red-300 focus:ring-red-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Enrollment ID <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your enrollment ID"
                       value={enrollmentId}
-                      onChange={(e) => {
-                        setEnrollmentId(e.target.value);
-                        validateField('enrollmentId', e.target.value);
-                      }}
+                      onChange={(e) => setEnrollmentId(e.target.value)}
                     />
-                    {validationErrors.enrollmentId && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.enrollmentId}</p>
-                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">School</label>
-                    <select 
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={school}
-                      onChange={(e) => setSchool(e.target.value)}
-                    >
-                      <option value="">Select School</option>
-                      <option value="School of Technology">School of Technology</option>
-                      <option value="School of Management">School of Management</option>
-                      <option value="School of HealthCare">School of HealthCare</option>
-                    </select>
-                  </div>
-
-
-                  {/* Inside your form, add: */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Batch</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Job Flexibility</label>
                     <select
-                      value={batch}
-                      onChange={(e) => setBatch(e.target.value)}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={jobFlexibility}
+                      onChange={(e) => setJobFlexibility(e.target.value)}
                     >
-                      <option value="2023-2027">2023-2027</option>
-                      <option value="2024-2028">2024-2028</option>
-                      <option value="2025-2029">2025-2029</option>
+                      <option value="">Select Flexibility</option>
+                      <option value="open-to-relocation">Open to Relocation</option>
+                      <option value="no-relocation">No Relocation</option>
+                      <option value="hybrid">Hybrid/Remote Preferred</option>
                     </select>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Center</label>
-                    <select
-                      value={center}
-                      onChange={(e) => setCenter(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Bangalore">Bangalore</option>
-                      <option value="Noida">Noida</option>
-                      <option value="Lucknow">Lucknow</option>
-                      <option value="Pune">Pune</option>
-                    </select>
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">CGPA</label>
                     <input
@@ -1181,52 +1208,80 @@ export default function StudentDashboard() {
                       onChange={(e) => setCgpa(e.target.value)}
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">School <span className="text-red-500">*</span></label>
+                    <select
+                      id="school"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={school}
+                      onChange={(e) => setSchool(e.target.value)}
+                    >
+                      <option value="">Select School</option>
+                      <option value="School of Technology">School of Technology</option>
+                      <option value="School of Management">School of Management</option>
+                      <option value="School of HealthCare">School of HealthCare</option>
+                    </select>
+                  </div>
+                </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Headline</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
                     <input
                       type="text"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Full-Stack Developer | Open Source Enthusiast"
+                      placeholder="Enter your city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">State/Region</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your state or region"
+                      value={stateRegion}
+                      onChange={(e) => setStateRegion(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Your professional tagline"
                       value={tagline}
                       onChange={(e) => setTagline(e.target.value)}
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your city"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your state"
-                        value={stateRegion}
-                        onChange={(e) => setStateRegion(e.target.value)}
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+                    <input
+                      type="url"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://linkedin.com/in/username"
+                      value={linkedin}
+                      onChange={(e) => setLinkedin(e.target.value)}
+                    />
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
-                      <input
-                        type="url"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://linkedin.com/in/username"
-                        value={linkedin}
-                        onChange={(e) => setLinkedin(e.target.value)}
-                      />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                    <input
+                      type="url"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://youtube.com/@channel"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                    />
+                  </div>
+                  {school === 'School of Technology' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">GitHub</label>
                       <input
@@ -1237,19 +1292,11 @@ export default function StudentDashboard() {
                         onChange={(e) => setGithubUrl(e.target.value)}
                       />
                     </div>
-                  </div>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
-                      <input
-                        type="url"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="https://youtube.com/@channel"
-                        value={youtubeUrl}
-                        onChange={(e) => setYoutubeUrl(e.target.value)}
-                      />
-                    </div>
+                {school === 'School of Technology' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">LeetCode</label>
                       <input
@@ -1260,9 +1307,6 @@ export default function StudentDashboard() {
                         onChange={(e) => setLeetcode(e.target.value)}
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Codeforces</label>
                       <input
@@ -1273,6 +1317,11 @@ export default function StudentDashboard() {
                         onChange={(e) => setCodeforces(e.target.value)}
                       />
                     </div>
+                  </div>
+                )}
+
+                {school === 'School of Technology' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">GeeksforGeeks</label>
                       <input
@@ -1283,20 +1332,20 @@ export default function StudentDashboard() {
                         onChange={(e) => setGfg(e.target.value)}
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">HackerRank</label>
+                      <input
+                        type="url"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://www.hackerrank.com/profile/username"
+                        value={hackerrank}
+                        onChange={(e) => setHackerrank(e.target.value)}
+                      />
+                    </div>
                   </div>
+                )}
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">HackerRank</label>
-                    <input
-                      type="url"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://www.hackerrank.com/profile/username"
-                      value={hackerrank}
-                      onChange={(e) => setHackerrank(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                     <textarea
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1306,8 +1355,6 @@ export default function StudentDashboard() {
                       onChange={(e) => setBio(e.target.value)}
                     ></textarea>
                   </div>
-                </div>
-
 
                 <div className="space-x-2 px-4 mb-2 text-xs">
                   <input

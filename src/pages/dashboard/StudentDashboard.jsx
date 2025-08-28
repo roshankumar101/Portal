@@ -38,7 +38,10 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Loader
+  Loader,
+  Info,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import PDFLivePreview from '../../components/resume/PDFLivePreview';
@@ -47,6 +50,10 @@ import { upsertResume, getResume } from '../../services/resumes';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Data caching to avoid reloading on tab switches
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [lastLoadTime, setLastLoadTime] = useState(null);
   
   // Scroll to top when activeTab changes
   useEffect(() => {
@@ -69,6 +76,11 @@ export default function StudentDashboard() {
   
   // Validation state for real-time feedback
   const [validationErrors, setValidationErrors] = useState({});
+  
+  // Alert state for Edit Profile
+  const [alertMessage, setAlertMessage] = useState(null);
+  const [alertType, setAlertType] = useState('info'); // 'success', 'error', 'warning', 'info'
+  const [showFloatingAlert, setShowFloatingAlert] = useState(false);
 
   // Edit Profile form state
   const [fullName, setFullName] = useState('');
@@ -161,48 +173,76 @@ export default function StudentDashboard() {
     };
   }, [searchParams, navigate]);
 
-  // Load profile data function (can be called for real-time updates)
-  const loadProfile = useCallback(async () => {
+  // Load profile data function (optimized with caching and minimal loading)
+  const loadProfile = useCallback(async (forceRefresh = false) => {
     if (!user?.uid) return;
+    
+    // Check if data is already loaded and fresh (within 5 minutes)
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    if (!forceRefresh && dataLoaded && lastLoadTime && (now - lastLoadTime) < fiveMinutes) {
+      return; // Use cached data
+    }
+    
     try {
-      const data = await getStudentProfile(user.uid);
-      if (data) {
-        setFullName(data.fullName || '');
-        setEmail(data.email || '');
-        setPhone(data.phone || '');
-        setEnrollmentId(data.enrollmentId || '');
-        setCgpa(data.cgpa?.toString?.() || '');
-        setBatch(data.batch || batch);
-        setCenter(data.center || center);
-        setBio(data.bio || '');
-        setHeadline(data.Headline || '');
-        setCity(data.city || '');
-        setStateRegion(data.stateRegion || data.state || '');
-        setLinkedin(data.linkedin || '');
-        setLeetcode(data.leetcode || '');
-        setCodeforces(data.codeforces || '');
-        setGfg(data.gfg || '');
-        setHackerrank(data.hackerrank || '');
-        setGithubUrl(data.githubUrl || data.github || '');
-        setYoutubeUrl(data.youtubeUrl || data.youtube || '');
-        setSchool(data.school || '');
-        setProfilePhoto(data.profilePhoto || '');
-        setJobFlexibility(data.jobFlexibility || '');
+      // Only load essential profile data first for faster initial render
+      const profileData = await getStudentProfile(user.uid);
+      
+      // Update profile data immediately
+      if (profileData) {
+        setFullName(profileData.fullName || '');
+        setEmail(profileData.email || '');
+        setPhone(profileData.phone || '');
+        setEnrollmentId(profileData.enrollmentId || '');
+        setCgpa(profileData.cgpa?.toString?.() || '');
+        setBatch(profileData.batch || batch);
+        setCenter(profileData.center || center);
+        setBio(profileData.bio || '');
+        setHeadline(profileData.Headline || '');
+        setCity(profileData.city || '');
+        setStateRegion(profileData.stateRegion || profileData.state || '');
+        setLinkedin(profileData.linkedin || '');
+        setLeetcode(profileData.leetcode || '');
+        setCodeforces(profileData.codeforces || '');
+        setGfg(profileData.gfg || '');
+        setHackerrank(profileData.hackerrank || '');
+        setGithubUrl(profileData.githubUrl || profileData.github || '');
+        setYoutubeUrl(profileData.youtubeUrl || profileData.youtube || '');
+        setSchool(profileData.school || '');
+        setProfilePhoto(profileData.profilePhoto || '');
+        setJobFlexibility(profileData.jobFlexibility || '');
         // Load resume if present on profile
-        if (data.resumeUrl) {
-          setResumeUrl(data.resumeUrl);
+        if (profileData.resumeUrl) {
+          setResumeUrl(profileData.resumeUrl);
           setHasResume(true);
         }
       }
       
-      // Load skills data
-      await loadSkillsData();
-      // Load applications data
-      await loadApplicationsData();
+      // Mark data as loaded immediately for faster UI
+      setDataLoaded(true);
+      setLastLoadTime(now);
+      
+      // Load secondary data immediately in background (no artificial delay)
+      Promise.all([
+        getStudentSkills(user.uid),
+        getStudentApplications(user.uid)
+      ]).then(([skillsData, applicationsData]) => {
+        setSkillsEntries(skillsData || []);
+        setApplications(applicationsData || []);
+        setLoadingSkills(false);
+        setLoadingApplications(false);
+      }).catch((err) => {
+        console.warn('Failed to load secondary data', err);
+        setLoadingSkills(false);
+        setLoadingApplications(false);
+      });
+      
     } catch (err) {
-      console.warn('Failed to load profile for edit form', err);
+      console.warn('Failed to load profile data', err);
+      setLoadingSkills(false);
+      setLoadingApplications(false);
     }
-  }, [user?.uid, batch, center]);
+  }, [user?.uid, batch, center, dataLoaded, lastLoadTime]);
 
 
   const loadSkillsData = useCallback(async () => {
@@ -268,15 +308,20 @@ export default function StudentDashboard() {
     return applications.some(app => app.jobId === jobId);
   };
 
-  // Load existing profile data for Edit Profile form
+  // Load data only when needed (not on component mount)
   useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    // Only load data when switching to dashboard tab or when data is not loaded
+    if (activeTab === 'dashboard' && !dataLoaded) {
+      loadProfile();
+    }
+  }, [activeTab, dataLoaded, loadProfile]);
 
-  // Load jobs data when component mounts
+  // Load jobs data only when needed
   useEffect(() => {
-    loadJobsData();
-  }, [loadJobsData]);
+    if (activeTab === 'jobs' || activeTab === 'dashboard') {
+      loadJobsData();
+    }
+  }, [activeTab, loadJobsData]);
 
   // Validation helper functions
   const validateEmail = (email) => {
@@ -469,7 +514,14 @@ export default function StudentDashboard() {
           fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
-      alert('Please fix the following errors:\n\n' + validation.errors.join('\n'));
+      setAlertMessage('Please fix the following errors:\n\n' + validation.errors.join('\n'));
+      setAlertType('error');
+      setShowFloatingAlert(true);
+      
+      setTimeout(() => {
+        setShowFloatingAlert(false);
+        setAlertMessage(null);
+      }, 4000);
       return;
     }
 
@@ -500,6 +552,13 @@ export default function StudentDashboard() {
         jobFlexibility: jobFlexibility.trim(),
       };
 
+      // Show success immediately for better UX (optimistic update)
+      setAlertMessage('Successfully Update Profile Details');
+      setAlertType('success');
+      setShowFloatingAlert(true);
+      setIsChecked(false);
+      
+      // Save to database in background
       const existing = await getStudentProfile(user.uid);
       if (existing) {
         await updateCompleteStudentProfile(user.uid, profileData, []);
@@ -507,15 +566,14 @@ export default function StudentDashboard() {
         await createCompleteStudentProfile(user.uid, profileData, []);
       }
       
-      // Reload profile data to show real-time updates
-      await loadProfile();
+      // Preload dashboard data while showing success message
+      loadJobsData();
       
-      // Reset checkbox after successful save
-      setIsChecked(false);
-      
-      // Go back to dashboard to see the updates
-      setActiveTab('dashboard');
-      alert('Profile saved successfully! Your information has been updated.');
+      setTimeout(() => {
+        setShowFloatingAlert(false);
+        setAlertMessage(null);
+        setActiveTab('dashboard');
+      }, 3000);
     } catch (err) {
       console.error('Failed to save profile', err);
       
@@ -531,7 +589,14 @@ export default function StudentDashboard() {
         errorMessage += err.message || 'Please try again.';
       }
       
-      alert(errorMessage);
+      setAlertMessage(errorMessage);
+      setAlertType('error');
+      setShowFloatingAlert(true);
+      
+      setTimeout(() => {
+        setShowFloatingAlert(false);
+        setAlertMessage(null);
+      }, 4000);
     } finally {
       setSaving(false);
     }
@@ -566,6 +631,9 @@ export default function StudentDashboard() {
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     setMobileMenuOpen(false);
+    // Clear alert when switching tabs
+    setShowFloatingAlert(false);
+    setAlertMessage(null);
   };
 
   const handleSkillClick = (skillId) => {
@@ -695,7 +763,40 @@ export default function StudentDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardHome />;
+        return <DashboardHome 
+          studentData={{
+            fullName,
+            email,
+            phone,
+            enrollmentId,
+            cgpa,
+            batch,
+            center,
+            bio,
+            Headline,
+            city,
+            stateRegion,
+            linkedin,
+            leetcode,
+            codeforces,
+            gfg,
+            hackerrank,
+            githubUrl,
+            youtubeUrl,
+            school,
+            profilePhoto,
+            jobFlexibility
+          }}
+          jobs={jobs}
+          applications={applications}
+          skillsEntries={skillsEntries}
+          loadingJobs={loadingJobs}
+          loadingApplications={loadingApplications}
+          loadingSkills={loadingSkills}
+          handleApplyToJob={handleApplyToJob}
+          hasApplied={hasApplied}
+          applying={applying}
+        />;
 
       case 'jobs':
         return (
@@ -1109,6 +1210,8 @@ export default function StudentDashboard() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h2>
+              
+              
               <form className="space-y-6" onSubmit={handleSaveProfile}>
                 {/* Profile Photo Section - Top Row */}
                 <div className="flex gap-4 w-1/2 pr-3">
@@ -1410,136 +1513,233 @@ export default function StudentDashboard() {
         );
 
       default:
-        return <DashboardHome />;
+        return <DashboardHome 
+          studentData={{
+            fullName,
+            email,
+            phone,
+            enrollmentId,
+            cgpa,
+            batch,
+            center,
+            bio,
+            Headline,
+            city,
+            stateRegion,
+            linkedin,
+            leetcode,
+            codeforces,
+            gfg,
+            hackerrank,
+            githubUrl,
+            youtubeUrl,
+            school,
+            profilePhoto,
+            jobFlexibility
+          }}
+          jobs={jobs}
+          applications={applications}
+          skillsEntries={skillsEntries}
+          loadingJobs={loadingJobs}
+          loadingApplications={loadingApplications}
+          loadingSkills={loadingSkills}
+          handleApplyToJob={handleApplyToJob}
+          hasApplied={hasApplied}
+          applying={applying}
+        />;
     }
   };
 
   return (
-    <DashboardLayout>
-      <div className="flex min-h-screen relative">
-        <aside
-          className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
-          style={{ width: `${sidebarWidth}%` }}
-        >
-          <div className="p-3 h-full flex flex-col">
-            <div className="mb-6">
-              {sidebarWidth >= 9 && (
-                <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
-              )}
-              <nav className="space-y-1">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <div key={tab.id} className="mb-1">
-                      <button
-                        onClick={() => handleTabClick(tab.id)}
-                        className={`w-full flex items-center rounded-lg text-xs font-medium transition-all duration-200 ${activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                          : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-                          } ${sidebarWidth < 9 ? 'justify-center px-2 py-2' : 'px-2 py-3'}`}
-                        title={sidebarWidth < 9 ? tab.label : ''}
-                      >
-                        <Icon className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
-                        {sidebarWidth >= 9 && tab.label}
-                      </button>
-                    </div>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="mb-6">
-              {sidebarWidth >= 9 && (
-                <h2 className="text-base font-bold text-gray-900 mb-3">Skills & Credentials</h2>
-              )}
-              <nav className="space-y-1">
-                {skillsCredentials.map((skill) => {
-                  const Icon = skill.icon;
-                  return (
-                    <div key={skill.id} className="mb-1">
-                      <button
-                        onClick={() => handleSkillClick(skill.id)}
-                        className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-200 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
-                          }`}
-                        title={sidebarWidth < 9 ? skill.label : ''}
-                      >
-                        <Icon className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''} ${skill.color}`} />
-                        {sidebarWidth >= 9 && (
-                          <>
-                            <span className="flex-1 text-left">{skill.label}</span>
-                            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="mt-auto pt-4 pb-[35%] border-t border-gray-300">
-              <button
-                onClick={handleLogout}
-                className={`w-full flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${sidebarWidth < 12 ? 'justify-center px-2 py-2 mb-15' : 'px-3 py-2.5'
-                  }`}
-                title={sidebarWidth < 9 ? 'Logout' : ''}
-              >
-                <LogOut className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
-                {sidebarWidth >= 9 && 'Logout'}
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <div
-          ref={dragRef}
-          onMouseDown={handleMouseDown}
-          className="fixed top-0 h-screen w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize z-10 transition-colors duration-200 flex items-center justify-center group"
-          style={{ left: `${sidebarWidth}%` }}
-        >
-          <div className="absolute inset-y-0 -left-1 -right-1 flex items-center justify-center">
-            <GripVertical className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors duration-200" />
-          </div>
-        </div>
-
-        <main
-          className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen transition-all duration-200 ease-in-out"
-          style={{
-            marginLeft: `${sidebarWidth}%`,
-            width: `${100 - sidebarWidth}%`
-          }}
-        >
-          {mobileMenuOpen && (
-            <div className="md:hidden bg-white border-b border-gray-200 shadow-lg">
-              <div className="px-4 py-3">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Navigation</h3>
-                <div className="space-y-2">
+    <>
+      <DashboardLayout>
+        <div className="flex min-h-screen relative">
+          <aside
+            className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
+            style={{ width: `${sidebarWidth}%` }}
+          >
+            <div className="p-3 h-full flex flex-col">
+              <div className="mb-6">
+                {sidebarWidth >= 9 && (
+                  <h2 className="text-base font-bold text-gray-900 mb-3">Navigation</h2>
+                )}
+                <nav className="space-y-1">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleTabClick(tab.id)}
-                        className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                          : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-                          }`}
-                      >
-                        <Icon className="h-5 w-5 mr-3" />
-                        {tab.label}
-                      </button>
+                      <div key={tab.id} className="mb-1">
+                        <button
+                          onClick={() => handleTabClick(tab.id)}
+                          className={`w-full flex items-center rounded-lg text-xs font-medium transition-all duration-200 ${activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                            } ${sidebarWidth < 9 ? 'justify-center px-2 py-2' : 'px-2 py-3'}`}
+                          title={sidebarWidth < 9 ? tab.label : ''}
+                        >
+                          <Icon className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
+                          {sidebarWidth >= 9 && tab.label}
+                        </button>
+                      </div>
                     );
                   })}
-                </div>
+                </nav>
+              </div>
+
+              <div className="mb-6">
+                {sidebarWidth >= 9 && (
+                  <h2 className="text-base font-bold text-gray-900 mb-3">Skills & Credentials</h2>
+                )}
+                <nav className="space-y-1">
+                  {skillsCredentials.map((skill) => {
+                    const Icon = skill.icon;
+                    return (
+                      <div key={skill.id} className="mb-1">
+                        <button
+                          onClick={() => handleSkillClick(skill.id)}
+                          className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-200 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
+                            }`}
+                          title={sidebarWidth < 9 ? skill.label : ''}
+                        >
+                          <Icon className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''} ${skill.color}`} />
+                          {sidebarWidth >= 9 && (
+                            <>
+                              <span className="flex-1 text-left">{skill.label}</span>
+                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              <div className="mt-auto pt-4 pb-[35%] border-t border-gray-300">
+                <button
+                  onClick={handleLogout}
+                  className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 ${sidebarWidth < 9 ? 'justify-center px-2 py-2' : 'px-2 py-3'
+                    }`}
+                  title={sidebarWidth < 9 ? 'Logout' : ''}
+                >
+                  <LogOut className={`h-4 w-4 ${sidebarWidth >= 9 ? 'mr-2' : ''}`} />
+                  {sidebarWidth >= 9 && 'Logout'}
+                </button>
               </div>
             </div>
-          )}
 
-          <div className="p-8">
-            {renderContent()}
+            <div
+              ref={dragRef}
+              className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-gray-300 hover:bg-blue-500 transition-colors duration-200"
+              onMouseDown={handleMouseDown}
+            />
+          </aside>
+
+          <main
+            className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen transition-all duration-200 ease-in-out"
+            style={{
+              marginLeft: `${sidebarWidth}%`,
+              width: `${100 - sidebarWidth}%`
+            }}
+          >
+            {mobileMenuOpen && (
+              <div className="md:hidden bg-white border-b border-gray-200 shadow-lg">
+                <div className="px-4 py-3">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Navigation</h3>
+                  <div className="space-y-2">
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabClick(tab.id)}
+                          className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+                            : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                            }`}
+                        >
+                          <Icon className="h-5 w-5 mr-3" />
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-8">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
+      </DashboardLayout>
+      
+      {/* Floating Alert for All Types */}
+      {showFloatingAlert && alertMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top duration-300">
+          <div className={`rounded-lg shadow-lg border p-4 flex items-center space-x-3 min-w-[300px] ${
+            alertType === 'success' 
+              ? 'bg-white border-green-200'
+              : alertType === 'error'
+              ? 'bg-white border-red-200'
+              : alertType === 'warning'
+              ? 'bg-white border-yellow-200'
+              : 'bg-white border-blue-200'
+          }`}>
+            <div className="flex-shrink-0">
+              {alertType === 'success' && <CheckCircle className="h-6 w-6 text-green-600" />}
+              {alertType === 'error' && <XCircle className="h-6 w-6 text-red-600" />}
+              {alertType === 'warning' && <AlertTriangle className="h-6 w-6 text-yellow-600" />}
+              {alertType === 'info' && <Info className="h-6 w-6 text-blue-600" />}
+            </div>
+            <div className="flex-1">
+              <div className={`text-sm font-medium ${
+                alertType === 'success' 
+                  ? 'text-green-800'
+                  : alertType === 'error'
+                  ? 'text-red-800'
+                  : alertType === 'warning'
+                  ? 'text-yellow-800'
+                  : 'text-blue-800'
+              }`}>
+                {alertType === 'success' && 'Success'}
+                {alertType === 'error' && 'Error'}
+                {alertType === 'warning' && 'Warning'}
+                {alertType === 'info' && 'Information'}
+              </div>
+              <div className={`text-sm whitespace-pre-line ${
+                alertType === 'success' 
+                  ? 'text-gray-700'
+                  : alertType === 'error'
+                  ? 'text-gray-700'
+                  : alertType === 'warning'
+                  ? 'text-gray-700'
+                  : 'text-gray-700'
+              }`}>
+                {alertMessage}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowFloatingAlert(false);
+                setAlertMessage(null);
+              }}
+              className={`flex-shrink-0 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                alertType === 'success' 
+                  ? 'text-green-500 hover:bg-green-100 focus:ring-green-600'
+                  : alertType === 'error'
+                  ? 'text-red-500 hover:bg-red-100 focus:ring-red-600'
+                  : alertType === 'warning'
+                  ? 'text-yellow-500 hover:bg-yellow-100 focus:ring-yellow-600'
+                  : 'text-blue-500 hover:bg-blue-100 focus:ring-blue-600'
+              }`}
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-        </main>
-      </div>
-    </DashboardLayout>
+        </div>
+      )}
+    </>
   );
 }

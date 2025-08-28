@@ -13,6 +13,26 @@ const toISOFromDDMMYYYY = (val) => {
   return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
+const toRoman = (num) => {
+  // Optimized for max 15 rounds
+  const romanNumerals = [
+    { value: 10, symbol: 'X' },
+    { value: 9, symbol: 'IX' },
+    { value: 5, symbol: 'V' },
+    { value: 4, symbol: 'IV' },
+    { value: 1, symbol: 'I' }
+  ];
+  
+  let result = '';
+  for (const { value, symbol } of romanNumerals) {
+    while (num >= value) {
+      result += symbol;
+      num -= value;
+    }
+  }
+  return result;
+};
+
 const toDDMMYYYY = (date) => {
   try {
     const d = new Date(date);
@@ -49,19 +69,17 @@ export default function CreateJob({ onCreated }) {
   const [form, setForm] = useState({
     company: '',
     website: '',
-    jobType: 'Internship', // Internship | Full-Time
+    jobType: '', // Empty string for placeholder
     stipend: '', // internship
     duration: '', // internship
     salary: '', // full-time (CTC)
     jobTitle: '',
-    workMode: 'On-site', // On-site | Hybrid | Remote
+    workMode: '', // Empty string for placeholder
     companyLocation: '',
     openings: '', // admin-only
     responsibilities: '',
-    // Company SPOC fields
-    spocFullName: '',
-    spocEmail: '',
-    spocPhone: '',
+    // Company SPOC fields - now array for multiple SPOCs
+    spocs: [{ fullName: '', email: '', phone: '' }],
     driveDateText: '', // DD/MM/YYYY for manual input
     driveDateISO: '',  // ISO for payload
     driveVenues: [],   // multi-select
@@ -71,9 +89,9 @@ export default function CreateJob({ onCreated }) {
     minCgpa: '',
     skillsInput: '', // raw input to turn into chips
     skills: [],
-    gapAllowed: 'Not Allowed', // Allowed | Not Allowed
+    gapAllowed: '', // Empty string for placeholder
     gapYears: '', // only if allowed
-    backlogs: 'Not Allowed', // Allowed | Not Allowed
+    backlogs: '', // Empty string for placeholder
     serviceAgreement: '',
     blockingPeriod: '',
     // Interview rounds: we store base and extra details separately, but will combine on submit
@@ -91,10 +109,10 @@ export default function CreateJob({ onCreated }) {
 
   // Section completion checks
   const isCompanyDetailsComplete = useMemo(() => {
-    const base = form.company?.trim() && form.jobTitle?.trim() && form.companyLocation?.trim() && form.website?.trim() && form.workMode?.trim();
+    const base = form.company?.trim() && form.jobTitle?.trim() && form.companyLocation?.trim() && form.website?.trim() && form.workMode?.trim() && form.workMode !== '' && form.jobType?.trim() && form.jobType !== '';
     const comp = form.jobType === 'Internship'
       ? form.stipend?.trim() && form.duration?.trim()
-      : form.salary?.trim();
+      : form.jobType === 'Full-Time' ? form.salary?.trim() : false;
     const websiteOk = !form.website?.trim() || isValidUrl(form.website.trim());
     return !!(base && comp && websiteOk);
   }, [form]);
@@ -104,8 +122,8 @@ export default function CreateJob({ onCreated }) {
   }, [form.driveDateISO, form.driveDateText, form.driveVenues]);
 
   const isSkillsEligibilityComplete = useMemo(() => {
-    return form.qualification?.trim() && form.yop?.trim() && form.minCgpa?.trim() && form.skills.length > 0;
-  }, [form.qualification, form.yop, form.minCgpa, form.skills]);
+    return form.qualification?.trim() && form.yop?.trim() && form.minCgpa?.trim() && form.skills.length > 0 && form.gapAllowed?.trim() && form.gapAllowed !== '' && form.backlogs?.trim() && form.backlogs !== '';
+  }, [form.qualification, form.yop, form.minCgpa, form.skills, form.gapAllowed, form.backlogs]);
 
   // Interview process validation
   const isInterviewProcessComplete = useMemo(() => {
@@ -164,12 +182,18 @@ export default function CreateJob({ onCreated }) {
 
   const addRound = () => {
     const count = form.extraRounds.length + 4; // starts from Round 4
-    update({ extraRounds: [...form.extraRounds, { title: `Round ${count}`, detail: '' }] });
+    const romanNumeral = toRoman(count);
+    update({ extraRounds: [...form.extraRounds, { title: `${romanNumeral} Round`, detail: '' }] });
   };
   const removeExtraRound = (idx) => {
     const next = [...form.extraRounds];
     next.splice(idx, 1);
-    update({ extraRounds: next });
+    // Update titles with new Roman numerals after removal
+    const updatedRounds = next.map((round, index) => ({
+      ...round,
+      title: `${toRoman(index + 4)} Round`
+    }));
+    update({ extraRounds: updatedRounds });
   };
   const updateBaseRoundDetail = (idx, val) => {
     const next = [...form.baseRoundDetails];
@@ -180,6 +204,25 @@ export default function CreateJob({ onCreated }) {
     const next = [...form.extraRounds];
     next[idx] = { ...next[idx], detail: val };
     update({ extraRounds: next });
+  };
+
+  // SPOC management functions
+  const addSpoc = () => {
+    update({ spocs: [...form.spocs, { fullName: '', email: '', phone: '' }] });
+  };
+  
+  const removeSpoc = (idx) => {
+    if (form.spocs.length > 1) {
+      const next = [...form.spocs];
+      next.splice(idx, 1);
+      update({ spocs: next });
+    }
+  };
+  
+  const updateSpoc = (idx, field, value) => {
+    const next = [...form.spocs];
+    next[idx] = { ...next[idx], [field]: value };
+    update({ spocs: next });
   };
 
   const onPickDate = (e) => {
@@ -234,15 +277,16 @@ export default function CreateJob({ onCreated }) {
     setForm((f) => ({
       company: keep.company ?? '',
       website: keep.website ?? '',
-      jobType: 'Internship',
+      jobType: '',
       stipend: '',
       duration: '',
       salary: '',
       jobTitle: '',
-      workMode: 'On-site',
+      workMode: '',
       companyLocation: keep.companyLocation ?? '',
       openings: '',
       responsibilities: '',
+      spocs: [{ fullName: '', email: '', phone: '' }],
       driveDateText: '',
       driveDateISO: '',
       driveVenues: [],
@@ -252,9 +296,9 @@ export default function CreateJob({ onCreated }) {
       minCgpa: '',
       skillsInput: '',
       skills: [],
-      gapAllowed: 'Not Allowed',
+      gapAllowed: '',
       gapYears: '',
-      backlogs: 'Not Allowed',
+      backlogs: '',
       serviceAgreement: keep.serviceAgreement ?? '',
       blockingPeriod: '',
       // reset interview rounds state
@@ -275,9 +319,9 @@ export default function CreateJob({ onCreated }) {
         adminId: user?.uid || null,
         createdAt: new Date().toISOString(),
         interviewRounds: [
-          { title: 'I Round', detail: form.baseRoundDetails[0] },
-          { title: 'II Round', detail: form.baseRoundDetails[1] },
-          { title: 'III Round', detail: form.baseRoundDetails[2] },
+          { title: `${toRoman(1)} Round`, detail: form.baseRoundDetails[0] },
+          { title: `${toRoman(2)} Round`, detail: form.baseRoundDetails[1] },
+          { title: `${toRoman(3)} Round`, detail: form.baseRoundDetails[2] },
           ...form.extraRounds,
         ],
       };
@@ -370,9 +414,10 @@ export default function CreateJob({ onCreated }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobType ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)}>
-                <option>Internship</option>
-                <option>Full-Time</option>
+              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)} required>
+                <option value="">Select Job Type</option>
+                <option value="Internship">Internship</option>
+                <option value="Full-Time">Full-Time</option>
               </select>
             </div>
 
@@ -387,12 +432,12 @@ export default function CreateJob({ onCreated }) {
                   <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => update({ duration: e.target.value })} />
                 </div>
               </>
-            ) : (
+            ) : form.jobType === 'Full-Time' ? (
               <div className="flex flex-col gap-1 sm:col-span-2">
                 <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
                 <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => update({ salary: e.target.value })} />
               </div>
-            )}
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -402,10 +447,11 @@ export default function CreateJob({ onCreated }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.workMode ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
-                <option>On-site</option>
-                <option>Hybrid</option>
-                <option>Remote</option>
+              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
+                <option value="">Select Work Mode</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Remote">Remote</option>
               </select>
             </div>
           </div>
@@ -416,13 +462,13 @@ export default function CreateJob({ onCreated }) {
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => update({ companyLocation: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600">Open Positions (Internal Details):</label>
+              <label className="text-sm text-black font-medium">Open Positions:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 5 (optional)" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
             </div>
           </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-600">Roles & Responsibilities:</label>
+                <label className="text-sm text-black font-medium">Roles & Responsibilities:</label>
                 <textarea 
                   className={`border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[120px] max-h-[300px] resize-y ${form.responsibilities?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
                   placeholder="Outline responsibilities, tech stack, team, etc. (optional)" 
@@ -469,43 +515,69 @@ export default function CreateJob({ onCreated }) {
               {/* Company SPOC Subsection */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <h4 className="text-md font-medium text-gray-800 mb-4">Company SPOC</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm text-gray-600">Full Name:</label>
-                    <input 
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.spocFullName?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
-                      placeholder="e.g. Amit Kumar" 
-                      value={form.spocFullName} 
-                      onChange={(e) => update({ spocFullName: e.target.value })} 
-                    />
+                {form.spocs.map((spoc, idx) => (
+                  <div key={idx} className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="text-sm font-medium text-gray-700">SPOC {idx + 1}</h5>
+                      {form.spocs.length > 1 && (
+                        <button 
+                          type="button" 
+                          onClick={() => removeSpoc(idx)} 
+                          className="text-red-500 hover:text-red-700" 
+                          title="Remove this SPOC"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm text-black font-medium">Full Name:</label>
+                        <input 
+                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.fullName?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                          placeholder="e.g. Amit Kumar" 
+                          value={spoc.fullName} 
+                          onChange={(e) => updateSpoc(idx, 'fullName', e.target.value)} 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm text-black font-medium">Email ID:</label>
+                        <input 
+                          type="email"
+                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.email?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                          placeholder="e.g. amit.kumar@company.com" 
+                          value={spoc.email} 
+                          onChange={(e) => updateSpoc(idx, 'email', e.target.value)} 
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm text-black font-medium">Phone Number:</label>
+                        <input 
+                          type="tel"
+                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.phone?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                          placeholder="e.g. +91 9876543210" 
+                          value={spoc.phone} 
+                          onChange={(e) => updateSpoc(idx, 'phone', e.target.value)} 
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm text-gray-600">Email ID:</label>
-                    <input 
-                      type="email"
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.spocEmail?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
-                      placeholder="e.g. amit.kumar@company.com" 
-                      value={form.spocEmail} 
-                      onChange={(e) => update({ spocEmail: e.target.value })} 
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm text-gray-600">Phone Number:</label>
-                    <input 
-                      type="tel"
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.spocPhone?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
-                      placeholder="e.g. +91 9876543210" 
-                      value={form.spocPhone} 
-                      onChange={(e) => update({ spocPhone: e.target.value })} 
-                    />
-                  </div>
+                ))}
+                <div className="flex justify-start">
+                  <button 
+                    type="button" 
+                    onClick={addSpoc} 
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                  >
+                    <Plus className="w-4 h-4" /> Add More
+                  </button>
                 </div>
               </div>
             </>
           )}
           
           {isCompanyDetailsComplete && (
-            <div className="flex justify-end pt-4">
+            <div className={`flex justify-end ${isSectionCollapsed('company') ? '-mt-8' : 'pt-4'}`}>
               <button
                 type="button"
                 onClick={() => toggleSection('company')}
@@ -573,7 +645,7 @@ export default function CreateJob({ onCreated }) {
           ) : null}
           
           {isDriveDetailsComplete && (
-            <div className="flex justify-end pt-4">
+            <div className={`flex justify-end ${isSectionCollapsed('drive') ? '-mt-8' : 'pt-4'}`}>
               <button
                 type="button"
                 onClick={() => toggleSection('drive')}
@@ -598,7 +670,7 @@ export default function CreateJob({ onCreated }) {
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600">Specialization:</label>
+              <label className="text-sm text-black font-medium">Specialization:</label>
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
@@ -640,7 +712,7 @@ export default function CreateJob({ onCreated }) {
                 {!gapInputMode ? (
                   <>
                     <select 
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed !== 'Not Allowed' ? 'bg-green-50' : 'bg-gray-50'}`} 
+                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`} 
                       value={form.gapAllowed} 
                       onChange={(e) => {
                         const value = e.target.value;
@@ -654,10 +726,12 @@ export default function CreateJob({ onCreated }) {
                           update({ gapAllowed: value, gapYears: '' });
                         }
                       }}
+                      required
                     >
+                      <option value="">Select Gap Policy</option>
                       <option value="Allowed">Allowed</option>
                       <option value="Not Allowed">Not Allowed</option>
-                      <option value="Custom">{form.gapYears ? `${form.gapYears} Year Allowed` : '_  Year Allowed'}</option>
+                      <option value="Custom">{form.gapYears ? `${form.gapYears} Year/s Allowed` : '_  Year/s Allowed'}</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <ChevronDown className="w-4 h-4 text-gray-800" />
@@ -688,7 +762,7 @@ export default function CreateJob({ onCreated }) {
                         }
                       }}
                     />
-                    <span className="text-sm ml-1">Year Allowed</span>
+                    <span className="text-sm ml-1">Year/s Allowed</span>
                     <button 
                       type="button"
                       className="ml-2 text-xs text-blue-600 hover:text-blue-800"
@@ -706,9 +780,10 @@ export default function CreateJob({ onCreated }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.backlogs !== 'Not Allowed' ? 'bg-green-50' : 'bg-gray-50'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })}>
-                <option>Allowed</option>
-                <option>Not Allowed</option>
+              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })} required>
+                <option value="">Select Backlog Policy</option>
+                <option value="Allowed">Allowed</option>
+                <option value="Not Allowed">Not Allowed</option>
               </select>
             </div>
               </div>
@@ -718,7 +793,7 @@ export default function CreateJob({ onCreated }) {
           ) : null}
           
           {isSkillsEligibilityComplete && (
-            <div className="flex justify-end pt-4">
+            <div className={`flex justify-end ${isSectionCollapsed('skills') ? '-mt-8' : 'pt-4'}`}>
               <button
                 type="button"
                 onClick={() => toggleSection('skills')}
@@ -741,7 +816,7 @@ export default function CreateJob({ onCreated }) {
           <div className="flex flex-wrap items-center gap-4">
             {[0,1,2].map((i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="text-xs font-medium text-black whitespace-nowrap">{['I Round','II Round','III Round'][i]} <span className="text-red-500">*</span></div>
+                <div className="text-xs font-medium text-black whitespace-nowrap">{[`${toRoman(1)} Round`, `${toRoman(2)} Round`, `${toRoman(3)} Round`][i]} <span className="text-red-500">*</span></div>
                 <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${form.baseRoundDetails[i]?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Online test, DS&A" value={form.baseRoundDetails[i]} onChange={(e) => updateBaseRoundDetail(i, e.target.value)} required />
                 {i < 2 && <span className="text-slate-300">—</span>}
               </div>
@@ -767,7 +842,7 @@ export default function CreateJob({ onCreated }) {
           {/* Agreement notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600 flex items-center gap-2">
+              <label className="text-sm text-black font-medium flex items-center gap-2">
                 Service Agreement: 
                 <div className="relative">
                   <Info 
@@ -786,7 +861,7 @@ export default function CreateJob({ onCreated }) {
               <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.serviceAgreement?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 1 year bond (optional)" value={form.serviceAgreement} onChange={(e) => update({ serviceAgreement: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm text-gray-600 flex items-center gap-2">
+              <label className="text-sm text-black font-medium flex items-center gap-2">
                 Blocking Period: 
                 <div className="relative">
                   <Info 
@@ -811,7 +886,7 @@ export default function CreateJob({ onCreated }) {
           ) : null}
           
           {canShowSection('interview') && (
-            <div className="flex justify-end pt-4">
+            <div className={`flex justify-end ${isSectionCollapsed('interview') ? '-mt-8' : 'pt-4'}`}>
               <button
                 type="button"
                 onClick={() => toggleSection('interview')}
@@ -827,7 +902,7 @@ export default function CreateJob({ onCreated }) {
         {/* Final Section: Instructions + Buttons */}
         <section className="space-y-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-600">Any Specific Instructions:</label>
+            <label className="text-sm text-black font-medium">Any Specific Instructions:</label>
             <textarea 
               className={`border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[120px] max-h-[250px] resize-y ${form.instructions?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
               placeholder="Any notes for candidates or TPO team (optional)" 

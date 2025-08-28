@@ -1,10 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../../firebase';
-import { listJobs } from '../../../services/jobs';
-import { getStudentApplications } from '../../../services/applications';
-import { getStudentProfile } from '../../../services/students';
 import AboutMe from './AboutMe';
 import DashboardStatsSection from './DashboardStatsSection';
 import ApplicationTrackerSection from './ApplicationTrackerSection';
@@ -22,122 +17,33 @@ import {
   Loader
 } from 'lucide-react';
 
-const DashboardHome = () => {
+const DashboardHome = ({ 
+  studentData, 
+  jobs = [], 
+  applications = [], 
+  skillsEntries = [],
+  loadingJobs = false,
+  loadingApplications = false,
+  loadingSkills = false,
+  handleApplyToJob,
+  hasApplied,
+  applying = {}
+}) => {
   const { user } = useAuth();
-  const [studentData, setStudentData] = useState(null);
-  const [jobs, setJobs] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [applying, setApplying] = useState({});
 
-  // Subscribe to student profile in real-time
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const ref = doc(db, 'students', user.uid);
-    const unsubscribe = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setStudentData({ id: snap.id, ...snap.data() });
-      } else {
-        setStudentData(null);
-      }
-    }, (err) => {
-      console.error('Error subscribing to profile:', err);
-      setError('Failed to load profile data');
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // Fetch jobs and applications
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user?.uid) return;
-      
-      try {
-        setLoading(true);
-        setError(''); // Clear previous errors
-        
-        const [jobsData, applicationsData] = await Promise.all([
-          listJobs({ limitTo: 10 }).catch(err => {
-            console.warn('Jobs fetch failed:', err);
-            return []; // Return empty array if jobs fetch fails
-          }),
-          getStudentApplications(user.uid).catch(err => {
-            console.warn('Applications fetch failed:', err);
-            return []; // Return empty array if applications fetch fails
-          })
-        ]);
-        
-        setJobs(jobsData || []);
-        setApplications(applicationsData || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        // Don't show error for empty collections
-        setJobs([]);
-        setApplications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  // Handle job application
-  const handleApplyToJob = async (jobId, companyId) => {
-    console.log('handleApplyToJob called with:', { jobId, companyId, userId: user?.uid });
-    
-    if (!user?.uid) {
-      console.error('No user ID available');
-      return;
+  // Convert studentData props to expected format and calculate stats
+  const formattedStudentData = studentData ? {
+    id: user?.uid,
+    ...studentData,
+    stats: {
+      applied: applications.length,
+      shortlisted: applications.filter(app => app.status === 'shortlisted').length,
+      interviewed: applications.filter(app => app.status === 'interviewed').length,
+      offers: applications.filter(app => app.status === 'selected' || app.status === 'offered').length
     }
-    
-    if (!jobId || !companyId) {
-      console.error('Missing jobId or companyId:', { jobId, companyId });
-      alert('Missing job or company information. Please try again.');
-      return;
-    }
-    
-    try {
-      console.log('Setting applying state to true for job:', jobId);
-      setApplying(prev => ({ ...prev, [jobId]: true }));
-      
-      console.log('Importing applyToJob service...');
-      const { applyToJob } = await import('../../../services/applications');
-      
-      console.log('Calling applyToJob service...');
-      await applyToJob(user.uid, jobId, companyId);
-      console.log('applyToJob completed successfully');
-      
-      // Refresh applications and student data
-      console.log('Refreshing applications...');
-      const updatedApplications = await getStudentApplications(user.uid);
-      setApplications(updatedApplications);
-      console.log('Applications refreshed:', updatedApplications.length);
-      
-      // Update student stats
-      console.log('Refreshing student data...');
-      const updatedStudentData = await getStudentProfile(user.uid);
-      setStudentData(updatedStudentData);
-      console.log('Student data refreshed');
-      
-      alert('Application submitted successfully!');
-    } catch (err) {
-      console.error('Error applying to job:', err);
-      console.error('Error details:', err.message, err.code);
-      alert(err.message || 'Failed to submit application. Please try again.');
-    } finally {
-      console.log('Setting applying state to false for job:', jobId);
-      setApplying(prev => ({ ...prev, [jobId]: false }));
-    }
-  };
+  } : null;
 
-  // Check fir student has already applied to a job
-  const hasApplied = (jobId) => {
-    return applications.some(app => app.jobId === jobId);
-  };
 
   //job details modal
   const handleKnowMore = (job) => {
@@ -162,13 +68,13 @@ const DashboardHome = () => {
 
   // whether a student meets eligibility criteria
   const meetsEligibility = (eligibilityCriteria) => {
-    if (!studentData?.cgpa || !eligibilityCriteria) return true;
+    if (!formattedStudentData?.cgpa || !eligibilityCriteria) return true;
     
     // CGPA check 
     const match = eligibilityCriteria.match(/CGPA\s*>=\s*(\d+\.?\d*)/i);
     if (match) {
       const requiredCGPA = parseFloat(match[1]);
-      return studentData.cgpa >= requiredCGPA;
+      return formattedStudentData.cgpa >= requiredCGPA;
     }
     
     return true; // If we can't parse criteria, assume eligible
@@ -195,14 +101,6 @@ const DashboardHome = () => {
   };
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="animate-spin h-8 w-8 text-blue-600" />
-        <span className="ml-2 text-gray-600">Loading dashboard...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -217,7 +115,7 @@ const DashboardHome = () => {
       <AboutMe />
 
       {/* Student Stats Section */}
-      <DashboardStatsSection studentData={studentData} />
+      <DashboardStatsSection studentData={formattedStudentData} />
 
       {/* Live Application Tracker Section */}
       <ApplicationTrackerSection 

@@ -1214,23 +1214,7 @@ export default function StudentDashboard() {
               
               <form className="space-y-6" onSubmit={handleSaveProfile}>
                 {/* Profile Photo Section - Top Row */}
-                <div className="flex gap-6">
-                  <div className="w-1/2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (e) => setProfilePhoto(e.target.result);
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </div>
+                <div className="flex gap-4 w-1/2 pr-3">
                   {profilePhoto && (
                     <div className="w-1/2 flex items-center justify-center">
                       <div className="text-center">
@@ -1239,6 +1223,30 @@ export default function StudentDashboard() {
                       </div>
                     </div>
                   )}
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => setProfilePhoto(e.target.result);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <div className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+                        <span className="text-gray-700">
+                          {profilePhoto ? 'Change Photo' : 'Choose a photo'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

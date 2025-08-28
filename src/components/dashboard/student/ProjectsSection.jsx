@@ -341,7 +341,7 @@ const ProjectsSection = () => {
                   
                   {project.liveUrl && (
                     <div className="mt-1 text-md text-gray-700 flex items-center pl-3">
-                      <span className="font-semibold mr-1 text-lg text-black">Project URL:</span>
+                      <span className="font-semibold mr-1 text-sm text-black">Project URL:</span>
                       <a
                         href={project.liveUrl}
                         target="_blank"

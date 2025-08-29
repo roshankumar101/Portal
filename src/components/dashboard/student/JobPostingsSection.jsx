@@ -53,7 +53,7 @@ const companySvgs = {
   ),
 };
 
-export default function JobPostingsSection({ jobs, onApply, hasApplied, applying, onExploreMore }) {
+export default function JobPostingsSection({ jobs, onApply, hasApplied, applying, onExploreMore, onKnowMore }) {
   const getCompanySvg = (companyName) => {
     return companyName && companySvgs[companyName] ? companySvgs[companyName] : null;
   };
@@ -138,7 +138,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => onKnowMore && onKnowMore(job)}
-                        className="px-2 py-1 border border-[#3c80a7] bg-[#8ec5ff] text-black font-medium rounded-sm hover:bg-[#2563eb] transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
+                        className="px-2 py-1 border border-[#3c80a7] bg-[#8ec5ff] text-black font-medium rounded-sm hover:bg-[#2563eb] hover:text-white transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
                       >
                         Know More
                       </button>

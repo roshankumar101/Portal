@@ -9,6 +9,7 @@ import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import Achievements from './Achievements';
 import StudentFooter from './StudentFooter';
+import JobDescription from './JobDescription';
 import { 
   Clock,
   AlertCircle,
@@ -31,6 +32,8 @@ const DashboardHome = ({
 }) => {
   const { user } = useAuth();
   const [error, setError] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
 
   // Convert studentData props to expected format and calculate stats
   const formattedStudentData = studentData ? {
@@ -47,11 +50,13 @@ const DashboardHome = ({
 
   //job details modal
   const handleKnowMore = (job) => {
-    if (job.jdUrl) {
-      window.open(job.jdUrl, '_blank');
-    } else {
-      alert('Job description not available');
-    }
+    setSelectedJob(job);
+    setIsJobModalOpen(true);
+  };
+
+  const handleCloseJobModal = () => {
+    setIsJobModalOpen(false);
+    setSelectedJob(null);
   };
 
   // Footer actions
@@ -152,7 +157,13 @@ const DashboardHome = ({
           onContactTeam={contactAdmin}
         />
       </div>
-     
+
+      {/* Job Description Modal */}
+      <JobDescription 
+        job={selectedJob}
+        isOpen={isJobModalOpen}
+        onClose={handleCloseJobModal}
+      />
       
     </div>
   );

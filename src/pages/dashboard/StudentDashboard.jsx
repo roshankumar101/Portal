@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import SampleResume from '../../assets/Docs/Resume(1).pdf';
 import DashboardLayout from '../../components/dashboard/shared/DashboardLayout';
 import DashboardHome from '../../components/dashboard/student/DashboardHome';
+import JobDescription from '../../components/dashboard/student/JobDescription';
 import { useAuth } from '../../hooks/useAuth';
 import { 
   getStudentProfile, 
@@ -122,6 +123,10 @@ export default function StudentDashboard() {
   const [jobs, setJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [applying, setApplying] = useState({});
+  
+  // Job Description Modal state
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   
 
   // Handle URL parameters to set active tab
@@ -306,6 +311,17 @@ export default function StudentDashboard() {
 
   const hasApplied = (jobId) => {
     return applications.some(app => app.jobId === jobId);
+  };
+
+  // Job Description Modal handlers
+  const handleKnowMore = (job) => {
+    setSelectedJob(job);
+    setIsJobModalOpen(true);
+  };
+
+  const handleCloseJobModal = () => {
+    setIsJobModalOpen(false);
+    setSelectedJob(null);
   };
 
   // Load data only when needed (not on component mount)
@@ -860,7 +876,8 @@ export default function StudentDashboard() {
 
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          className="px-2 py-1 border border-[#3c80a7] bg-[#8ec5ff] text-black font-medium rounded-sm hover:bg-[#2563eb] transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
+                          onClick={() => handleKnowMore(job)}
+                          className="px-2 py-1 border border-[#3c80a7] bg-[#8ec5ff] text-black font-medium rounded-sm hover:bg-[#2563eb] hover:text-white transition-all duration-200 shadow-sm text-xs whitespace-nowrap"
                         >
                           Know More
                         </button>
@@ -1740,6 +1757,13 @@ export default function StudentDashboard() {
           </div>
         </div>
       )}
+
+      {/* Job Description Modal */}
+      <JobDescription 
+        job={selectedJob}
+        isOpen={isJobModalOpen}
+        onClose={handleCloseJobModal}
+      />
     </>
   );
 }

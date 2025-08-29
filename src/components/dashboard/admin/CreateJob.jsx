@@ -142,7 +142,7 @@ export default function CreateJob({ onCreated }) {
   function isValidUrl(value) {
     try {
       const u = new URL(value);
-      return u.protocol === 'http:' || u.protocol === 'https:';
+      return u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'www.';
     } catch {
       return false;
     }
@@ -154,7 +154,7 @@ export default function CreateJob({ onCreated }) {
       setWebsiteError('');
       return;
     }
-    setWebsiteError(isValidUrl(value) ? '' : 'Enter a valid URL starting with http(s)://');
+    setWebsiteError(isValidUrl(value) ? '' : 'Enter a valid URL starting with www. or http(s)://');
   };
 
   const onJobTypeChange = (val) => {
@@ -406,7 +406,7 @@ export default function CreateJob({ onCreated }) {
 
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-blue-600 font-medium">Website <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${websiteError ? 'border-red-400 bg-red-50' : form.website?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="https://company.com" value={form.website} onChange={(e) => onWebsiteChange(e.target.value)} required />
+                  <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${websiteError ? 'border-red-400 bg-red-50' : form.website?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="www.company.com" value={form.website} onChange={(e) => onWebsiteChange(e.target.value)} required />
                   {websiteError && <p className="text-xs text-red-600 mt-1">{websiteError}</p>}
                 </div>
               </div>
@@ -463,7 +463,7 @@ export default function CreateJob({ onCreated }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Open Positions:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 5 (optional)" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
+              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 15" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
             </div>
           </div>
 

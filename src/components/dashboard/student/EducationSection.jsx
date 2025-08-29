@@ -432,17 +432,17 @@ const EducationSection = () => {
               <p className="text-xs text-gray-600">Entry {educationEntries.length + 1} of 4</p>
               <div className="flex space-x-2">
                 <button
-                  onClick={cancelEdit}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
                   onClick={saveEducation}
                   className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Saving...' : 'Save Education'}
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                >
+                  Cancel
                 </button>
               </div>
             </div>

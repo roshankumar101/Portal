@@ -226,11 +226,11 @@ const Achievements = () => {
           )}
           <div className="flex space-x-2 justify-end">
             <button
-              onClick={() => handleDeleteAchievement(achievement.id)}
-              className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+              onClick={saveAchievement}
+              className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
               disabled={loading}
             >
-              Delete
+              {loading ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={cancelEditing}
@@ -239,11 +239,11 @@ const Achievements = () => {
               Cancel
             </button>
             <button
-              onClick={saveAchievement}
-              className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              onClick={() => handleDeleteAchievement(achievement.id)}
+              className="px-3 py-1 rounded bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Save'}
+              Delete
             </button>
           </div>
         </div>
@@ -377,17 +377,17 @@ const Achievements = () => {
                 />
                 <div className="flex space-x-2 justify-end">
                   <button
-                    onClick={cancelEditing}
-                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
-                  >
-                    Cancel
-                  </button>
-                  <button
                     onClick={saveAchievement}
                     className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
@@ -449,17 +449,17 @@ const Achievements = () => {
                 />
                 <div className="flex space-x-2 justify-end">
                   <button
-                    onClick={cancelEditing}
-                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
-                  >
-                    Cancel
-                  </button>
-                  <button
                     onClick={saveAchievement}
                     className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>

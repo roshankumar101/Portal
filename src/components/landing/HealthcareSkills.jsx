@@ -119,7 +119,7 @@ const HealthcareSkills = () => {
               <div className="flex items-start">
                 <div className='hover:pl-2 duration-300'>
                   <h4 className="text-lg font-semibold mb-1">
-                    <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] ease-in-out">Zero-Cost Clinical Talent</span>
+                    <span className="px-1 bg-gradient-to-t from-yellow-400 to-yellow-400 bg-no-repeat [background-size:100%_30%] [background-position:0_100%] transition-all duration-300 ease-in-out hover:[background-size:100%_100%] hover:[background-position:100%_100%]">Zero-Cost Clinical Talent</span>
                   </h4>
                   <p className="text-gray-700">Hospitals access pre-credentialed graduates without recruitment fees or temp agency markups.</p>
                 </div>

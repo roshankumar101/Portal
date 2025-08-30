@@ -346,7 +346,7 @@ export default function CreateJob({ onCreated }) {
     if (!canPost) return;
     // Validate website if provided
     if (form.website?.trim() && !isValidUrl(form.website.trim())) {
-      setWebsiteError('Enter a valid URL starting with http(s)://');
+      setWebsiteError('Enter a valid URL starting with www. or http(s)://');
       return;
     }
     // Save summary of current position locally

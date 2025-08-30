@@ -382,6 +382,35 @@ export default function CreateJob({ onCreated }) {
     setCollapsedSections(new Set());
   };
 
+  // Validation functions
+  const validateField = (field, value) => {
+    switch (field) {
+      case 'company':
+      case 'jobTitle':
+      case 'qualification':
+      case 'specialization':
+        return /^[a-zA-Z\s]+$/.test(value) || value === '';
+      case 'stipend':
+      case 'duration':
+      case 'salary':
+      case 'yop':
+      case 'minCgpa':
+      case 'gapYears':
+      case 'openings':
+        return /^\d+$/.test(value) || value === '';
+      case 'website':
+        return isValidUrl(value);
+      default:
+        return true;
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (validateField(field, value)) {
+      update({ [field]: value });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -401,7 +430,7 @@ export default function CreateJob({ onCreated }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => handleInputChange('company', e.target.value)} />
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -625,7 +654,7 @@ export default function CreateJob({ onCreated }) {
                   {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'}
                 </button>
                 {showVenues && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-md shadow">
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-slate-300 rounded-md shadow">
                     {DRIVE_VENUES.map((v) => (
                       <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer">
                         <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
@@ -712,7 +741,7 @@ export default function CreateJob({ onCreated }) {
                 {!gapInputMode ? (
                   <>
                     <select 
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`} 
+                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`} 
                       value={form.gapAllowed} 
                       onChange={(e) => {
                         const value = e.target.value;
@@ -726,8 +755,7 @@ export default function CreateJob({ onCreated }) {
                           update({ gapAllowed: value, gapYears: '' });
                         }
                       }}
-                      required
-                    >
+                      required>
                       <option value="">Select Gap Policy</option>
                       <option value="Allowed">Allowed</option>
                       <option value="Not Allowed">Not Allowed</option>

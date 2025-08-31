@@ -9,7 +9,7 @@ export default function AdminLayout({ children }) {
   // School-specific header texts (same as DashboardLayout)
   const getSchoolHeaderText = (school) => {
     const schoolTexts = {
-      SOT: 'Fostering Innovation. Strengthening Foundations',
+      SOT: 'Fostering Innovation. Strengthening Foundations.',
       SOM: 'Leading with Vision. Strategizing with Innovation.',
       SOH: 'Healing with Science. Caring with Innovation.',
     };

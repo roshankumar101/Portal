@@ -96,12 +96,12 @@ const JobDescription = ({ job, isOpen, onClose }) => {
 
   // -------- Skills Array --------
   const skillsRequired = [
+    "Problem Solving",
     "JavaScript & ES6+",
     "React.js & Node.js",
-    "Database Management",
-    "Problem Solving",
-    "Team Collaboration",
     "Git & Version Control",
+    "Database Management",
+    "Team Collaboration",
     "REST APIs",
     "Agile Methodology",
   ];
@@ -153,6 +153,8 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             )}
           </div>
         </div>
+
+
         {/* Position Details */}
         <div className="flex flex-wrap justify-center gap-6 px-6 py-6 border-b">
           <div className="flex items-center gap-2 text-gray-700">
@@ -215,6 +217,8 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             </div>
           </div>
         </div>
+
+
         {/* Roles & Responsibilities */}
         <div className="px-6 pb-10">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -235,6 +239,8 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             ))}
           </ul>
         </div>
+
+
         {/* Eligibility Criteria */}
         <h3 className="text-lg font-semibold mb-4 text-gray-800 px-4 flex items-center gap-2">
           <GoChecklist className="text-blue-600" /> Eligibility Criteria
@@ -292,6 +298,8 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             </div>
           </div>
         </div>
+
+
         {/* Skills Required */}
         <div className="px-6">
           <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-2">
@@ -304,8 +312,9 @@ const JobDescription = ({ job, isOpen, onClose }) => {
                 {leftSkills.map((skill, index) => {
                   const totalLeftSkills = leftSkills.length;
                   const circleRadius = Math.max(96, 88 + skillsRequired.length * 3);
-                  const startAngle = 135;
-                  const endAngle = 225;
+                  // Changed: Start from top (225°) and go to bottom (135°)
+                  const startAngle = 225;
+                  const endAngle = 135;
                   const angleStep =
                     totalLeftSkills > 1 ? (endAngle - startAngle) / (totalLeftSkills - 1) : 0;
                   const angle = startAngle + index * angleStep;
@@ -313,6 +322,10 @@ const JobDescription = ({ job, isOpen, onClose }) => {
                   // Attachment point on circle edge
                   const attachX = 500 + circleRadius * Math.cos(radian);
                   const attachY = 175 + circleRadius * Math.sin(radian);
+
+                  // Now we can use direct numbering since positioning is top to bottom
+                  const skillNumber = skillsRequired.findIndex(s => s === skill) + 1;
+
                   return (
                     <div
                       key={index}
@@ -324,26 +337,24 @@ const JobDescription = ({ job, isOpen, onClose }) => {
                       }}
                     >
                       <div
-                        className={`${
-                          index % 3 === 0
+                        className={`${index % 3 === 0
                             ? "bg-slate-600"
                             : index % 3 === 1
-                            ? "bg-slate-500"
-                            : "bg-slate-400"
-                        } text-white px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap relative`}
+                              ? "bg-slate-500"
+                              : "bg-slate-400"
+                          } text-white px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap relative`}
                       >
                         <span className="text-white font-bold mr-2">
-                          {String(index * 2 + 1).padStart(2, "0")}
+                          {String(skillNumber).padStart(2, "0")}
                         </span>
                         {skill}
                         <div
-                          className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-0 h-0 ${
-                            index % 3 === 0
+                          className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-0 h-0 ${index % 3 === 0
                               ? "border-l-slate-600"
                               : index % 3 === 1
-                              ? "border-l-slate-500"
-                              : "border-l-slate-400"
-                          } border-l-8 border-t-4 border-t-transparent border-b-4 border-b-transparent`}
+                                ? "border-l-slate-500"
+                                : "border-l-slate-400"
+                            } border-l-8 border-t-4 border-t-transparent border-b-4 border-b-transparent`}
                         ></div>
                       </div>
                     </div>
@@ -365,15 +376,20 @@ const JobDescription = ({ job, isOpen, onClose }) => {
                 {rightSkills.map((skill, index) => {
                   const totalRightSkills = rightSkills.length;
                   const circleRadius = Math.max(96, 88 + skillsRequired.length * 3);
-                  const startAngle = 45;
-                  const endAngle = -45;
+                  // Changed: Start from top (-45°) and go to bottom (45°)
+                  const startAngle = -45;
+                  const endAngle = 45;
                   const angleStep =
-                    totalRightSkills > 1 ? (startAngle - endAngle) / (totalRightSkills - 1) : 0;
-                  const angle = startAngle - index * angleStep;
+                    totalRightSkills > 1 ? (endAngle - startAngle) / (totalRightSkills - 1) : 0;
+                  const angle = startAngle + index * angleStep;
                   const radian = (angle * Math.PI) / 180;
                   // Attachment point on circle edge
                   const attachX = circleRadius * Math.cos(radian) - 100;
                   const attachY = 175 + circleRadius * Math.sin(radian);
+
+                  // Now we can use direct numbering since positioning is top to bottom
+                  const skillNumber = skillsRequired.findIndex(s => s === skill) + 1;
+
                   return (
                     <div
                       key={index}
@@ -385,25 +401,23 @@ const JobDescription = ({ job, isOpen, onClose }) => {
                       }}
                     >
                       <div
-                        className={`${
-                          index % 3 === 0
+                        className={`${index % 3 === 0
                             ? "bg-slate-600"
                             : index % 3 === 1
-                            ? "bg-slate-500"
-                            : "bg-slate-400"
-                        } text-white px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap relative`}
+                              ? "bg-slate-500"
+                              : "bg-slate-400"
+                          } text-white px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap relative`}
                       >
                         <div
-                          className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 ${
-                            index % 3 === 0
+                          className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 ${index % 3 === 0
                               ? "border-r-slate-600"
                               : index % 3 === 1
-                              ? "border-r-slate-500"
-                              : "border-r-slate-400"
-                          } border-r-8 border-t-4 border-t-transparent border-b-4 border-b-transparent`}
+                                ? "border-r-slate-500"
+                                : "border-r-slate-400"
+                            } border-r-8 border-t-4 border-t-transparent border-b-4 border-b-transparent`}
                         ></div>
                         <span className="text-white font-bold mr-2">
-                          {String((index + leftSkills.length) * 2).padStart(2, "0")}
+                          {String(skillNumber).padStart(2, "0")}
                         </span>
                         {skill}
                       </div>
@@ -414,6 +428,8 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             </div>
           </div>
         </div>
+
+
         {/* Interview Process Timeline */}
         <div className="w-full flex flex-col items-center py-8 px-4">
           <h3 className="text-xl font-bold mb-8 text-gray-800 flex items-center gap-2">
@@ -497,16 +513,18 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             </div>
           </div>
         </div>
+
+
         {/* Buttons Sticky at the Bottom */}
-        <div className="sticky bottom-0 bg-white z-50 flex gap-2 p-4 shadow-md justify-end">
+        <div className="sticky bottom-0 z-50 flex gap-2 p-4 shadow-md justify-end">
           <button
-            className="px-4 py-2 border-2 border-green-700 text-white rounded-md transition font-semibold shadow-md bg-gradient-to-r from-green-800 to-green-600 hover:from-green-700 hover:to-green-500"
+            className="px-4 py-2 border-1 border-green-700 text-white rounded-md transition font-semibold shadow-md bg-gradient-to-r from-green-800 to-green-600 hover:from-green-700 hover:to-green-500"
           >
             Apply Now
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border-2 border-gray-700 text-white rounded-md transition font-semibold shadow-md bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-700 hover:to-gray-500"
+            className="px-4 py-2 border-1 border-gray-700 text-white rounded-md transition font-semibold shadow-md bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-700 hover:to-gray-500"
           >
             Close
           </button>

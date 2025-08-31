@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { Calendar, Info, Plus, X, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -58,49 +58,72 @@ export default function CreateJob({ onCreated }) {
   const [posting, setPosting] = useState(false);
   const [showVenues, setShowVenues] = useState(false);
   const hiddenDateRef = useRef(null);
+  const venueDropdownRef = useRef(null);
   const [websiteError, setWebsiteError] = useState('');
-  const [savedPositions, setSavedPositions] = useState([]); // locally saved (company, jobTitle)
-  const [selectedPositions, setSelectedPositions] = useState(new Set()); // track which positions are selected
+  const [linkedinError, setLinkedinError] = useState('');
+  const [stipendError, setStipendError] = useState('');
+  const [durationError, setDurationError] = useState('');
+  const [salaryError, setSalaryError] = useState('');
+  const [companyLocationError, setCompanyLocationError] = useState('');
+  const [minCgpaError, setMinCgpaError] = useState('');
+  const [savedPositions, setSavedPositions] = useState([]);
+  const [selectedPositions, setSelectedPositions] = useState(new Set());
   const [collapsedSections, setCollapsedSections] = useState(new Set());
   const [gapInputMode, setGapInputMode] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState({ serviceAgreement: false, blockingPeriod: false });
+
+  // Add useEffect for click outside detection
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (venueDropdownRef.current && !venueDropdownRef.current.contains(event.target)) {
+        setShowVenues(false);
+      }
+    }
+
+    if (showVenues) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showVenues]);
 
   // Form state
   const [form, setForm] = useState({
     company: '',
     website: '',
-    jobType: '', // Empty string for placeholder
-    stipend: '', // internship
-    duration: '', // internship
-    salary: '', // full-time (CTC)
+    linkedin: '',
+    jobType: '',
+    stipend: '',
+    duration: '',
+    salary: '',
     jobTitle: '',
-    workMode: '', // Empty string for placeholder
+    workMode: '',
     companyLocation: '',
-    openings: '', // admin-only
+    openings: '',
     responsibilities: '',
-    // Company SPOC fields - now array for multiple SPOCs
     spocs: [{ fullName: '', email: '', phone: '' }],
-    driveDateText: '', // DD/MM/YYYY for manual input
-    driveDateISO: '',  // ISO for payload
-    driveVenues: [],   // multi-select
+    driveDateText: '',
+    driveDateISO: '',
+    driveVenues: [],
     qualification: '',
     specialization: '',
-    yop: '', // year of passing
+    yop: '',
     minCgpa: '',
-    skillsInput: '', // raw input to turn into chips
+    skillsInput: '',
     skills: [],
-    gapAllowed: '', // Empty string for placeholder
-    gapYears: '', // only if allowed
-    backlogs: '', // Empty string for placeholder
+    gapAllowed: '',
+    gapYears: '',
+    backlogs: '',
     serviceAgreement: '',
     blockingPeriod: '',
-    // Interview rounds: we store base and extra details separately, but will combine on submit
-    baseRoundDetails: ['', '', ''], // for I, II, III Round respectively
-    extraRounds: [], // [{ title: 'Round 4', detail: '' }, ...]
+    baseRoundDetails: ['', '', ''],
+    extraRounds: [],
     instructions: '',
   });
 
-  // Local draft for About Drive section (so Save stores into main form, Cancel clears this subset)
+  // Local draft for About Drive section
   const [driveDraft, setDriveDraft] = useState({
     driveDateText: '',
     driveDateISO: '',
@@ -109,28 +132,31 @@ export default function CreateJob({ onCreated }) {
 
   // Section completion checks
   const isCompanyDetailsComplete = useMemo(() => {
-    const base = form.company?.trim() && form.jobTitle?.trim() && form.companyLocation?.trim() && form.website?.trim() && form.workMode?.trim() && form.workMode !== '' && form.jobType?.trim() && form.jobType !== '';
+    const base = form.company?.trim() && form.jobTitle?.trim() && form.companyLocation?.trim() && form.website?.trim() && form.linkedin?.trim() && form.workMode?.trim() && form.workMode !== '' && form.jobType?.trim() && form.jobType !== '';
     const comp = form.jobType === 'Internship'
       ? form.stipend?.trim() && form.duration?.trim()
       : form.jobType === 'Full-Time' ? form.salary?.trim() : false;
     const websiteOk = !form.website?.trim() || isValidUrl(form.website.trim());
-    return !!(base && comp && websiteOk);
-  }, [form]);
+    const linkedinOk = !form.linkedin?.trim() || isValidLinkedInUrl(form.linkedin.trim());
+    const stipendOk = !form.stipend?.trim() || !stipendError;
+    const durationOk = !form.duration?.trim() || !durationError;
+    const salaryOk = !form.salary?.trim() || !salaryError;
+    const locationOk = !form.companyLocation?.trim() || !companyLocationError;
+    return !!(base && comp && websiteOk && linkedinOk && stipendOk && durationOk && salaryOk && locationOk);
+  }, [form, websiteError, linkedinError, stipendError, durationError, salaryError, companyLocationError]);
 
   const isDriveDetailsComplete = useMemo(() => {
     return !!(form.driveDateISO || toISOFromDDMMYYYY(form.driveDateText)) && form.driveVenues.length > 0;
   }, [form.driveDateISO, form.driveDateText, form.driveVenues]);
 
   const isSkillsEligibilityComplete = useMemo(() => {
-    return form.qualification?.trim() && form.yop?.trim() && form.minCgpa?.trim() && form.skills.length > 0 && form.gapAllowed?.trim() && form.gapAllowed !== '' && form.backlogs?.trim() && form.backlogs !== '';
-  }, [form.qualification, form.yop, form.minCgpa, form.skills, form.gapAllowed, form.backlogs]);
+    return form.qualification?.trim() && form.yop?.trim() && form.minCgpa?.trim() && form.skills.length > 0 && form.gapAllowed?.trim() && form.gapAllowed !== '' && form.backlogs?.trim() && form.backlogs !== '' && !minCgpaError;
+  }, [form.qualification, form.yop, form.minCgpa, form.skills, form.gapAllowed, form.backlogs, minCgpaError]);
 
-  // Interview process validation
   const isInterviewProcessComplete = useMemo(() => {
     return form.baseRoundDetails[0]?.trim() && form.baseRoundDetails[1]?.trim() && form.baseRoundDetails[2]?.trim();
   }, [form.baseRoundDetails]);
 
-  // Derived validations
   const canPost = useMemo(() => {
     return isCompanyDetailsComplete && isDriveDetailsComplete && isSkillsEligibilityComplete && isInterviewProcessComplete;
   }, [isCompanyDetailsComplete, isDriveDetailsComplete, isSkillsEligibilityComplete, isInterviewProcessComplete]);
@@ -138,23 +164,129 @@ export default function CreateJob({ onCreated }) {
   // Handlers
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // URL validation (http/https) - function declaration so it's hoisted
+  // Validation functions
   function isValidUrl(value) {
+    if (!value) return true;
+    // Allow www.example.com format
+    if (value.startsWith('www.') && value.includes('.')) {
+      return true;
+    }
     try {
       const u = new URL(value);
-      return u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'www.';
+      return u.protocol === 'http:' || u.protocol === 'https:';
     } catch {
       return false;
     }
   }
 
+  function isValidLinkedInUrl(value) {
+    if (!value) return true;
+    const linkedinRegex = /(https?)?:?(\/\/)?((w{3}||[\w\w])\.)?linkedin\.com(\w+:{0,1}\w*@)?(\S+)(:([0-9])+)?(\/|\/[\w#!:.?+=&%@!\-\/])?/;
+    return linkedinRegex.test(value);
+  }
+
+  function isValidNumeric(value) {
+    return /^\d+$/.test(value);
+  }
+
+  function isValidAlphabetic(value) {
+    return /^[a-zA-Z\s,.-]+$/.test(value);
+  }
+
+  // Input change handlers with validation
   const onWebsiteChange = (value) => {
     update({ website: value });
     if (!value) {
       setWebsiteError('');
       return;
     }
-    setWebsiteError(isValidUrl(value) ? '' : 'Enter a valid URL starting with www. or http(s)://');
+    setWebsiteError(isValidUrl(value) ? '' : 'Enter a valid URL (www.example.com or https://example.com)');
+  };
+
+  const onLinkedInChange = (value) => {
+    update({ linkedin: value });
+    if (!value) {
+      setLinkedinError('');
+      return;
+    }
+    setLinkedinError(isValidLinkedInUrl(value) ? '' : 'Enter a valid LinkedIn URL (e.g. https://linkedin.com/company/example)');
+  };
+
+  const onStipendChange = (value) => {
+    if (value === '' || isValidNumeric(value)) {
+      update({ stipend: value });
+      setStipendError('');
+    } else {
+      setStipendError('Please enter the amount');
+    }
+  };
+
+  const onDurationChange = (value) => {
+    // Allow numbers and common duration words
+    const durationRegex = /^[\d\s]*(months?|years?|weeks?|days?)?$/i;
+    if (value === '' || durationRegex.test(value)) {
+      update({ duration: value });
+      setDurationError('');
+    } else {
+      setDurationError('Please enter valid duration (e.g. 6 months)');
+    }
+  };
+
+  const onSalaryChange = (value) => {
+    if (value === '' || isValidNumeric(value.replace(/[,]/g, ''))) {
+      update({ salary: value });
+      setSalaryError('');
+    } else {
+      setSalaryError('Please enter the amount');
+    }
+  };
+
+  const onCompanyLocationChange = (value) => {
+    if (value === '' || isValidAlphabetic(value)) {
+      update({ companyLocation: value });
+      setCompanyLocationError('');
+    } else {
+      setCompanyLocationError('Please enter the location');
+    }
+  };
+
+  // NEW: Year of Passing validation - only allows 2 or 4 digit numbers
+  const onYopChange = (value) => {
+    if (/^\d{0,4}$/.test(value)) {
+      update({ yop: value });
+    }
+  };
+
+  // NEW: Min CGPA/Percentage validation
+  const onMinCgpaChange = (value) => {
+    update({ minCgpa: value });
+    setMinCgpaError('');
+  };
+
+  const onMinCgpaBlur = (value) => {
+    if (!value.trim()) {
+      setMinCgpaError('');
+      return;
+    }
+    
+    const trimmed = value.trim();
+    if (trimmed.endsWith('%')) {
+      // Percentage validation (0-100)
+      const numVal = parseFloat(trimmed.slice(0, -1));
+      if (isNaN(numVal) || numVal < 0 || numVal > 100) {
+        setMinCgpaError('Percentage must be between 0 and 100');
+      } else {
+        setMinCgpaError('');
+      }
+    } else {
+      // CGPA validation (0-10)
+      const numVal = parseFloat(trimmed);
+      if (isNaN(numVal) || numVal < 0 || numVal > 10) {
+        setMinCgpaError('CGPA must be between 0 and 10');
+      } else {
+        setMinCgpaError('');
+      }
+    }
   };
 
   const onJobTypeChange = (val) => {
@@ -181,25 +313,27 @@ export default function CreateJob({ onCreated }) {
   };
 
   const addRound = () => {
-    const count = form.extraRounds.length + 4; // starts from Round 4
+    const count = form.extraRounds.length + 4;
     const romanNumeral = toRoman(count);
     update({ extraRounds: [...form.extraRounds, { title: `${romanNumeral} Round`, detail: '' }] });
   };
+
   const removeExtraRound = (idx) => {
     const next = [...form.extraRounds];
     next.splice(idx, 1);
-    // Update titles with new Roman numerals after removal
     const updatedRounds = next.map((round, index) => ({
       ...round,
       title: `${toRoman(index + 4)} Round`
     }));
     update({ extraRounds: updatedRounds });
   };
+
   const updateBaseRoundDetail = (idx, val) => {
     const next = [...form.baseRoundDetails];
     next[idx] = val;
     update({ baseRoundDetails: next });
   };
+
   const updateExtraRoundDetail = (idx, val) => {
     const next = [...form.extraRounds];
     next[idx] = { ...next[idx], detail: val };
@@ -247,8 +381,6 @@ export default function CreateJob({ onCreated }) {
     update({ driveVenues: arr });
   };
 
-  // About Drive section now updates the main form immediately; no Save/Cancel buttons
-  
   const toggleSection = (sectionId) => {
     setCollapsedSections(prev => {
       const next = new Set(prev);
@@ -277,6 +409,7 @@ export default function CreateJob({ onCreated }) {
     setForm((f) => ({
       company: keep.company ?? '',
       website: keep.website ?? '',
+      linkedin: keep.linkedin ?? '',
       jobType: '',
       stipend: '',
       duration: '',
@@ -301,7 +434,6 @@ export default function CreateJob({ onCreated }) {
       backlogs: '',
       serviceAgreement: keep.serviceAgreement ?? '',
       blockingPeriod: '',
-      // reset interview rounds state
       baseRoundDetails: ['', '', ''],
       extraRounds: [],
       instructions: '',
@@ -344,12 +476,14 @@ export default function CreateJob({ onCreated }) {
 
   const cloneForAnother = () => {
     if (!canPost) return;
-    // Validate website if provided
     if (form.website?.trim() && !isValidUrl(form.website.trim())) {
-      setWebsiteError('Enter a valid URL starting with www. or http(s)://');
+      setWebsiteError('Enter a valid URL (www.example.com or https://example.com)');
       return;
     }
-    // Save summary of current position locally
+    if (form.linkedin?.trim() && !isValidLinkedInUrl(form.linkedin.trim())) {
+      setLinkedinError('Enter a valid LinkedIn URL (e.g. https://linkedin.com/company)');
+      return;
+    }
     const companyName = form.company?.trim();
     const jobTitle = form.jobTitle?.trim();
     const jobType = form.jobType;
@@ -362,23 +496,20 @@ export default function CreateJob({ onCreated }) {
         jobType, 
         workMode 
       }]);
-      // Auto-select the new position
       setSelectedPositions(prev => new Set([...prev, newPositionIndex]));
     }
-    // Reset while cloning certain fields for faster next entry
     resetForm({
       company: form.company,
       website: form.website,
+      linkedin: form.linkedin,
       serviceAgreement: form.serviceAgreement,
       companyLocation: form.companyLocation,
     });
-    // Clear drive details for new position
     setDriveDraft({
       driveDateText: '',
       driveDateISO: '',
       driveVenues: [],
     });
-    // Keep sections expanded for easy multiple entries
     setCollapsedSections(new Set());
   };
 
@@ -398,10 +529,18 @@ export default function CreateJob({ onCreated }) {
           
           {!isSectionCollapsed('company') && (
             <>
+              {/* Company field taking full row */}
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
+                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
+              </div>
+
+              {/* LinkedIn and Website fields half-half */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
+                  <label className="text-sm text-blue-600 font-medium">LinkedIn <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${linkedinError ? 'border-red-400 bg-red-50' : form.linkedin?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="https://linkedin.com/company/example" value={form.linkedin} onChange={(e) => onLinkedInChange(e.target.value)} required />
+                  {linkedinError && <p className="text-xs text-red-600 mt-1">{linkedinError}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -414,28 +553,36 @@ export default function CreateJob({ onCreated }) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)} required>
-                <option value="">Select Job Type</option>
-                <option value="Internship">Internship</option>
-                <option value="Full-Time">Full-Time</option>
-              </select>
+              <div className="relative">
+                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)} required>
+                  <option value="" className='bg-green-100'>Select Job Type</option>
+                  <option value="Internship" className='bg-green-100'>Internship</option>
+                  <option value="Full-Time" className='bg-green-100'>Full-Time</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <ChevronDown className="w-4 h-4 text-gray-800" />
+                </div>
+              </div>
             </div>
 
             {form.jobType === 'Internship' ? (
               <>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => update({ stipend: e.target.value })} />
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${stipendError ? 'border-red-400 bg-red-50' : form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => onStipendChange(e.target.value)} />
+                  {stipendError && <p className="text-xs text-red-600 mt-1">{stipendError}</p>}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
-                  <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => update({ duration: e.target.value })} />
+                  <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${durationError ? 'border-red-400 bg-red-50' : form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => onDurationChange(e.target.value)} />
+                  {durationError && <p className="text-xs text-red-600 mt-1">{durationError}</p>}
                 </div>
               </>
             ) : form.jobType === 'Full-Time' ? (
               <div className="flex flex-col gap-1 sm:col-span-2">
                 <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
-                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => update({ salary: e.target.value })} />
+                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${salaryError ? 'border-red-400 bg-red-50' : form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => onSalaryChange(e.target.value)} />
+                {salaryError && <p className="text-xs text-red-600 mt-1">{salaryError}</p>}
               </div>
             ) : null}
           </div>
@@ -447,19 +594,25 @@ export default function CreateJob({ onCreated }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
-                <option value="">Select Work Mode</option>
-                <option value="On-site">On-site</option>
-                <option value="Hybrid">Hybrid</option>
-                <option value="Remote">Remote</option>
-              </select>
+              <div className="relative">
+                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
+                  <option value="" className='bg-green-100'>Select Work Mode</option>
+                  <option value="On-site" className='bg-green-100'>On-site</option>
+                  <option value="Hybrid" className='bg-green-100'>Hybrid</option>
+                  <option value="Remote" className='bg-green-100 border'>Remote</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <ChevronDown className="w-4 h-4 text-gray-800" />
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1 sm:col-span-2">
               <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => update({ companyLocation: e.target.value })} />
+              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${companyLocationError ? 'border-red-400 bg-red-50' : form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => onCompanyLocationChange(e.target.value)} />
+              {companyLocationError && <p className="text-xs text-red-600 mt-1">{companyLocationError}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Open Positions:</label>
@@ -482,19 +635,15 @@ export default function CreateJob({ onCreated }) {
                       const textBefore = textarea.value.substring(0, cursorPosition);
                       const textAfter = textarea.value.substring(cursorPosition);
                       
-                      // Check if we're at the beginning of a line or after a bullet point
                       const lines = textBefore.split('\n');
                       const currentLine = lines[lines.length - 1];
                       
                       let newText;
                       if (currentLine?.trim() === '' || currentLine?.trim() === '•') {
-                        // If current line is empty or just a bullet, add a new bullet point
                         newText = textBefore + '\n• ' + textAfter;
                       } else if (currentLine.startsWith('• ')) {
-                        // If current line already has a bullet, add a new bullet point
                         newText = textBefore + '\n• ' + textAfter;
                       } else {
-                        // If current line doesn't have a bullet, convert it to a bullet point and add new one
                         const updatedCurrentLine = '• ' + currentLine;
                         const updatedLines = [...lines.slice(0, -1), updatedCurrentLine];
                         newText = updatedLines.join('\n') + '\n• ' + textAfter;
@@ -502,7 +651,6 @@ export default function CreateJob({ onCreated }) {
                       
                       update({ responsibilities: newText });
                       
-                      // Set cursor position after the new bullet point
                       setTimeout(() => {
                         const newCursorPosition = newText.length - textAfter.length;
                         textarea.setSelectionRange(newCursorPosition, newCursorPosition);
@@ -620,14 +768,14 @@ export default function CreateJob({ onCreated }) {
 
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
-              <div className="relative">
+              <div ref={venueDropdownRef} className="relative">
                 <button type="button" className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full text-left ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} onClick={() => setShowVenues((v) => !v)}>
                   {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'}
                 </button>
                 {showVenues && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-md shadow">
+                  <div className="absolute z-10 mt-1 w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
                     {DRIVE_VENUES.map((v) => (
-                      <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer">
+                      <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
                         <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
                         <span>{v}</span>
                       </label>
@@ -637,8 +785,6 @@ export default function CreateJob({ onCreated }) {
               </div>
             </div>
           </div>
-
-              {/* Save/Cancel removed; values are saved live */}
             </>
           ) : !canShowSection('drive') ? (
             <p className="text-sm text-slate-500 italic">Complete Company Details section to continue</p>
@@ -675,11 +821,12 @@ export default function CreateJob({ onCreated }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025" value={form.yop} onChange={(e) => update({ yop: e.target.value })} />
+              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025 or 25" value={form.yop} onChange={(e) => onYopChange(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 CGPA or 70%" value={form.minCgpa} onChange={(e) => update({ minCgpa: e.target.value })} />
+              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${minCgpaError ? 'border-red-400 bg-red-50' : form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 or 70%" value={form.minCgpa} onChange={(e) => onMinCgpaChange(e.target.value)} onBlur={(e) => onMinCgpaBlur(e.target.value)} />
+              {minCgpaError && <p className="text-xs text-red-600 mt-1">{minCgpaError}</p>}
             </div>
           </div>
 
@@ -755,36 +902,33 @@ export default function CreateJob({ onCreated }) {
                           setGapInputMode(false);
                         }
                       }}
-                      onBlur={(e) => {
-                        if (!e.target.value.trim()) {
+                      onBlur={() => {
+                        if (form.gapYears && form.gapYears.trim()) {
+                          update({ gapAllowed: 'Custom' });
+                          setGapInputMode(false);
+                        } else {
                           update({ gapAllowed: 'Not Allowed', gapYears: '' });
                           setGapInputMode(false);
                         }
                       }}
                     />
                     <span className="text-sm ml-1">Year/s Allowed</span>
-                    <button 
-                      type="button"
-                      className="ml-2 text-xs text-blue-600 hover:text-blue-800"
-                      onClick={() => {
-                        if (form.gapYears.trim()) {
-                          update({ gapAllowed: 'Custom' });
-                          setGapInputMode(false);
-                        }
-                      }}
-                    >
-                    </button>
                   </div>
                 )}
               </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
-              <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })} required>
-                <option value="">Select Backlog Policy</option>
-                <option value="Allowed">Allowed</option>
-                <option value="Not Allowed">Not Allowed</option>
-              </select>
+              <div className="relative">
+                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })} required>
+                  <option value="">Select Backlog Policy</option>
+                  <option value="Allowed">Allowed</option>
+                  <option value="Not Allowed">Not Allowed</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <ChevronDown className="w-4 h-4 text-gray-800" />
+                </div>
+              </div>
             </div>
               </div>
             </>
@@ -916,19 +1060,15 @@ export default function CreateJob({ onCreated }) {
                   const textBefore = textarea.value.substring(0, cursorPosition);
                   const textAfter = textarea.value.substring(cursorPosition);
                   
-                  // Check if we're at the beginning of a line or after a bullet point
                   const lines = textBefore.split('\n');
                   const currentLine = lines[lines.length - 1];
                   
                   let newText;
                   if (currentLine.trim() === '' || currentLine.trim() === '•') {
-                    // If current line is empty or just a bullet, add a new bullet point
                     newText = textBefore + '\n• ' + textAfter;
                   } else if (currentLine.startsWith('• ')) {
-                    // If current line already has a bullet, add a new bullet point
                     newText = textBefore + '\n• ' + textAfter;
                   } else {
-                    // If current line doesn't have a bullet, convert it to a bullet point and add new one
                     const updatedCurrentLine = '• ' + currentLine;
                     const updatedLines = [...lines.slice(0, -1), updatedCurrentLine];
                     newText = updatedLines.join('\n') + '\n• ' + textAfter;
@@ -936,7 +1076,6 @@ export default function CreateJob({ onCreated }) {
                   
                   update({ instructions: newText });
                   
-                  // Set cursor position after the new bullet point
                   setTimeout(() => {
                     const newCursorPosition = newText.length - textAfter.length;
                     textarea.setSelectionRange(newCursorPosition, newCursorPosition);
@@ -1016,13 +1155,11 @@ export default function CreateJob({ onCreated }) {
                     <button 
                       type="button"
                       onClick={() => {
-                        // Load complete position data back into form for editing
                         update({
                           company: p.company,
                           jobTitle: p.jobTitle,
                           jobType: p.jobType,
                           workMode: p.workMode,
-                          // Reset other fields to ensure clean editing
                           stipend: '',
                           duration: '',
                           salary: '',
@@ -1045,17 +1182,13 @@ export default function CreateJob({ onCreated }) {
                           extraRounds: [],
                           instructions: ''
                         });
-                        // Clear drive draft
                         setDriveDraft({
                           driveDateText: '',
                           driveDateISO: '',
                           driveVenues: []
                         });
-                        // Reset gap input mode
                         setGapInputMode(false);
-                        // Remove from saved positions
                         setSavedPositions(list => list.filter((_, idx) => idx !== i));
-                        // Expand all sections for editing
                         setCollapsedSections(new Set());
                       }}
                       className="text-blue-600 hover:text-blue-800 p-1"

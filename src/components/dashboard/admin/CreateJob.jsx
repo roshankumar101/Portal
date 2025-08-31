@@ -513,6 +513,35 @@ export default function CreateJob({ onCreated }) {
     setCollapsedSections(new Set());
   };
 
+  // Validation functions
+  const validateField = (field, value) => {
+    switch (field) {
+      case 'company':
+      case 'jobTitle':
+      case 'qualification':
+      case 'specialization':
+        return /^[a-zA-Z\s]+$/.test(value) || value === '';
+      case 'stipend':
+      case 'duration':
+      case 'salary':
+      case 'yop':
+      case 'minCgpa':
+      case 'gapYears':
+      case 'openings':
+        return /^\d+$/.test(value) || value === '';
+      case 'website':
+        return isValidUrl(value);
+      default:
+        return true;
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (validateField(field, value)) {
+      update({ [field]: value });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -859,7 +888,7 @@ export default function CreateJob({ onCreated }) {
                 {!gapInputMode ? (
                   <>
                     <select 
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`} 
+                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`} 
                       value={form.gapAllowed} 
                       onChange={(e) => {
                         const value = e.target.value;
@@ -873,8 +902,7 @@ export default function CreateJob({ onCreated }) {
                           update({ gapAllowed: value, gapYears: '' });
                         }
                       }}
-                      required
-                    >
+                      required>
                       <option value="">Select Gap Policy</option>
                       <option value="Allowed">Allowed</option>
                       <option value="Not Allowed">Not Allowed</option>

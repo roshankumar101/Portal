@@ -28,18 +28,32 @@ service cloud.firestore {
         request.auth.uid == resource.data.ownerId;
     }
 
-    // Jobs collection - allow read for all authenticated users, write for recruiters
+    // Jobs collection - status-based access control
     match /jobs/{jobId} {
-      allow read: if request.auth != null;
+      function isAdmin() {
+        return request.auth != null && 
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      }
       
-      // Allow recruiters to create jobs
-      allow create: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      function isRecruiter() {
+        return request.auth != null && 
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      }
       
-      // Allow job owner (recruiter) to update/delete their own jobs
-      allow update, delete: if request.auth != null && 
-        request.auth.uid == resource.data.recruiterId;
+      // Students can read only active jobs; admins and recruiters can read all
+      allow read: if request.auth != null && (
+        resource.data.status == 'active' || isAdmin() || isRecruiter()
+      );
+      
+      // Admins can create/update/delete all jobs
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+      
+      // Recruiters can create jobs and update/delete their own jobs
+      allow create: if isRecruiter();
+      allow update, delete: if isRecruiter() && request.auth.uid == resource.data.recruiterId;
     }
     
     // Applications collection

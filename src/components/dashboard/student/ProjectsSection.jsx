@@ -195,7 +195,7 @@ const ProjectsSection = () => {
 
         <div className="my-2">
           <div className="space-y-2 pr-2 custom-scrollbar" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-            <style jsx>{`
+            <style>{`
               .custom-scrollbar::-webkit-scrollbar {
                 width: 8px;
                 height: 8px;

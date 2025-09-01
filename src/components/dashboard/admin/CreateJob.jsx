@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { Calendar, Info, Plus, X, Loader, ChevronUp, ChevronDown } from 'lucide-react';
+import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../services/jobs';
 
 // Utility helpers
 const toISOFromDDMMYYYY = (val) => {
@@ -56,6 +57,7 @@ const DRIVE_VENUES = [
 export default function CreateJob({ onCreated }) {
   const { user } = useAuth();
   const [posting, setPosting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showVenues, setShowVenues] = useState(false);
   const hiddenDateRef = useRef(null);
   const venueDropdownRef = useRef(null);
@@ -154,7 +156,8 @@ export default function CreateJob({ onCreated }) {
   }, [form.qualification, form.yop, form.minCgpa, form.skills, form.gapAllowed, form.backlogs, minCgpaError]);
 
   const isInterviewProcessComplete = useMemo(() => {
-    return form.baseRoundDetails[0]?.trim() && form.baseRoundDetails[1]?.trim() && form.baseRoundDetails[2]?.trim();
+    return form.baseRoundDetails && form.baseRoundDetails.length >= 3 && 
+           form.baseRoundDetails[0]?.trim() && form.baseRoundDetails[1]?.trim() && form.baseRoundDetails[2]?.trim();
   }, [form.baseRoundDetails]);
 
   const canPost = useMemo(() => {
@@ -440,29 +443,127 @@ export default function CreateJob({ onCreated }) {
     }));
   };
 
+  const buildJobPayload = () => {
+    return {
+      company: form.company,
+      website: form.website,
+      linkedin: form.linkedin,
+      jobType: form.jobType,
+      stipend: form.stipend,
+      duration: form.duration,
+      salary: form.salary,
+      jobTitle: form.jobTitle,
+      workMode: form.workMode,
+      companyLocation: form.companyLocation,
+      openings: form.openings,
+      responsibilities: form.responsibilities,
+      spocs: form.spocs,
+      driveDate: form.driveDateISO || toISOFromDDMMYYYY(form.driveDateText) || null,
+      driveVenues: form.driveVenues,
+      qualification: form.qualification,
+      specialization: form.specialization,
+      yop: form.yop,
+      minCgpa: form.minCgpa,
+      skills: form.skills,
+      gapAllowed: form.gapAllowed,
+      gapYears: form.gapYears,
+      backlogs: form.backlogs,
+      serviceAgreement: form.serviceAgreement,
+      blockingPeriod: form.blockingPeriod,
+      interviewRounds: [
+        { title: `${toRoman(1)} Round`, detail: form.baseRoundDetails[0] },
+        { title: `${toRoman(2)} Round`, detail: form.baseRoundDetails[1] },
+        { title: `${toRoman(3)} Round`, detail: form.baseRoundDetails[2] },
+        ...form.extraRounds,
+      ],
+      instructions: form.instructions,
+      adminId: user?.uid || null,
+    };
+  };
+
+  const handleSave = async () => {
+    if (!canPost) return;
+    try {
+      setIsSaving(true);
+      const payload = buildJobPayload();
+      await saveJobDraft(payload);
+      alert('Saved as draft');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save draft: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddAnotherPosition = async () => {
+    if (!canPost) return;
+    try {
+      setIsSaving(true);
+      const payload = buildJobPayload();
+      const { autofill } = await addAnotherPositionDraft(payload);
+      
+      // Reset unique fields
+      setForm(prev => ({
+        ...prev,
+        jobTitle: '',
+        jobType: '',
+        stipend: '',
+        duration: '',
+        salary: '',
+        workMode: '',
+        openings: '',
+        responsibilities: '',
+        driveDateText: '',
+        driveDateISO: '',
+        driveVenues: [],
+        qualification: '',
+        specialization: '',
+        yop: '',
+        minCgpa: '',
+        skills: [],
+        skillsInput: '',
+        gapAllowed: '',
+        gapYears: '',
+        backlogs: '',
+        blockingPeriod: '',
+        instructions: '',
+        // Keep autofill data
+        company: autofill.company,
+        website: autofill.website,
+        linkedin: autofill.linkedin,
+        companyLocation: autofill.companyLocation,
+        spocs: autofill.spocs,
+        serviceAgreement: autofill.serviceAgreement,
+        baseRoundDetails: autofill.baseRoundDetails || ['', '', ''],
+        extraRounds: autofill.extraRounds || [],
+      }));
+      
+      setDriveDraft({
+        driveDateText: '',
+        driveDateISO: '',
+        driveVenues: [],
+      });
+      
+      setCollapsedSections(new Set());
+      alert('Position saved; new form prefilled');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add another position: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!canPost) return;
     try {
       setPosting(true);
-      const payload = {
-        ...form,
-        driveDate: form.driveDateISO || toISOFromDDMMYYYY(form.driveDateText) || null,
-        adminId: user?.uid || null,
-        createdAt: new Date().toISOString(),
-        interviewRounds: [
-          { title: `${toRoman(1)} Round`, detail: form.baseRoundDetails[0] },
-          { title: `${toRoman(2)} Round`, detail: form.baseRoundDetails[1] },
-          { title: `${toRoman(3)} Round`, detail: form.baseRoundDetails[2] },
-          ...form.extraRounds,
-        ],
-      };
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error('Failed to post job');
+      const payload = buildJobPayload();
+      // Save as draft first, then immediately post it
+      const { jobId } = await saveJobDraft(payload);
+      await postJob(jobId);
       if (onCreated) onCreated();
       alert('Job posted successfully');
       resetForm();
@@ -1120,7 +1221,25 @@ export default function CreateJob({ onCreated }) {
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm text-white ${!canPost || posting ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
               {posting ? <Loader className="w-4 h-4 animate-spin" /> : null}
-              Save & Post
+              Save Job
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!canPost || isSaving}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${!canPost || isSaving ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'}`}
+            >
+              {isSaving ? <Loader className="w-4 h-4 animate-spin" /> : null}
+              Save (Draft)
+            </button>
+            <button
+              type="button"
+              onClick={handleAddAnotherPosition}
+              disabled={!canPost || isSaving}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${!canPost || isSaving ? 'bg-emerald-200 text-emerald-500 border-emerald-300 cursor-not-allowed' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'}`}
+            >
+              {isSaving ? <Loader className="w-4 h-4 animate-spin" /> : null}
+              + Add Another Position
             </button>
             <button
               type="button"
@@ -1128,14 +1247,6 @@ export default function CreateJob({ onCreated }) {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border border-slate-200 hover:bg-slate-50"
             >
               Cancel / Reset
-            </button>
-            <button
-              type="button"
-              onClick={cloneForAnother}
-              disabled={!canPost}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${!canPost ? 'bg-emerald-200 text-emerald-500 border-emerald-300 cursor-not-allowed' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'}`}
-            >
-              + Add Another Position
             </button>
           </div>
         </section>

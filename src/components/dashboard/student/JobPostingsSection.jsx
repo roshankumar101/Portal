@@ -79,7 +79,8 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
     }
   };
 
-  const jobsWithSvgs = (jobs || []).filter((job) => getCompanySvg(job.company?.name));
+  // Show all jobs, not just those with SVGs
+  const displayJobs = jobs || [];
 
   return (
     <div className="w-full">
@@ -89,7 +90,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
         </legend>
 
         <div className="mb-3 mt-1">
-          {jobsWithSvgs.length === 0 ? (
+          {displayJobs.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No job postings available at the moment.</p>
             </div>
@@ -101,14 +102,14 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                   Company
                 </div>
                 <div className="text-black font-bold text-lg">Job Title</div>
-                <div className="text-black font-bold text-lg">Interview Date</div>
+                <div className="text-black font-bold text-lg">Drive Date</div>
                 <div className="text-black font-bold text-lg">Salary (CTC)</div>
                 <div></div>
               </div>
 
               {/* Job Listings */}
-              {jobsWithSvgs.slice(0, 3).map((job) => {
-                const companyName = job.company?.name;
+              {displayJobs.slice(0, 3).map((job) => {
+                const companyName = job.company || 'Unknown Company';
                 const logoSvg = getCompanySvg(companyName);
 
                 return (
@@ -117,18 +118,24 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                     className="grid grid-cols-5 gap-6 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:bg-[#f0f8fa] hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-center space-x-3">
-                      {logoSvg && <div className="w-10 h-8">{logoSvg}</div>}
+                      {logoSvg ? (
+                        <div className="w-10 h-8">{logoSvg}</div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                          {companyName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <span className="text-base font-semibold text-black truncate">
-                        {companyName || 'Unknown Company'}
+                        {companyName}
                       </span>
                     </div>
 
                     <div className="text-sm font-medium text-gray-800 flex items-center whitespace-nowrap overflow-hidden text-ellipsis">
-                      {job.jobTitle || 'Unknown Position'}
+                      {job.jobTitle || 'Position Available'}
                     </div>
 
                     <div className="text-sm text-gray-600 flex items-center whitespace-nowrap">
-                      {formatDate(job.interviewDate)}
+                      {formatDate(job.driveDate)}
                     </div>
 
                     <div className="text-sm font-medium text-gray-800 flex items-center whitespace-nowrap">
@@ -143,11 +150,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                         Know More
                       </button>
                       <button
-                        onClick={() => {
-                          console.log('Apply button clicked for job:', job);
-                          console.log('Job ID:', job.id, 'Company ID:', job.companyId || job.company?.id);
-                          onApply && onApply(job.id, job.companyId || job.company?.id);
-                        }}
+                        onClick={() => onApply && onApply(job)}
                         disabled={hasApplied && hasApplied(job.id) || applying && applying[job.id]}
                         className={`px-2 py-1 font-medium rounded-sm transition-all duration-200 shadow-sm text-xs whitespace-nowrap ${
                           hasApplied && hasApplied(job.id)
@@ -176,7 +179,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                 );
               })}
 
-              {jobsWithSvgs.length > 3 && (
+              {displayJobs.length > 3 && (
                 <div className="flex justify-end pt-1">
                   <button 
                     onClick={() => onExploreMore && onExploreMore()}

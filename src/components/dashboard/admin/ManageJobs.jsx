@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { listJobs, createJob, deleteJob } from '../../../services/jobs';
+import { listJobs, createJob, deleteJob, subscribeJobs, postJob } from '../../../services/jobs';
 import { useAuth } from '../../../hooks/useAuth';
-import { Plus, Loader, Trash2 } from 'lucide-react';
+import { Plus, Loader, Trash2, Send } from 'lucide-react';
 
 export default function ManageJobs() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [postingJobs, setPostingJobs] = useState(new Set());
   const [form, setForm] = useState({
     jobTitle: '',
     location: '',
@@ -38,8 +39,35 @@ export default function ManageJobs() {
   };
 
   useEffect(() => {
-    refresh();
+    setLoading(true);
+    const unsubscribe = subscribeJobs((jobsList) => {
+      setJobs(jobsList);
+      setLoading(false);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
+
+  const handlePostJob = async (jobId) => {
+    if (postingJobs.has(jobId)) return;
+    
+    try {
+      setPostingJobs(prev => new Set([...prev, jobId]));
+      await postJob(jobId);
+      // Job will update via real-time subscription
+    } catch (err) {
+      console.error('Failed to post job:', err);
+      alert('Failed to post job: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setPostingJobs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
+    }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -207,13 +235,42 @@ export default function ManageJobs() {
           {jobs.map((job) => (
             <div key={job.id} className="p-4 flex items-center justify-between">
               <div>
-                <div className="font-medium text-slate-900">{job.jobTitle}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-medium text-slate-900">{job.jobTitle || job.company}</div>
+                  {job.status && (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      job.status === 'active' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {job.status === 'active' ? 'Posted' : 'Draft'}
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-slate-600">
-                  {job.company?.name ? job.company.name + ' • ' : ''}
-                  {job.location} • {job.jobType} • {job.experienceLevel}
+                  {job.company ? job.company + ' • ' : ''}
+                  {job.companyLocation || job.location} • {job.jobType} • {job.workMode}
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {job.status === 'draft' && (
+                  <button
+                    onClick={() => handlePostJob(job.id)}
+                    disabled={postingJobs.has(job.id)}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm ${
+                      postingJobs.has(job.id)
+                        ? 'bg-blue-200 text-blue-500 cursor-not-allowed'
+                        : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
+                    }`}
+                  >
+                    {postingJobs.has(job.id) ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    Post
+                  </button>
+                )}
                 <button
                   onClick={() => handleDelete(job.id)}
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"

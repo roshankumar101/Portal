@@ -12,7 +12,7 @@ import {
   getEducationalBackground,
 } from '../../services/students';
 import { getStudentApplications, applyToJob } from '../../services/applications';
-import { listJobs } from '../../services/jobs';
+import { subscribeJobs } from '../../services/jobs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
 import { FaHackerrank, FaYoutube } from 'react-icons/fa';
@@ -276,16 +276,14 @@ export default function StudentDashboard() {
     }
   }, [user?.uid]);
 
-  const loadJobsData = useCallback(async () => {
-    try {
-      setLoadingJobs(true);
-      const jobsData = await listJobs();
+  const loadJobsData = useCallback(() => {
+    setLoadingJobs(true);
+    const unsubscribe = subscribeJobs((jobsData) => {
       setJobs(jobsData || []);
-    } catch (err) {
-      console.error('Failed to load jobs data', err);
-    } finally {
       setLoadingJobs(false);
-    }
+    }, { status: 'active' });
+
+    return unsubscribe;
   }, []);
 
   const handleApplyToJob = async (job) => {
@@ -335,7 +333,10 @@ export default function StudentDashboard() {
   // Load jobs data only when needed
   useEffect(() => {
     if (activeTab === 'jobs' || activeTab === 'dashboard') {
-      loadJobsData();
+      const unsubscribe = loadJobsData();
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, [activeTab, loadJobsData]);
 
@@ -583,7 +584,8 @@ export default function StudentDashboard() {
       }
       
       // Preload dashboard data while showing success message
-      loadJobsData();
+      const unsubscribe = loadJobsData();
+      // Note: cleanup handled by useEffect
       
       setTimeout(() => {
         setShowFloatingAlert(false);

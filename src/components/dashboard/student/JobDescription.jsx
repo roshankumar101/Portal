@@ -184,7 +184,7 @@ const JobDescription = ({ job, isOpen, onClose }) => {
               <FaCalendarAlt className="text-green-600 text-lg" />
               <p className="text-sm text-gray-500">Drive Date</p>
             </div>
-            <p className="font-semibold text-gray-800">15-09-25</p>
+            <p className="font-semibold text-gray-800">{job.driveDate || "15-09-25"}</p>
           </div>
           <div className="bg-purple-50 p-3 rounded-lg shadow-sm text-center">
             <div className="flex justify-center gap-2 items-center mb-1">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listJobs } from '../../services/jobs';
+import { subscribeJobs } from '../../services/jobs';
 import { Link } from 'react-router-dom';
 
 export default function JobList() {
@@ -8,18 +8,17 @@ export default function JobList() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const data = await listJobs({ limitTo: 50 });
-        setJobs(data);
-      } catch (e) {
-        setError('Failed to load jobs');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    setLoading(true);
+    setError('');
+    
+    const unsubscribe = subscribeJobs((jobsData) => {
+      setJobs(jobsData || []);
+      setLoading(false);
+    }, { status: 'active' });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   if (loading) return <div className="p-6">Loading jobs...</div>;

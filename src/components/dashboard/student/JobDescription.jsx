@@ -191,7 +191,7 @@ const JobDescription = ({ job, isOpen, onClose }) => {
               <FaBuilding className="text-purple-600 text-lg" />
               <p className="text-sm text-gray-500">Venue</p>
             </div>
-            <p className="font-semibold text-gray-800">{job.driveVenues?.[0] || "Bangalore"}</p>
+            <p className="font-semibold text-gray-800">{(job.driveVenues && Array.isArray(job.driveVenues) && job.driveVenues.length > 0) ? job.driveVenues[0] : "Bangalore"}</p>
           </div>
           <div className="flex justify-center items-center">
             <div
@@ -225,7 +225,7 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             <FaTasks className="text-blue-600" /> Roles & Responsibilities
           </h3>
           <ul className="space-y-2 text-gray-700">
-            {(job.responsibilities && job.responsibilities.length > 0
+            {(job.responsibilities && Array.isArray(job.responsibilities) && job.responsibilities.length > 0
               ? job.responsibilities
               : [" Responsibility 1.", " Responsibility 2.", " Responsibility 3."]
             ).map((item, idx) => (

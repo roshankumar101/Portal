@@ -228,16 +228,26 @@ export default function StudentDashboard() {
       setLastLoadTime(now);
       
       // Load secondary data immediately in background (no artificial delay)
-      Promise.all([
+      Promise.allSettled([
         getStudentSkills(user.uid),
         getStudentApplications(user.uid)
-      ]).then(([skillsData, applicationsData]) => {
-        setSkillsEntries(skillsData || []);
-        setApplications(applicationsData || []);
-        setLoadingSkills(false);
-        setLoadingApplications(false);
-      }).catch((err) => {
-        console.warn('Failed to load secondary data', err);
+      ]).then(([skillsResult, applicationsResult]) => {
+        // Handle skills data
+        if (skillsResult.status === 'fulfilled') {
+          setSkillsEntries(skillsResult.value || []);
+        } else {
+          console.warn('Failed to load skills data', skillsResult.reason);
+          setSkillsEntries([]);
+        }
+        
+        // Handle applications data
+        if (applicationsResult.status === 'fulfilled') {
+          setApplications(applicationsResult.value || []);
+        } else {
+          console.warn('Failed to load applications data', applicationsResult.reason);
+          setApplications([]);
+        }
+        
         setLoadingSkills(false);
         setLoadingApplications(false);
       });
@@ -271,6 +281,8 @@ export default function StudentDashboard() {
       setApplications(applicationsData || []);
     } catch (err) {
       console.error('Failed to load applications data', err);
+      // Set empty array on error to prevent UI issues
+      setApplications([]);
     } finally {
       setLoadingApplications(false);
     }
@@ -313,6 +325,7 @@ export default function StudentDashboard() {
 
   // Job Description Modal handlers
   const handleKnowMore = (job) => {
+    console.log('handleKnowMore called with job:', job);
     setSelectedJob(job);
     setIsJobModalOpen(true);
   };
@@ -1761,6 +1774,7 @@ export default function StudentDashboard() {
       )}
 
       {/* Job Description Modal */}
+      {console.log('Rendering modal with state:', { selectedJob, isJobModalOpen })}
       <JobDescription 
         job={selectedJob}
         isOpen={isJobModalOpen}

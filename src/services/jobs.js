@@ -44,6 +44,35 @@ export async function getJob(jobId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+// Get comprehensive job details with all related data
+export async function getJobDetails(jobId) {
+  try {
+    const jobSnap = await getDoc(doc(db, JOBS_COLL, jobId));
+    if (!jobSnap.exists()) {
+      return null;
+    }
+
+    const jobData = { id: jobSnap.id, ...jobSnap.data() };
+
+    // Fetch company details if companyId exists
+    if (jobData.companyId) {
+      try {
+        const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
+        if (companyDoc.exists()) {
+          jobData.company = companyDoc.data();
+        }
+      } catch (err) {
+        console.warn('Error fetching company details:', err);
+      }
+    }
+
+    return jobData;
+  } catch (error) {
+    console.error('Error fetching job details:', error);
+    throw error;
+  }
+}
+
 export async function createJob(recruiterId, data) {
   const payload = {
     ...data,

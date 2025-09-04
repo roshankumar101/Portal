@@ -16,6 +16,8 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { GoChecklist } from "react-icons/go";
+import { Loader } from "lucide-react";
+import { getJobDetails } from '../../../services/jobs';
 
 // Timeline steps
 const interviewTimeline = [
@@ -71,11 +73,47 @@ const interviewTimeline = [
 ];
 
 const JobDescription = ({ job, isOpen, onClose }) => {
-  if (!isOpen || !job) return null;
+  const [jobDetails, setJobDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setJobDetails(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
+  // Fetch comprehensive job details when modal opens
+  useEffect(() => {
+    if (isOpen && job) {
+      if (job.id) {
+        fetchJobDetails();
+      } else {
+        console.warn('Modal opened but job has no ID:', job);
+        setError('Invalid job data - missing ID');
+      }
+    }
+  }, [isOpen, job]);
+
+  // Use detailed job data if available, fallback to basic job data
+  const displayJob = jobDetails || job;
 
   // -------- Dynamic Timer --------
-  const [now, setNow] = useState(Date.now());
-  const deadline = useMemo(() => Date.now() + 3 * 24 * 60 * 60 * 1000, []); // 3 days from now
+  const deadline = useMemo(() => {
+    // Use drive date as the countdown target
+    if (displayJob?.driveDate) {
+      return new Date(displayJob.driveDate).getTime();
+    }
+    // Fallback to application deadline if no drive date
+    if (displayJob?.applicationDeadline) {
+      return new Date(displayJob.applicationDeadline).getTime();
+    }
+    return Date.now() + 3 * 24 * 60 * 60 * 1000; // 3 days from now as fallback
+  }, [displayJob?.driveDate, displayJob?.applicationDeadline]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -95,16 +133,33 @@ const JobDescription = ({ job, isOpen, onClose }) => {
   }, [deadline, now]);
 
   // -------- Skills Array --------
-  const skillsRequired = [
-    "Problem Solving",
-    "JavaScript & ES6+",
-    "React.js & Node.js",
-    "Git & Version Control",
-    "Database Management",
-    "Team Collaboration",
-    "REST APIs",
-    "Agile Methodology",
-  ];
+  const skillsRequired = (() => {
+    // Priority order: requiredSkills array > skillsRequired > skills > fallback
+    if (displayJob?.requiredSkills && Array.isArray(displayJob.requiredSkills) && displayJob.requiredSkills.length > 0) {
+      return displayJob.requiredSkills;
+    } else if (displayJob?.skillsRequired && Array.isArray(displayJob.skillsRequired) && displayJob.skillsRequired.length > 0) {
+      return displayJob.skillsRequired;
+    } else if (displayJob?.skills && Array.isArray(displayJob.skills) && displayJob.skills.length > 0) {
+      return displayJob.skills;
+    } else if (displayJob?.requiredSkills && typeof displayJob.requiredSkills === 'string') {
+      // If requiredSkills is a string, split by common delimiters
+      return displayJob.requiredSkills
+        .split(/[,;•\n\r]/)
+        .map(skill => skill.trim())
+        .filter(skill => skill.length > 0);
+    } else {
+      return [
+        "Problem Solving",
+        "JavaScript & ES6+", 
+        "React.js & Node.js",
+        "Git & Version Control",
+        "Database Management",
+        "Team Collaboration",
+        "REST APIs",
+        "Agile Methodology",
+      ];
+    }
+  })();
 
   // Split skills alternately between left and right
   const leftSkills = skillsRequired.filter((_, index) => index % 2 === 0);
@@ -119,38 +174,155 @@ const JobDescription = ({ job, isOpen, onClose }) => {
     return salary;
   };
 
+  const formatDriveDate = (driveDate) => {
+    if (!driveDate) return new Date().toLocaleDateString('en-GB');
+    try {
+      const date = new Date(driveDate);
+      return date.toLocaleDateString('en-GB');
+    } catch (err) {
+      return new Date().toLocaleDateString('en-GB');
+    }
+  };
+
+  const fetchJobDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const details = await getJobDetails(job.id);
+      if (details) {
+        setJobDetails(details);
+      } else {
+        setError('Job not found');
+      }
+    } catch (err) {
+      console.error('Error fetching job details:', err);
+      setError('Failed to load job details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  // Always show modal container, even if no job data
+  if (!job) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+        <div className="bg-white rounded-xl shadow-2xl p-6 text-center">
+          <p className="text-red-600 mb-4">No job selected</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
-      <div className="relative bg-white rounded-xl shadow-2xl w-[95%] md:w-[80%] h-[95%] overflow-y-auto flex flex-col">
+      <div className="relative bg-white rounded-xl shadow-2xl w-[95%] md:w-[80%] h-[95%] overflow-y-auto">
+        {/* Loading State */}
+        {loading && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
+            <div className="flex flex-col items-center">
+              <Loader className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+              <span className="text-gray-600">Loading job details...</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Error State */}
+        {error && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={fetchJobDetails}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
         {/* Header */}
         <div className="text-center mt-10 px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{job.jobTitle || "Job Position"}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{displayJob.jobTitle || "Job Position"}</h2>
         </div>
         {/* Company Info */}
         <div className="flex items-center gap-4 py-6 px-6 border-b">
-          {job.company?.logoUrl ? (
-            <img
-              src={job.company.logoUrl}
-              alt={job.company?.name}
-              className="w-14 h-14 rounded-lg object-cover border"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-semibold bg-blue-500 text-white">
-              {job.company?.name?.[0] || "?"}
-            </div>
-          )}
+          {(() => {
+            // Priority order for logo: company.logoUrl > company.logo > fallback
+            const logoUrl = displayJob.company?.logoUrl || displayJob.company?.logo || displayJob.logoUrl;
+            const companyName = displayJob.company?.name || displayJob.companyName || displayJob.company || "Company Name";
+            
+            return logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={companyName}
+                className="w-14 h-14 rounded-lg object-cover border"
+                onError={(e) => {
+                  // Fallback to initial letter if image fails to load
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }}
+              />
+            ) : null;
+          })()}
+          {(() => {
+            const logoUrl = displayJob.company?.logoUrl || displayJob.company?.logo || displayJob.logoUrl;
+            const companyName = displayJob.company?.name || displayJob.companyName || displayJob.company || "Company Name";
+            
+            return !logoUrl ? (
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-semibold bg-blue-500 text-white">
+                {companyName?.[0]?.toUpperCase() || "?"}
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-semibold bg-blue-500 text-white" style={{display: 'none'}}>
+                {companyName?.[0]?.toUpperCase() || "?"}
+              </div>
+            );
+          })()}
           <div>
-            <h2 className="text-xl font-semibold">{job.company?.name}</h2>
-            {job.company?.website && (
-              <a
-                href={job.company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700"
-              >
-                <FaExternalLinkAlt size={12} /> {job.company.website}
-              </a>
-            )}
+            <h2 className="text-xl font-semibold">
+              {displayJob.company?.name || displayJob.companyName || displayJob.company || "Company Name"}
+            </h2>
+            {(() => {
+              // Priority order for website: company.website > website > companyWebsite
+              const website = displayJob.company?.website || displayJob.website || displayJob.companyWebsite;
+              
+              if (website) {
+                // Ensure website has protocol
+                const formattedWebsite = website.startsWith('http') ? website : `https://${website}`;
+                const displayWebsite = website.replace(/^https?:\/\//, '');
+                
+                return (
+                  <a
+                    href={formattedWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700"
+                  >
+                    <FaExternalLinkAlt size={12} /> {displayWebsite}
+                  </a>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
 
@@ -159,15 +331,15 @@ const JobDescription = ({ job, isOpen, onClose }) => {
         <div className="flex flex-wrap justify-center gap-6 px-6 py-6 border-b">
           <div className="flex items-center gap-2 text-gray-700">
             <FaBriefcase className="text-blue-600" />
-            <span>{job.jobType || "Full-time"}</span>
+            <span>{displayJob.jobType || "Full-time"}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-700">
             <FaBuilding className="text-green-600" />
-            <span>{job.workMode || "Onsite"}</span>
+            <span>{displayJob.workMode || "Onsite"}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-700">
             <FaMapMarkerAlt className="text-red-600" />
-            <span>{job.location || "Bangalore"}</span>
+            <span>{displayJob.location || "Bangalore"}</span>
           </div>
         </div>
         {/* Stats */}
@@ -177,21 +349,21 @@ const JobDescription = ({ job, isOpen, onClose }) => {
               <FaMoneyBillWave className="text-blue-600 text-lg" />
               <p className="text-sm text-gray-500">CTC</p>
             </div>
-            <p className="font-semibold text-gray-800">{formatSalary(job.salary)}</p>
+            <p className="font-semibold text-gray-800">{formatSalary(displayJob.salary || displayJob.stipend)}</p>
           </div>
           <div className="bg-green-50 p-3 rounded-lg shadow-sm text-center">
             <div className="flex justify-center gap-2 items-center mb-1">
               <FaCalendarAlt className="text-green-600 text-lg" />
               <p className="text-sm text-gray-500">Drive Date</p>
             </div>
-            <p className="font-semibold text-gray-800">{job.driveDate || "15-09-25"}</p>
+            <p className="font-semibold text-gray-800">{formatDriveDate(displayJob.driveDate)}</p>
           </div>
           <div className="bg-purple-50 p-3 rounded-lg shadow-sm text-center">
             <div className="flex justify-center gap-2 items-center mb-1">
               <FaBuilding className="text-purple-600 text-lg" />
               <p className="text-sm text-gray-500">Venue</p>
             </div>
-            <p className="font-semibold text-gray-800">{(job.driveVenues && Array.isArray(job.driveVenues) && job.driveVenues.length > 0) ? job.driveVenues[0] : "Bangalore"}</p>
+            <p className="font-semibold text-gray-800">{(displayJob.driveVenues && Array.isArray(displayJob.driveVenues) && displayJob.driveVenues.length > 0) ? displayJob.driveVenues[0] : displayJob.location || "Bangalore"}</p>
           </div>
           <div className="flex justify-center items-center">
             <div
@@ -225,18 +397,46 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             <FaTasks className="text-blue-600" /> Roles & Responsibilities
           </h3>
           <ul className="space-y-2 text-gray-700">
-            {(job.responsibilities && Array.isArray(job.responsibilities) && job.responsibilities.length > 0
-              ? job.responsibilities
-              : [" Responsibility 1.", " Responsibility 2.", " Responsibility 3."]
-            ).map((item, idx) => (
-              <li
-                key={idx}
-                className="flex items-start gap-2 p-2 bg-gray-50 rounded"
-              >
-                <span className="text-blue-500 font-bold">•</span>
-                {item}
-              </li>
-            ))}
+            {(() => {
+              // Priority order: responsibilities field > jobDescription > fallback
+              let responsibilities = [];
+              
+              // First check for responsibilities field from database
+              if (displayJob.responsibilities && typeof displayJob.responsibilities === 'string' && displayJob.responsibilities.trim()) {
+                // Split responsibilities by bullet points, newlines, or semicolons
+                responsibilities = displayJob.responsibilities
+                  .split(/[•\n\r;]/)
+                  .map(item => item.trim())
+                  .filter(item => item.length > 0)
+                  .map(item => item.replace(/^[-•*]\s*/, '')); // Remove leading bullets/dashes
+              } else if (displayJob.responsibilities && Array.isArray(displayJob.responsibilities) && displayJob.responsibilities.length > 0) {
+                responsibilities = displayJob.responsibilities;
+              } else if (displayJob.jobDescription && typeof displayJob.jobDescription === 'string' && displayJob.jobDescription.trim()) {
+                // Fallback to jobDescription field
+                responsibilities = displayJob.jobDescription
+                  .split(/[•\n\r;]/)
+                  .map(item => item.trim())
+                  .filter(item => item.length > 0)
+                  .map(item => item.replace(/^[-•*]\s*/, '')); // Remove leading bullets/dashes
+              } else {
+                // Default fallback responsibilities
+                responsibilities = [
+                  "Develop and maintain software applications",
+                  "Collaborate with cross-functional teams", 
+                  "Participate in code reviews and technical discussions"
+                ];
+              }
+              
+              return responsibilities.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 p-2 bg-gray-50 rounded"
+                >
+                  <span className="text-blue-500 font-bold">•</span>
+                  {item}
+                </li>
+              ));
+            })()}
           </ul>
         </div>
 
@@ -256,44 +456,141 @@ const JobDescription = ({ job, isOpen, onClose }) => {
             {/* Paper/Card content */}
             <div className="bg-white rounded-md p-6 shadow-sm border border-gray-300 mt-4">
               <ul className="space-y-4">
-                <li className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
-                    <span className="text-green-600 font-bold text-sm">✓</span>
-                  </div>
-                  <span className="text-gray-700 text-sm">
-                    Bachelor's degree in Computer Science or related field
-                  </span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
-                    <span className="text-green-600 font-bold text-sm">✓</span>
-                  </div>
-                  <span className="text-gray-700 text-sm">
-                    Minimum 60% aggregate in academics
-                  </span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
-                    <span className="text-green-600 font-bold text-sm">✓</span>
-                  </div>
-                  <span className="text-gray-700 text-sm">No active backlogs</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
-                    <span className="text-green-600 font-bold text-sm">✓</span>
-                  </div>
-                  <span className="text-gray-700 text-sm">
-                    Valid student ID card required
-                  </span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
-                    <span className="text-green-600 font-bold text-sm">✓</span>
-                  </div>
-                  <span className="text-gray-700 text-sm">
-                    Must be in final year or final semester
-                  </span>
-                </li>
+                {/* Qualification */}
+                {displayJob.qualification && (
+                  <li className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                      <span className="text-green-600 font-bold text-sm">✓</span>
+                    </div>
+                    <span className="text-gray-700 text-sm">
+                      {displayJob.qualification}
+                    </span>
+                  </li>
+                )}
+                
+                {/* Specialization */}
+                {displayJob.specialization && (
+                  <li className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                      <span className="text-green-600 font-bold text-sm">✓</span>
+                    </div>
+                    <span className="text-gray-700 text-sm">
+                      Specialization: {displayJob.specialization}
+                    </span>
+                  </li>
+                )}
+                
+                {/* Minimum CGPA/Percentage - Updated to use database field */}
+                {(() => {
+                  const minCgpa = displayJob.minCgpa || displayJob.cgpaRequirement;
+                  if (minCgpa) {
+                    return (
+                      <li className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                          <span className="text-green-600 font-bold text-sm">✓</span>
+                        </div>
+                        <span className="text-gray-700 text-sm">
+                          Minimum CGPA/Percentage: {minCgpa}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* Year of Passing */}
+                {(displayJob.yop || displayJob.yearOfPassing) && (
+                  <li className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                      <span className="text-green-600 font-bold text-sm">✓</span>
+                    </div>
+                    <span className="text-gray-700 text-sm">
+                      Year of Passing: {displayJob.yop || displayJob.yearOfPassing}
+                    </span>
+                  </li>
+                )}
+                
+                {/* Year Gaps - Updated to use database fields */}
+                {(() => {
+                  const gapAllowed = displayJob.gapAllowed || displayJob.gapPolicy;
+                  const gapYears = displayJob.gapYears;
+                  
+                  if (gapAllowed) {
+                    return (
+                      <li className="flex items-center gap-3">
+                        <div className={`w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center ${
+                          gapAllowed === 'Allowed' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          <span className={`font-bold text-sm ${
+                            gapAllowed === 'Allowed' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {gapAllowed === 'Allowed' ? '✓' : '✗'}
+                          </span>
+                        </div>
+                        <span className="text-gray-700 text-sm">
+                          Year Gaps: {gapAllowed}
+                          {gapAllowed === 'Allowed' && gapYears && ` (Max ${gapYears} years)`}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* Active Backlogs - Updated to use database field */}
+                {(() => {
+                  const backlogs = displayJob.backlogs || displayJob.backlogPolicy;
+                  
+                  if (backlogs) {
+                    return (
+                      <li className="flex items-center gap-3">
+                        <div className={`w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center ${
+                          backlogs === 'Allowed' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          <span className={`font-bold text-sm ${
+                            backlogs === 'Allowed' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {backlogs === 'Allowed' ? '✓' : '✗'}
+                          </span>
+                        </div>
+                        <span className="text-gray-700 text-sm">
+                          Active Backlogs: {backlogs}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* Fallback criteria if no specific data */}
+                {!displayJob.qualification && !displayJob.specialization && !displayJob.minCgpa && !displayJob.cgpaRequirement && (
+                  <>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                        <span className="text-green-600 font-bold text-sm">✓</span>
+                      </div>
+                      <span className="text-gray-700 text-sm">
+                        Bachelor's degree in relevant field
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                        <span className="text-green-600 font-bold text-sm">✓</span>
+                      </div>
+                      <span className="text-gray-700 text-sm">
+                        Good academic record
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-gray-400 rounded flex items-center justify-center bg-green-100">
+                        <span className="text-green-600 font-bold text-sm">✓</span>
+                      </div>
+                      <span className="text-gray-700 text-sm">
+                        Must be in final year or final semester
+                      </span>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           </div>

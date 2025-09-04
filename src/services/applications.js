@@ -47,6 +47,14 @@ export const getStudentApplications = async (studentId) => {
     return applications;
   } catch (error) {
     console.error('Error getting student applications:', error);
+    
+    // Handle specific permission errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for applications collection. User may not have proper access or no applications exist.');
+      return []; // Return empty array instead of throwing
+    }
+    
+    // For other errors, still throw to maintain error handling
     throw error;
   }
 };

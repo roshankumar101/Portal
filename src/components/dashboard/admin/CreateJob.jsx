@@ -5,7 +5,6 @@ import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../service
 
 // Utility helpers
 const toISOFromDDMMYYYY = (val) => {
-  // expects DD/MM/YYYY; returns ISO string or ''
   if (!val) return '';
   const m = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!m) return '';
@@ -15,7 +14,6 @@ const toISOFromDDMMYYYY = (val) => {
 };
 
 const toRoman = (num) => {
-  // Optimized for max 15 rounds
   const romanNumerals = [
     { value: 10, symbol: 'X' },
     { value: 9, symbol: 'IX' },
@@ -58,9 +56,22 @@ export default function CreateJob({ onCreated }) {
   const { user } = useAuth();
   const [posting, setPosting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Dropdown states for all custom dropdowns
   const [showVenues, setShowVenues] = useState(false);
+  const [showJobTypes, setShowJobTypes] = useState(false);
+  const [showWorkModes, setShowWorkModes] = useState(false);
+  const [showGapAllowed, setShowGapAllowed] = useState(false);
+  const [showBacklogs, setShowBacklogs] = useState(false);
+
+  // Refs for all dropdowns
   const hiddenDateRef = useRef(null);
   const venueDropdownRef = useRef(null);
+  const jobTypeDropdownRef = useRef(null);
+  const workModeDropdownRef = useRef(null);
+  const gapAllowedDropdownRef = useRef(null);
+  const backlogsDropdownRef = useRef(null);
+
   const [websiteError, setWebsiteError] = useState('');
   const [linkedinError, setLinkedinError] = useState('');
   const [stipendError, setStipendError] = useState('');
@@ -74,22 +85,31 @@ export default function CreateJob({ onCreated }) {
   const [gapInputMode, setGapInputMode] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState({ serviceAgreement: false, blockingPeriod: false });
 
-  // Add useEffect for click outside detection
+  // Enhanced useEffect for click outside detection for all dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
       if (venueDropdownRef.current && !venueDropdownRef.current.contains(event.target)) {
         setShowVenues(false);
       }
+      if (jobTypeDropdownRef.current && !jobTypeDropdownRef.current.contains(event.target)) {
+        setShowJobTypes(false);
+      }
+      if (workModeDropdownRef.current && !workModeDropdownRef.current.contains(event.target)) {
+        setShowWorkModes(false);
+      }
+      if (gapAllowedDropdownRef.current && !gapAllowedDropdownRef.current.contains(event.target)) {
+        setShowGapAllowed(false);
+      }
+      if (backlogsDropdownRef.current && !backlogsDropdownRef.current.contains(event.target)) {
+        setShowBacklogs(false);
+      }
     }
 
-    if (showVenues) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showVenues]);
+  }, []);
 
   // Form state
   const [form, setForm] = useState({
@@ -170,7 +190,6 @@ export default function CreateJob({ onCreated }) {
   // Validation functions
   function isValidUrl(value) {
     if (!value) return true;
-    // Allow www.example.com format
     if (value.startsWith('www.') && value.includes('.')) {
       return true;
     }
@@ -225,7 +244,6 @@ export default function CreateJob({ onCreated }) {
   };
 
   const onDurationChange = (value) => {
-    // Allow numbers and common duration words
     const durationRegex = /^[\d\s]*(months?|years?|weeks?|days?)?$/i;
     if (value === '' || durationRegex.test(value)) {
       update({ duration: value });
@@ -253,14 +271,12 @@ export default function CreateJob({ onCreated }) {
     }
   };
 
-  // NEW: Year of Passing validation - only allows 2 or 4 digit numbers
   const onYopChange = (value) => {
     if (/^\d{0,4}$/.test(value)) {
       update({ yop: value });
     }
   };
 
-  // NEW: Min CGPA/Percentage validation
   const onMinCgpaChange = (value) => {
     update({ minCgpa: value });
     setMinCgpaError('');
@@ -274,7 +290,6 @@ export default function CreateJob({ onCreated }) {
     
     const trimmed = value.trim();
     if (trimmed.endsWith('%')) {
-      // Percentage validation (0-100)
       const numVal = parseFloat(trimmed.slice(0, -1));
       if (isNaN(numVal) || numVal < 0 || numVal > 100) {
         setMinCgpaError('Percentage must be between 0 and 100');
@@ -282,7 +297,6 @@ export default function CreateJob({ onCreated }) {
         setMinCgpaError('');
       }
     } else {
-      // CGPA validation (0-10)
       const numVal = parseFloat(trimmed);
       if (isNaN(numVal) || numVal < 0 || numVal > 10) {
         setMinCgpaError('CGPA must be between 0 and 10');
@@ -503,7 +517,6 @@ export default function CreateJob({ onCreated }) {
       const payload = buildJobPayload();
       const { autofill } = await addAnotherPositionDraft(payload);
       
-      // Reset unique fields
       setForm(prev => ({
         ...prev,
         jobTitle: '',
@@ -528,7 +541,6 @@ export default function CreateJob({ onCreated }) {
         backlogs: '',
         blockingPeriod: '',
         instructions: '',
-        // Keep autofill data
         company: autofill.company,
         website: autofill.website,
         linkedin: autofill.linkedin,
@@ -561,7 +573,6 @@ export default function CreateJob({ onCreated }) {
     try {
       setPosting(true);
       const payload = buildJobPayload();
-      // Save as draft first, then immediately post it
       const { jobId } = await saveJobDraft(payload);
       await postJob(jobId);
       if (onCreated) onCreated();
@@ -614,7 +625,6 @@ export default function CreateJob({ onCreated }) {
     setCollapsedSections(new Set());
   };
 
-  // Validation functions
   const validateField = (field, value) => {
     switch (field) {
       case 'company':
@@ -680,75 +690,122 @@ export default function CreateJob({ onCreated }) {
                 </div>
               </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
-              <div className="relative">
-                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.jobType} onChange={(e) => onJobTypeChange(e.target.value)} required>
-                  <option value="" className='bg-green-100'>Select Job Type</option>
-                  <option value="Internship" className='bg-green-100'>Internship</option>
-                  <option value="Full-Time" className='bg-green-100'>Full-Time</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-gray-800" />
-                </div>
-              </div>
-            </div>
-
-            {form.jobType === 'Internship' ? (
-              <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* Job Type Dropdown with Toggle Effect */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${stipendError ? 'border-red-400 bg-red-50' : form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => onStipendChange(e.target.value)} />
-                  {stipendError && <p className="text-xs text-red-600 mt-1">{stipendError}</p>}
+                  <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
+                  <div className="relative" ref={jobTypeDropdownRef}>
+                    <button
+                      type="button"
+                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                      onClick={() => setShowJobTypes(prev => !prev)}
+                    >
+                      <span className="truncate">
+                        {form.jobType || 'Select Job Type'}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    </button>
+                    {showJobTypes && (
+                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 text-left"
+                          onClick={() => {
+                            onJobTypeChange('Internship');
+                            setShowJobTypes(false);
+                          }}
+                        >
+                          <span>Internship</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer text-left"
+                          onClick={() => {
+                            onJobTypeChange('Full-Time');
+                            setShowJobTypes(false);
+                          }}
+                        >
+                          <span>Full-Time</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {form.jobType === 'Internship' ? (
+                  <>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
+                      <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${stipendError ? 'border-red-400 bg-red-50' : form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => onStipendChange(e.target.value)} />
+                      {stipendError && <p className="text-xs text-red-600 mt-1">{stipendError}</p>}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
+                      <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${durationError ? 'border-red-400 bg-red-50' : form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => onDurationChange(e.target.value)} />
+                      {durationError && <p className="text-xs text-red-600 mt-1">{durationError}</p>}
+                    </div>
+                  </>
+                ) : form.jobType === 'Full-Time' ? (
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${salaryError ? 'border-red-400 bg-red-50' : form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => onSalaryChange(e.target.value)} />
+                    {salaryError && <p className="text-xs text-red-600 mt-1">{salaryError}</p>}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Job Title <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
+                </div>
+                
+                {/* Work Mode Dropdown with Toggle Effect */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
+                  <div className="relative" ref={workModeDropdownRef}>
+                    <button
+                      type="button"
+                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                      onClick={() => setShowWorkModes(prev => !prev)}
+                    >
+                      <span className="truncate">
+                        {form.workMode || 'Select Work Mode'}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    </button>
+                    {showWorkModes && (
+                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
+                        {['On-site', 'Hybrid', 'Remote'].map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
+                            onClick={() => {
+                              update({ workMode: mode });
+                              setShowWorkModes(false);
+                            }}
+                          >
+                            <span>{mode}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${companyLocationError ? 'border-red-400 bg-red-50' : form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => onCompanyLocationChange(e.target.value)} />
+                  {companyLocationError && <p className="text-xs text-red-600 mt-1">{companyLocationError}</p>}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
-                  <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${durationError ? 'border-red-400 bg-red-50' : form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => onDurationChange(e.target.value)} />
-                  {durationError && <p className="text-xs text-red-600 mt-1">{durationError}</p>}
-                </div>
-              </>
-            ) : form.jobType === 'Full-Time' ? (
-              <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
-                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${salaryError ? 'border-red-400 bg-red-50' : form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => onSalaryChange(e.target.value)} />
-                {salaryError && <p className="text-xs text-red-600 mt-1">{salaryError}</p>}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Job Title <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
-              <div className="relative">
-                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.workMode} onChange={(e) => update({ workMode: e.target.value })} required>
-                  <option value="" className='bg-green-100'>Select Work Mode</option>
-                  <option value="On-site" className='bg-green-100'>On-site</option>
-                  <option value="Hybrid" className='bg-green-100'>Hybrid</option>
-                  <option value="Remote" className='bg-green-100 border'>Remote</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-gray-800" />
+                  <label className="text-sm text-black font-medium">Open Positions:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 15" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${companyLocationError ? 'border-red-400 bg-red-50' : form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => onCompanyLocationChange(e.target.value)} />
-              {companyLocationError && <p className="text-xs text-red-600 mt-1">{companyLocationError}</p>}
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Open Positions:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 15" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
-            </div>
-          </div>
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-black font-medium">Roles & Responsibilities:</label>
@@ -875,46 +932,54 @@ export default function CreateJob({ onCreated }) {
           {canShowSection('drive') && !isSectionCollapsed('drive') ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Drive Date <span className="text-red-500">*</span>:</label>
-              <div className="relative">
-                <input
-                  className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${driveDraft.driveDateText?.trim() ? 'bg-green-100' : 'bg-gray-100'}`}
-                  placeholder="DD/MM/YYYY"
-                  value={driveDraft.driveDateText || ''}
-                  onChange={(e) => onDriveDateText(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => hiddenDateRef.current?.showPicker?.() || hiddenDateRef.current?.click()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900"
-                  title="Pick a date"
-                >
-                  <Calendar className="w-4 h-4" />
-                </button>
-                <input ref={hiddenDateRef} type="date" className="sr-only" onChange={onPickDate} />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
-              <div ref={venueDropdownRef} className="relative">
-                <button type="button" className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full text-left ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} onClick={() => setShowVenues((v) => !v)}>
-                  {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'}
-                </button>
-                {showVenues && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                    {DRIVE_VENUES.map((v) => (
-                      <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
-                        <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Drive Date <span className="text-red-500">*</span>:</label>
+                  <div className="relative">
+                    <input
+                      className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${driveDraft.driveDateText?.trim() ? 'bg-green-100' : 'bg-gray-100'}`}
+                      placeholder="DD/MM/YYYY"
+                      value={driveDraft.driveDateText || ''}
+                      onChange={(e) => onDriveDateText(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => hiddenDateRef.current?.showPicker?.() || hiddenDateRef.current?.click()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900"
+                      title="Pick a date"
+                    >
+                      <Calendar className="w-4 h-4" />
+                    </button>
+                    <input ref={hiddenDateRef} type="date" className="sr-only" onChange={onPickDate} />
                   </div>
-                )}
+                </div>
+
+                {/* Drive Venue Dropdown with Toggle Effect - Updated */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
+                  <div ref={venueDropdownRef} className="relative">
+                    <button 
+                      type="button" 
+                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} 
+                      onClick={() => setShowVenues((v) => !v)}
+                    >
+                      <span>
+                        {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(', ') : 'Select venues'}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    </button>
+                    {showVenues && (
+                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                        {DRIVE_VENUES.map((v) => (
+                          <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0">
+                            <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
+                            <span>{v}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
             </>
           ) : !canShowSection('drive') ? (
             <p className="text-sm text-slate-500 italic">Complete Company Details section to continue</p>
@@ -941,124 +1006,165 @@ export default function CreateJob({ onCreated }) {
           {canShowSection('skills') && !isSectionCollapsed('skills') ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Qualification <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Specialization:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025 or 25" value={form.yop} onChange={(e) => onYopChange(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${minCgpaError ? 'border-red-400 bg-red-50' : form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 or 70%" value={form.minCgpa} onChange={(e) => onMinCgpaChange(e.target.value)} onBlur={(e) => onMinCgpaBlur(e.target.value)} />
-              {minCgpaError && <p className="text-xs text-red-600 mt-1">{minCgpaError}</p>}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-black font-medium">Skills <span className="text-red-500">*</span>:</label>
-            <div className={`relative border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[42px] flex flex-wrap items-center gap-1 ${form.skills.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
-              {form.skills.map((s, idx) => (
-                <span key={`${s}-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                  {s}
-                  <button type="button" className="ml-1 hover:text-blue-900" onClick={() => removeSkill(idx)}>
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-              <input
-                className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm"
-                placeholder={form.skills.length === 0 ? "e.g. JavaScript, React, Node.js (comma separated)" : ""}
-                value={form.skillsInput}
-                onChange={(e) => update({ skillsInput: e.target.value })}
-                onKeyDown={onSkillsKeyDown}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Year Gaps <span className="text-red-500">*</span>:</label>
-              <div className="relative">
-                {!gapInputMode ? (
-                  <>
-                    <select 
-                      className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`} 
-                      value={form.gapAllowed} 
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === 'Custom') {
-                          setGapInputMode(true);
-                          setTimeout(() => {
-                            const input = document.querySelector('[data-gap-input]');
-                            if (input) input.focus();
-                          }, 100);
-                        } else {
-                          update({ gapAllowed: value, gapYears: '' });
-                        }
-                      }}
-                      required>
-                      <option value="">Select Gap Policy</option>
-                      <option value="Allowed">Allowed</option>
-                      <option value="Not Allowed">Not Allowed</option>
-                      <option value="Custom">{form.gapYears ? `${form.gapYears} Year/s Allowed` : '_  Year/s Allowed'}</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                      <ChevronDown className="w-4 h-4 text-gray-800" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm w-full flex items-center">
-                    <input 
-                      data-gap-input
-                      type="text" 
-                      className="bg-transparent border-none outline-none text-sm w-8 text-center" 
-                      placeholder="_"
-                      value={form.gapYears}
-                      onChange={(e) => update({ gapYears: e.target.value })}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && form.gapYears.trim()) {
-                          update({ gapAllowed: 'Custom' });
-                          setGapInputMode(false);
-                        } else if (e.key === 'Escape') {
-                          update({ gapAllowed: 'Not Allowed', gapYears: '' });
-                          setGapInputMode(false);
-                        }
-                      }}
-                      onBlur={() => {
-                        if (form.gapYears && form.gapYears.trim()) {
-                          update({ gapAllowed: 'Custom' });
-                          setGapInputMode(false);
-                        } else {
-                          update({ gapAllowed: 'Not Allowed', gapYears: '' });
-                          setGapInputMode(false);
-                        }
-                      }}
-                    />
-                    <span className="text-sm ml-1">Year/s Allowed</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
-              <div className="relative">
-                <select className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full appearance-none cursor-pointer pr-8 ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`} value={form.backlogs} onChange={(e) => update({ backlogs: e.target.value })} required>
-                  <option value="">Select Backlog Policy</option>
-                  <option value="Allowed">Allowed</option>
-                  <option value="Not Allowed">Not Allowed</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <ChevronDown className="w-4 h-4 text-gray-800" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Qualification <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Specialization:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025 or 25" value={form.yop} onChange={(e) => onYopChange(e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${minCgpaError ? 'border-red-400 bg-red-50' : form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 or 70%" value={form.minCgpa} onChange={(e) => onMinCgpaChange(e.target.value)} onBlur={(e) => onMinCgpaBlur(e.target.value)} />
+                  {minCgpaError && <p className="text-xs text-red-600 mt-1">{minCgpaError}</p>}
                 </div>
               </div>
-            </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-black font-medium">Skills <span className="text-red-500">*</span>:</label>
+                <div className={`relative border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[42px] flex flex-wrap items-center gap-1 ${form.skills.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
+                  {form.skills.map((s, idx) => (
+                    <span key={`${s}-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                      {s}
+                      <button type="button" className="ml-1 hover:text-blue-900" onClick={() => removeSkill(idx)}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm"
+                    placeholder={form.skills.length === 0 ? "e.g. JavaScript, React, Node.js (comma separated)" : ""}
+                    value={form.skillsInput}
+                    onChange={(e) => update({ skillsInput: e.target.value })}
+                    onKeyDown={onSkillsKeyDown}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* Year Gaps Dropdown - Keep the custom behavior as it is unique */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Year Gaps <span className="text-red-500">*</span>:</label>
+                  <div className="relative" ref={gapAllowedDropdownRef}>
+                    {!gapInputMode ? (
+                      <>
+                        <button
+                          type="button"
+                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                          onClick={() => setShowGapAllowed(prev => !prev)}
+                        >
+                          <span className="truncate">
+                            {form.gapAllowed === 'Custom' && form.gapYears 
+                              ? `${form.gapYears} Year/s Allowed` 
+                              : form.gapAllowed || 'Select Gap Policy'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                        </button>
+                        {showGapAllowed && (
+                          <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                            {['Allowed', 'Not Allowed'].map((policy) => (
+                              <button
+                                key={policy}
+                                type="button"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 text-left"
+                                onClick={() => {
+                                  update({ gapAllowed: policy, gapYears: '' });
+                                  setShowGapAllowed(false);
+                                }}
+                              >
+                                <span>{policy}</span>
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer text-left"
+                              onClick={() => {
+                                setGapInputMode(true);
+                                setShowGapAllowed(false);
+                                setTimeout(() => {
+                                  const input = document.querySelector('[data-gap-input]');
+                                  if (input) input.focus();
+                                }, 100);
+                              }}
+                            >
+                              <span>{form.gapYears ? `${form.gapYears} Year/s Allowed` : '_ Year/s Allowed'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-sm w-full flex items-center">
+                        <input 
+                          data-gap-input
+                          type="text" 
+                          className="bg-transparent border-none outline-none text-sm w-8 text-center" 
+                          placeholder="_"
+                          value={form.gapYears}
+                          onChange={(e) => update({ gapYears: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && form.gapYears.trim()) {
+                              update({ gapAllowed: 'Custom' });
+                              setGapInputMode(false);
+                            } else if (e.key === 'Escape') {
+                              update({ gapAllowed: 'Not Allowed', gapYears: '' });
+                              setGapInputMode(false);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (form.gapYears && form.gapYears.trim()) {
+                              update({ gapAllowed: 'Custom' });
+                              setGapInputMode(false);
+                            } else {
+                              update({ gapAllowed: 'Not Allowed', gapYears: '' });
+                              setGapInputMode(false);
+                            }
+                          }}
+                        />
+                        <span className="text-sm ml-1">Year/s Allowed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Active Backlogs Dropdown with Toggle Effect */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
+                  <div className="relative" ref={backlogsDropdownRef}>
+                    <button
+                      type="button"
+                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                      onClick={() => setShowBacklogs(prev => !prev)}
+                    >
+                      <span className="truncate">
+                        {form.backlogs || 'Select Backlog Policy'}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    </button>
+                    {showBacklogs && (
+                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                        {['Allowed', 'Not Allowed'].map((policy) => (
+                          <button
+                            key={policy}
+                            type="button"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
+                            onClick={() => {
+                              update({ backlogs: policy });
+                              setShowBacklogs(false);
+                            }}
+                          >
+                            <span>{policy}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </>
           ) : !canShowSection('skills') ? (
@@ -1086,73 +1192,73 @@ export default function CreateJob({ onCreated }) {
           {canShowSection('interview') && !isSectionCollapsed('interview') ? (
             <>
               {/* Base fixed rounds */}
-          <div className="flex flex-wrap items-center gap-4">
-            {[0,1,2].map((i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="text-xs font-medium text-black whitespace-nowrap">{[`${toRoman(1)} Round`, `${toRoman(2)} Round`, `${toRoman(3)} Round`][i]} <span className="text-red-500">*</span></div>
-                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${form.baseRoundDetails[i]?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Online test, DS&A" value={form.baseRoundDetails[i]} onChange={(e) => updateBaseRoundDetail(i, e.target.value)} required />
-                {i < 2 && <span className="text-slate-300">—</span>}
+              <div className="flex flex-wrap items-center gap-4">
+                {[0,1,2].map((i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="text-xs font-medium text-black whitespace-nowrap">{[`${toRoman(1)} Round`, `${toRoman(2)} Round`, `${toRoman(3)} Round`][i]} <span className="text-red-500">*</span></div>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${form.baseRoundDetails[i]?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Online test, DS&A" value={form.baseRoundDetails[i]} onChange={(e) => updateBaseRoundDetail(i, e.target.value)} required />
+                    {i < 2 && <span className="text-slate-300">—</span>}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Extra rounds */}
-          <div className="flex flex-wrap items-center gap-4">
-            {form.extraRounds.map((r, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div className="text-xs font-medium text-slate-600 whitespace-nowrap">{r.title}</div>
-                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${r.detail?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Managerial round (optional)" value={r.detail} onChange={(e) => updateExtraRoundDetail(idx, e.target.value)} />
-                <button type="button" onClick={() => removeExtraRound(idx)} className="text-slate-500 hover:text-red-600" title="Remove this round">
-                  <X className="w-4 h-4" />
+              {/* Extra rounds */}
+              <div className="flex flex-wrap items-center gap-4">
+                {form.extraRounds.map((r, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="text-xs font-medium text-slate-600 whitespace-nowrap">{r.title}</div>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-48 ${r.detail?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Managerial round (optional)" value={r.detail} onChange={(e) => updateExtraRoundDetail(idx, e.target.value)} />
+                    <button type="button" onClick={() => removeExtraRound(idx)} className="text-slate-500 hover:text-red-600" title="Remove this round">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={addRound} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
+                  <Plus className="w-4 h-4" /> Add Round
                 </button>
               </div>
-            ))}
-            <button type="button" onClick={addRound} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
-              <Plus className="w-4 h-4" /> Add Round
-            </button>
-          </div>
 
-          {/* Agreement notes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium flex items-center gap-2">
-                Service Agreement: 
-                <div className="relative">
-                  <Info 
-                    className="w-3 h-3 text-slate-500 hover:text-slate-700 cursor-help" 
-                    onMouseEnter={() => setTooltipVisible(prev => ({ ...prev, serviceAgreement: true }))}
-                    onMouseLeave={() => setTooltipVisible(prev => ({ ...prev, serviceAgreement: false }))}
-                  />
-                  {tooltipVisible.serviceAgreement && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
-                      This defines the minimum tenure with company.
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              {/* Agreement notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium flex items-center gap-2">
+                    Service Agreement: 
+                    <div className="relative">
+                      <Info 
+                        className="w-3 h-3 text-slate-500 hover:text-slate-700 cursor-help" 
+                        onMouseEnter={() => setTooltipVisible(prev => ({ ...prev, serviceAgreement: true }))}
+                        onMouseLeave={() => setTooltipVisible(prev => ({ ...prev, serviceAgreement: false }))}
+                      />
+                      {tooltipVisible.serviceAgreement && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
+                          This defines the minimum tenure with company.
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.serviceAgreement?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 1 year bond (optional)" value={form.serviceAgreement} onChange={(e) => update({ serviceAgreement: e.target.value })} />
                 </div>
-              </label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.serviceAgreement?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 1 year bond (optional)" value={form.serviceAgreement} onChange={(e) => update({ serviceAgreement: e.target.value })} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black font-medium flex items-center gap-2">
-                Blocking Period: 
-                <div className="relative">
-                  <Info 
-                    className="w-3 h-3 text-slate-500 hover:text-slate-700 cursor-help" 
-                    onMouseEnter={() => setTooltipVisible(prev => ({ ...prev, blockingPeriod: true }))}
-                    onMouseLeave={() => setTooltipVisible(prev => ({ ...prev, blockingPeriod: false }))}
-                  />
-                  {tooltipVisible.blockingPeriod && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
-                      The duration candidate cannot apply elsewhere.
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm text-black font-medium flex items-center gap-2">
+                    Blocking Period: 
+                    <div className="relative">
+                      <Info 
+                        className="w-3 h-3 text-slate-500 hover:text-slate-700 cursor-help" 
+                        onMouseEnter={() => setTooltipVisible(prev => ({ ...prev, blockingPeriod: true }))}
+                        onMouseLeave={() => setTooltipVisible(prev => ({ ...prev, blockingPeriod: false }))}
+                      />
+                      {tooltipVisible.blockingPeriod && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10">
+                          The duration candidate cannot apply elsewhere.
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.blockingPeriod?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 6 months (optional)" value={form.blockingPeriod} onChange={(e) => update({ blockingPeriod: e.target.value })} />
                 </div>
-              </label>
-              <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.blockingPeriod?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 6 months (optional)" value={form.blockingPeriod} onChange={(e) => update({ blockingPeriod: e.target.value })} />
-            </div>
-          </div>
+              </div>
             </>
           ) : !canShowSection('interview') ? (
             <p className="text-sm text-slate-500 italic">Complete Skills & Eligibility section to continue</p>

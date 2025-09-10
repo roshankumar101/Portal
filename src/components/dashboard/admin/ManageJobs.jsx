@@ -207,7 +207,7 @@ export default function ManageJobs() {
         </div>
         <div className="divide-y py-4">
           {jobs.length === 0 && !loading && (
-            <div className="p-6 text-slate-500 text-sm">No jobs yet.</div>
+            <div className="p-6 text-slate-500 text-sm">No Jobs Saved yet.</div>
           )}
           {jobs.map((job) => (
             <div key={job.id} className="relative bg-blue-50 border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mb-4 mx-4">

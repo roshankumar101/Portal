@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { deleteJob, subscribeJobs, postJob } from '../../../services/jobs';
-import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown } from 'lucide-react';
+import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle } from 'lucide-react';
 
 const SCHOOLS = ['All Schools', 'SOT', 'SOM', 'SOH'];
 const BATCHES = ['All Batches', '23-27', '24-28', '25-29'];
@@ -9,6 +9,7 @@ export default function ManageJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [postingJobs, setPostingJobs] = useState(new Set());
+  const [postedJobs, setPostedJobs] = useState(new Set());
   const [showSchools, setShowSchools] = useState({});
   const [showBatches, setShowBatches] = useState({});
   const [selectedSchools, setSelectedSchools] = useState({});
@@ -55,17 +56,17 @@ export default function ManageJobs() {
   }, [showSchools, showBatches]);
 
   const handlePostJob = async (jobId) => {
-    if (postingJobs.has(jobId)) return;
-    
+    if (postingJobs.has(jobId) || postedJobs.has(jobId)) return;
+
     try {
-      setPostingJobs(prev => new Set([...prev, jobId]));
+      setPostingJobs((prev) => new Set([...prev, jobId]));
       await postJob(jobId);
-      // Job will update via real-time subscription
+      setPostedJobs((prev) => new Set([...prev, jobId]));
     } catch (err) {
       console.error('Failed to post job:', err);
       alert('Failed to post job: ' + (err?.message || 'Unknown error'));
     } finally {
-      setPostingJobs(prev => {
+      setPostingJobs((prev) => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
         return newSet;
@@ -309,14 +310,20 @@ export default function ManageJobs() {
                   <div className="flex items-center ml-3 mt-4">
                     <button
                       onClick={() => handlePostJob(job.id)}
-                      disabled={postingJobs.has(job.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        postingJobs.has(job.id)
+                      disabled={postingJobs.has(job.id) || postedJobs.has(job.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 justify-center ${
+                        postedJobs.has(job.id)
+                          ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                          : postingJobs.has(job.id)
                           ? 'bg-blue-100 text-blue-500 cursor-not-allowed'
                           : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
                       }`}
                     >
-                      {postingJobs.has(job.id) ? (
+                      {postedJobs.has(job.id) ? (
+                        <>
+                          <CheckCircle className="w-5 h-5" /> Posted!
+                        </>
+                      ) : postingJobs.has(job.id) ? (
                         <Loader className="w-4 h-4 animate-spin" />
                       ) : (
                         'Post Job'

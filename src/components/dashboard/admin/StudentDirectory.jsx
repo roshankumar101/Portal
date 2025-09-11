@@ -1,18 +1,362 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ImEye } from 'react-icons/im';
 import { MdEditNote } from 'react-icons/md';
 import { GoBlocked } from 'react-icons/go';
-import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
+import { Loader } from 'lucide-react';
+import { getAllStudents, updateStudentStatus, updateStudentProfile } from '../../../services/students';
 
-const dummyStudents = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: `Student ${i + 1}`,
-  email: `student${i + 1}@example.com`,
-  cgpa: (Math.random() * 4 + 6).toFixed(2),
-  center: ['Lucknow', 'Pune', 'Bangalore', 'Delhi'][i % 4],
-  school: ['SOT', 'SOH', 'SOM'][i % 3],
-  status: ['Active', 'Inactive', 'Blocked'][i % 3],
-}));
+// Student Details Modal
+const StudentDetailsModal = ({ isOpen, onClose, student }) => {
+  if (!isOpen || !student) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-bold text-gray-800">Student Details</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Personal Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <FaUser className="mr-2 text-blue-600" />
+                Personal Information
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Full Name</label>
+                  <p className="text-gray-800">{student.fullName || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Email</label>
+                  <p className="text-gray-800 flex items-center">
+                    <FaEnvelope className="mr-2 text-gray-400" size={14} />
+                    {student.email || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Phone</label>
+                  <p className="text-gray-800 flex items-center">
+                    <FaPhone className="mr-2 text-gray-400" size={14} />
+                    {student.phone || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Enrollment ID</label>
+                  <p className="text-gray-800 flex items-center">
+                    <FaIdCard className="mr-2 text-gray-400" size={14} />
+                    {student.enrollmentId || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Academic Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <FaGraduationCap className="mr-2 text-green-600" />
+                Academic Information
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">School</label>
+                  <p className="text-gray-800">{student.school || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Center</label>
+                  <p className="text-gray-800 flex items-center">
+                    <FaMapMarkerAlt className="mr-2 text-gray-400" size={14} />
+                    {student.center || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">CGPA</label>
+                  <p className="text-gray-800">{student.cgpa || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Batch</label>
+                  <p className="text-gray-800 flex items-center">
+                    <FaCalendarAlt className="mr-2 text-gray-400" size={14} />
+                    {student.batch || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <p className="text-gray-800">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      student.status === 'Active' ? 'bg-green-100 text-green-800' :
+                      student.status === 'Blocked' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {student.status || 'Active'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Bio</label>
+                  <p className="text-gray-800">{student.bio || 'No bio available'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Tagline</label>
+                  <p className="text-gray-800">{student.tagline || 'No tagline available'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Application Statistics</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{student.stats?.applied || 0}</div>
+                  <div className="text-sm text-gray-500">Applied</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600">{student.stats?.shortlisted || 0}</div>
+                  <div className="text-sm text-gray-500">Shortlisted</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{student.stats?.interviewed || 0}</div>
+                  <div className="text-sm text-gray-500">Interviewed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{student.stats?.offers || 0}</div>
+                  <div className="text-sm text-gray-500">Offers</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t p-4 bg-gray-50">
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Edit Student Modal
+const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
+  const [formData, setFormData] = useState({
+    center: '',
+    school: '',
+    cgpa: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (student && isOpen) {
+      setFormData({
+        center: student.center || '',
+        school: student.school || '',
+        cgpa: student.cgpa || ''
+      });
+      setErrors({});
+    }
+  }, [student, isOpen]);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.center.trim()) {
+      newErrors.center = 'Center is required';
+    }
+    
+    if (!formData.school.trim()) {
+      newErrors.school = 'School is required';
+    }
+    
+    if (!formData.cgpa.trim()) {
+      newErrors.cgpa = 'CGPA is required';
+    } else {
+      const cgpaValue = parseFloat(formData.cgpa);
+      if (isNaN(cgpaValue) || cgpaValue < 0 || cgpaValue > 10) {
+        newErrors.cgpa = 'CGPA must be between 0 and 10';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await onSave(student.id, formData);
+      onClose();
+    } catch (error) {
+      console.error('Error updating student:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  if (!isOpen || !student) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-bold text-gray-800">Edit Student</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <FaTimes size={20} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Student Name
+              </label>
+              <input
+                type="text"
+                value={student.fullName || ''}
+                disabled
+                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Center *
+              </label>
+              <select
+                name="center"
+                value={formData.center}
+                onChange={handleChange}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.center ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select Center</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Pune">Pune</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Lucknow">Lucknow</option>
+              </select>
+              {errors.center && <p className="text-red-500 text-sm mt-1">{errors.center}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                School *
+              </label>
+              <select
+                name="school"
+                value={formData.school}
+                onChange={handleChange}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.school ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select School</option>
+                <option value="School of Technology">School of Technology</option>
+                <option value="School of Management">School of Management</option>
+                <option value="School of Humanities">School of Humanities</option>
+                <option value="School of Design">School of Design</option>
+                <option value="School of Law">School of Law</option>
+              </select>
+              {errors.school && <p className="text-red-500 text-sm mt-1">{errors.school}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                CGPA *
+              </label>
+              <input
+                type="number"
+                name="cgpa"
+                value={formData.cgpa}
+                onChange={handleChange}
+                min="0"
+                max="10"
+                step="0.01"
+                placeholder="Enter CGPA (0-10)"
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.cgpa ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.cgpa && <p className="text-red-500 text-sm mt-1">{errors.cgpa}</p>}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              {loading && <Loader className="h-4 w-4 animate-spin mr-2" />}
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
   const [blockType, setBlockType] = useState('Permanent');
@@ -21,6 +365,18 @@ const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [otherReason, setOtherReason] = useState('');
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setBlockType('Permanent');
+      setEndDate('');
+      setEndTime('');
+      setReason('');
+      setNotes('');
+      setOtherReason('');
+    }
+  }, [isOpen]);
 
   const isConfirmEnabled =
     reason &&
@@ -50,9 +406,9 @@ const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
           Are you sure you want to block the following student? This action is irreversible.
         </p>
         <div className="mb-4">
-          <p className="text-sm sm:text-base font-medium text-gray-700">Name: {student.name}</p>
-          <p className="text-sm sm:text-base font-medium text-gray-700">ID: {student.id}</p>
-          <p className="text-sm sm:text-base font-medium text-gray-700">Program: {student.school}</p>
+          <p className="text-sm sm:text-base font-medium text-gray-700">Name: {student?.fullName}</p>
+          <p className="text-sm sm:text-base font-medium text-gray-700">Enrollment ID: {student?.enrollmentId}</p>
+          <p className="text-sm sm:text-base font-medium text-gray-700">Program: {student?.school}</p>
         </div>
         <div className="mb-4">
           <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1">Block Type</label>
@@ -161,6 +517,9 @@ const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
 };
 
 export default function StudentDirectory() {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({
     center: '',
@@ -172,13 +531,35 @@ export default function StudentDirectory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const studentsPerPage = 5;
+  const studentsPerPage = 10;
 
-  const filteredStudents = dummyStudents.filter((student) => {
+  // Fetch students data on component mount
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const studentsData = await getAllStudents();
+      setStudents(studentsData);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setError('Failed to load students data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredStudents = students.filter((student) => {
     const matchesSearch =
-      student.name.toLowerCase().includes(search.toLowerCase()) ||
-      student.email.toLowerCase().includes(search.toLowerCase());
+      student.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      student.email.toLowerCase().includes(search.toLowerCase()) ||
+      student.enrollmentId.toLowerCase().includes(search.toLowerCase());
     const matchesCenter = filters.center ? student.center === filters.center : true;
     const matchesSchool = filters.school ? student.school === filters.school : true;
     const matchesStatus = filters.status ? student.status === filters.status : true;
@@ -243,24 +624,107 @@ export default function StudentDirectory() {
     setBlockModalOpen(true);
   };
 
-  const handleBlockConfirm = ({ reason, notes, blockPeriod }) => {
-    console.log('Student blocked:', {
-      student: selectedStudent,
-      reason,
-      notes,
-      blockPeriod,
-    });
-    // Add logic to handle the block action, e.g., API call
+  const handleViewDetails = (student) => {
+    setSelectedStudent(student);
+    setDetailsModalOpen(true);
   };
+
+  const handleEditStudent = (student) => {
+    setSelectedStudent(student);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSave = async (studentId, updatedData) => {
+    try {
+      await updateStudentProfile(studentId, updatedData);
+      
+      // Update local state
+      setStudents(prev => prev.map(student => 
+        student.id === studentId 
+          ? { ...student, ...updatedData }
+          : student
+      ));
+      
+      console.log('Student updated successfully');
+    } catch (error) {
+      console.error('Error updating student:', error);
+      setError('Failed to update student');
+      throw error;
+    }
+  };
+
+  const handleBlockConfirm = async (blockDetails) => {
+    try {
+      const newStatus = selectedStudent.status === 'Blocked' ? 'Active' : 'Blocked';
+      await updateStudentStatus(selectedStudent.id, newStatus, blockDetails);
+      
+      // Update local state
+      setStudents(prev => prev.map(student => 
+        student.id === selectedStudent.id 
+          ? { ...student, status: newStatus, blockDetails }
+          : student
+      ));
+      
+      console.log('Student status updated successfully');
+    } catch (error) {
+      console.error('Error updating student status:', error);
+      setError('Failed to update student status');
+    }
+  };
+
+  // Get unique values for filter dropdowns
+  const uniqueCenters = [...new Set(students.map(s => s.center).filter(c => c && c !== 'N/A'))];
+  const uniqueSchools = [...new Set(students.map(s => s.school).filter(s => s && s !== 'N/A'))];
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center">
+              <Loader className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+              <span className="text-gray-600">Loading students...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={fetchStudents}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Student Directory</h1>
-          <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} found
-          </span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={fetchStudents}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+            >
+              Refresh
+            </button>
+            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} found
+            </span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -270,7 +734,7 @@ export default function StudentDirectory() {
           </div>
           <input
             type="text"
-            placeholder="Search by name or email"
+            placeholder="Search by name, email, or enrollment ID"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -306,10 +770,9 @@ export default function StudentDirectory() {
                   className="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Centers</option>
-                  <option value="Lucknow">Lucknow</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Bangalore">Bangalore</option>
-                  <option value="Delhi">Delhi</option>
+                  {uniqueCenters.map(center => (
+                    <option key={center} value={center}>{center}</option>
+                  ))}
                 </select>
               </div>
 
@@ -322,9 +785,9 @@ export default function StudentDirectory() {
                   className="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Schools</option>
-                  <option value="SOT">SOT</option>
-                  <option value="SOH">SOH</option>
-                  <option value="SOM">SOM</option>
+                  {uniqueSchools.map(school => (
+                    <option key={school} value={school}>{school}</option>
+                  ))}
                 </select>
               </div>
 
@@ -383,6 +846,7 @@ export default function StudentDirectory() {
               <tr>
                 <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Name</th>
                 <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Email</th>
+                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Enrollment ID</th>
                 <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Center</th>
                 <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">School</th>
                 <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">CGPA</th>
@@ -394,8 +858,9 @@ export default function StudentDirectory() {
               {displayedStudents.length > 0 ? (
                 displayedStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="p-4 text-gray-800 font-medium">{student.name}</td>
+                    <td className="p-4 text-gray-800 font-medium">{student.fullName}</td>
                     <td className="p-4 text-gray-600">{student.email}</td>
+                    <td className="p-4 text-gray-600 font-mono text-sm">{student.enrollmentId}</td>
                     <td className="p-4 text-gray-600">{student.center}</td>
                     <td className="p-4 text-gray-600">{student.school}</td>
                     <td className="p-4 text-gray-600 font-medium">{student.cgpa}</td>
@@ -407,7 +872,10 @@ export default function StudentDirectory() {
                     <td className="p-4">
                       <div className="flex items-center justify-center space-x-3">
                         <div className="relative group">
-                          <button className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                          <button 
+                            onClick={() => handleViewDetails(student)}
+                            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                          >
                             <ImEye className="text-lg" />
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -415,7 +883,10 @@ export default function StudentDirectory() {
                           </span>
                         </div>
                         <div className="relative group">
-                          <button className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors">
+                          <button 
+                            onClick={() => handleEditStudent(student)}
+                            className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                          >
                             <MdEditNote className="text-xl" />
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -439,7 +910,7 @@ export default function StudentDirectory() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-500">
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center">
                       <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -520,6 +991,19 @@ export default function StudentDirectory() {
           </div>
         )}
       </div>
+
+      <StudentDetailsModal
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        student={selectedStudent}
+      />
+
+      <EditStudentModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        student={selectedStudent}
+        onSave={handleEditSave}
+      />
 
       <BlockStudentModal
         isOpen={blockModalOpen}

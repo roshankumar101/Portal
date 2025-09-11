@@ -372,6 +372,11 @@ export default function CreateJob({ onCreated }) {
   
   const updateSpoc = (idx, field, value) => {
     const next = [...form.spocs];
+    if (field === 'phone') {
+      if (!/^[0-9]*$/.test(value) || value.length > 10) {
+        return; // Prevent invalid input
+      }
+    }
     next[idx] = { ...next[idx], [field]: value };
     update({ spocs: next });
   };

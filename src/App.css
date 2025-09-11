@@ -24,3 +24,12 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #A8D5E3, #F2F0EA);
 }
+
+/* Styles for sorting indicators */
+.sort-asc {
+  color: #3b82f6;
+}
+
+.sort-desc {
+  color: #3b82f6;
+}

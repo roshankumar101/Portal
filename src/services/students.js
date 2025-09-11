@@ -551,3 +551,67 @@ export const createCompleteStudentProfile = async (studentId, profileData, educa
     throw error;
   }
 };
+
+// Get all students for admin directory
+export const getAllStudents = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'students'));
+    const students = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      students.push({
+        id: doc.id,
+        uid: data.uid,
+        fullName: data.fullName || data.name || 'N/A',
+        email: data.email || 'N/A',
+        center: data.center || 'N/A',
+        school: data.school || 'N/A',
+        cgpa: data.cgpa || 'N/A',
+        phone: data.phone || 'N/A',
+        batch: data.batch || 'N/A',
+        enrollmentId: data.enrollmentId || data.studentId || 'N/A',
+        status: data.status || 'Active',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        stats: data.stats || { applied: 0, shortlisted: 0, interviewed: 0, offers: 0 }
+      });
+    });
+    
+    // Sort by creation date (newest first)
+    students.sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
+      const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
+      return dateB - dateA;
+    });
+    
+    return students;
+  } catch (error) {
+    console.error('Error getting all students:', error);
+    throw error;
+  }
+};
+
+// Update student status (for blocking/unblocking)
+export const updateStudentStatus = async (studentId, status, blockDetails = null) => {
+  try {
+    const docRef = doc(db, 'students', studentId);
+    const updateData = {
+      status,
+      updatedAt: new Date()
+    };
+    
+    if (blockDetails) {
+      updateData.blockDetails = {
+        ...blockDetails,
+        blockedAt: new Date()
+      };
+    }
+    
+    await updateDoc(docRef, updateData);
+    return true;
+  } catch (error) {
+    console.error('Error updating student status:', error);
+    throw error;
+  }
+};

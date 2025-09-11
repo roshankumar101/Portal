@@ -300,3 +300,75 @@ export async function updateJobData(jobId, patch) {
   }
 }
 
+// Fetch recruiter directory data from jobs collection
+export async function getRecruiterDirectory() {
+  try {
+    const q = query(
+      collection(db, JOBS_COLL), 
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    
+    // Group jobs by company and extract recruiter info
+    const companyMap = new Map();
+    
+    snap.docs.forEach(docSnap => {
+      const jobData = { id: docSnap.id, ...docSnap.data() };
+      const companyName = jobData.company?.trim();
+      
+      if (!companyName) return;
+      
+      // Extract recruiter info from first SPOC
+      const firstSpoc = jobData.spocs?.[0];
+      if (!firstSpoc?.fullName || !firstSpoc?.email) return;
+      
+      // Extract location from driveVenues (first venue)
+      const location = jobData.driveVenues?.[0] || jobData.companyLocation || 'Not specified';
+      
+      const companyKey = companyName.toLowerCase();
+      
+      if (!companyMap.has(companyKey)) {
+        companyMap.set(companyKey, {
+          id: `company_${companyMap.size + 1}`,
+          companyName: companyName,
+          recruiterName: firstSpoc.fullName,
+          email: firstSpoc.email,
+          location: location,
+          lastJobPostedAt: jobData.createdAt,
+          totalJobPostings: 1,
+          status: 'Active', // Default status
+          jobs: [jobData]
+        });
+      } else {
+        const existing = companyMap.get(companyKey);
+        existing.totalJobPostings += 1;
+        existing.jobs.push(jobData);
+        
+        // Update last job posted date if this job is newer
+        if (jobData.createdAt && jobData.createdAt.toMillis() > existing.lastJobPostedAt.toMillis()) {
+          existing.lastJobPostedAt = jobData.createdAt;
+        }
+      }
+    });
+    
+    // Convert map to array and format dates
+    const recruiters = Array.from(companyMap.values()).map(recruiter => ({
+      ...recruiter,
+      lastJobPostedAt: recruiter.lastJobPostedAt 
+        ? new Date(recruiter.lastJobPostedAt.toMillis()).toLocaleDateString()
+        : 'Never',
+      activityHistory: recruiter.jobs.map(job => ({
+        type: job.jobTitle || 'Job Posted',
+        date: job.createdAt ? new Date(job.createdAt.toMillis()).toLocaleDateString() : 'Unknown',
+        location: job.driveVenues?.[0] || job.companyLocation || 'Not specified',
+        status: job.status || 'Active'
+      }))
+    }));
+    
+    return recruiters;
+  } catch (error) {
+    console.error('Error fetching recruiter directory:', error);
+    return [];
+  }
+}
+

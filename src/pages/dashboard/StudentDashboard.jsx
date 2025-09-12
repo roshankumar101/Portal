@@ -51,6 +51,8 @@ import ResumeManager from '../../components/resume/ResumeManager';
 import ResumeAnalyzer from '../../components/resume/ResumeAnalyzer';
 import CustomResumeBuilder from '../../components/resume/CustomResumeBuilder';
 import { upsertResume, getResume } from '../../services/resumes';
+import Query from '../../components/dashboard/student/Query';
+import Resources from '../../components/dashboard/student/Resources';
 import { getResumeInfo } from '../../services/resumeStorage';
 
 export default function StudentDashboard() {
@@ -669,6 +671,7 @@ export default function StudentDashboard() {
     { id: 'applications', label: 'Track Applications', icon: ClipboardList },
     { id: 'resources', label: 'Placement Resources', icon: BookOpen },
     { id: 'editProfile', label: 'Edit Profile', icon: SquarePen },
+    { id: 'raiseQuery', label: 'Raise Query', icon: AlertCircle }, // Added new tab
   ];
 
   const LeetCodeIcon = (props) => (
@@ -1298,14 +1301,7 @@ export default function StudentDashboard() {
         );
 
       case 'resources':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Placement Resources</h2>
-              {/* Resources content omitted for brevity */}
-            </div>
-          </div>
-        );
+        return <Resources />;
 
       case 'editProfile':
         return (
@@ -1613,6 +1609,9 @@ export default function StudentDashboard() {
             </div>
           </div>
         );
+
+      case 'raiseQuery':
+        return <Query />;
 
       default:
         return <DashboardHome 

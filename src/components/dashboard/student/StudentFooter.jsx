@@ -1,14 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import brandLogo from '../../../assets/brand_logo.webp';
 import policyPdf from '../../../assets/Docs/PlacementPolicy.pdf';
 
 const StudentFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementPolicy }) => {
+    const navigate = useNavigate();
     const linkedinLink = "https://www.linkedin.com/school/pw-ioi/";
     const instagramLink = "https://www.instagram.com/pw_ioi/";
     const youtubeLink = "https://www.youtube.com/@PW-IOI";
-
-    // No external policy; use local PDF from assets. Contact Admin kept static per request.
-
 
     return (
         <footer className="text-white py-5 relative overflow-hidden mt-10 rounded-lg" style={{ background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #2a2a5a 100%)' }}>
@@ -72,7 +71,10 @@ const StudentFooter = ({ onLoginOpen, onContactTeam, onMeetDevTeam, onPlacementP
                     </a>
                     <a
                         href="#"
-                        onClick={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            navigate('/query');
+                        }}
                         className="text-gray-400 no-underline mb-3 relative inline-block transition-all duration-300 pl-0 hover:text-white hover:pl-5 before:content-['→'] before:absolute before:left-[-20px] before:opacity-0 before:transition-all before:duration-300 hover:before:opacity-100 hover:before:left-0 text-left cursor-pointer"
                     >
                         Contact Admin

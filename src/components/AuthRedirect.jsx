@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function AuthRedirect() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, emailVerified } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,7 +16,7 @@ export default function AuthRedirect() {
     }
 
     if (user && role) {
-      // User is authenticated with a role, redirect to appropriate dashboard
+      // User is authenticated with a role, check verification status from Firestore
       const currentPath = location.pathname;
       console.log('AuthRedirect - User authenticated with role:', role, 'Current path:', currentPath);
       

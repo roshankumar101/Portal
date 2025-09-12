@@ -668,11 +668,11 @@ const JobDescription = ({ job, isOpen, onClose }) => {
               >
                 Close
               </button>
-              <button
+              {/* <button
                 className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-800 transition-colors font-medium"
               >
                 Apply Now
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

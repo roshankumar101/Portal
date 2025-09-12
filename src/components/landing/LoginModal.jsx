@@ -4,9 +4,11 @@ import { useAuth } from '../../hooks/useAuth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useNavigate } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
+import EmailVerificationModal from '../auth/EmailVerificationModal';
 
 function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
-  const { login, registerWithEmail, resetPassword } = useAuth();
+  const { login, registerWithEmail, resetPassword, user, emailVerified } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState(defaultRole);
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
@@ -14,6 +16,8 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const [animKey, setAnimKey] = useState('Student');
   const [isAnimating, setIsAnimating] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -253,19 +257,49 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                 animationFillMode: 'both'
               }}
             >
-              {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+              {error && (
+                <div className="mb-4 p-4 rounded-xl flex items-start space-x-3 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 shadow-sm">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <AlertCircle className="text-red-600" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium leading-relaxed text-red-800">
+                      {error}
+                    </p>
+                    {error.includes('user-not-found') && (
+                      <p className="text-xs text-red-600 mt-2">
+                        This email address is not registered. Please create an account first.
+                      </p>
+                    )}
+                    {error.includes('wrong-password') && (
+                      <p className="text-xs text-red-600 mt-2">
+                        Please check your password and try again.
+                      </p>
+                    )}
+                    {error.includes('invalid-email') && (
+                      <p className="text-xs text-red-600 mt-2">
+                        Please enter a valid email address.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
               {mode !== 'forgot' && (
                 <form className="flex flex-col gap-3" onSubmit={async (e)=>{
                   e.preventDefault();
                   setError('');
                   setBusy(true);
                   try {
-                    console.log('LoginModal - Starting login process...');
+                    console.log('LoginModal - Starting authentication process...');
                     let uid = null;
                     if (mode === 'login') {
                       const u = await login(email, password);
                       uid = u?.uid;
                       console.log('LoginModal - Login successful, UID:', uid);
+                      
+                      // For existing users logging in, skip email verification
+                      // Email verification is only required for new account creation
+                      console.log('LoginModal - Existing user login, skipping email verification');
                     } else {
                       // Register. For Admin, require manual creation in Firestore after registration
                       const selected = role.toLowerCase();
@@ -273,15 +307,21 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                       const u = await registerWithEmail({ email, password, role: assignRole });
                       uid = u?.uid;
                       console.log('LoginModal - Registration successful, UID:', uid);
+                      
+                      // Show email verification modal after registration
+                      setRegisteredEmail(email);
+                      setShowEmailVerification(true);
+                      
                       if (selected === 'admin') {
                         // Inform user that admin role must be granted by existing admin in Firestore
                         alert('Account created. Ask an existing admin to set your role to admin in Firestore.');
                       }
+                      return; // Don't proceed with navigation, wait for email verification
                     }
                     
-                    console.log('LoginModal - Closing modal and checking for redirect');
+                    console.log('LoginModal - Proceeding with verified user redirect');
                     
-                    // Get user role and redirect appropriately
+                    // Get user role and redirect appropriately (only for verified users)
                     try {
                       const userDoc = await getDoc(doc(db, 'users', uid));
                       if (userDoc.exists()) {
@@ -311,7 +351,43 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                       onClose();
                     }
                   } catch (err) {
-                    setError(err?.message || 'Action failed');
+                    console.error('Authentication error:', err);
+                    
+                    // Enhanced error messages based on Firebase error codes
+                    let errorMessage = err?.message || 'Authentication failed';
+                    
+                    if (err?.code) {
+                      switch (err.code) {
+                        case 'auth/user-not-found':
+                          errorMessage = 'No account found with this email address.';
+                          break;
+                        case 'auth/wrong-password':
+                          errorMessage = 'Incorrect password. Please try again.';
+                          break;
+                        case 'auth/invalid-email':
+                          errorMessage = 'Please enter a valid email address.';
+                          break;
+                        case 'auth/user-disabled':
+                          errorMessage = 'This account has been disabled. Contact support.';
+                          break;
+                        case 'auth/too-many-requests':
+                          errorMessage = 'Too many failed attempts. Please try again later.';
+                          break;
+                        case 'auth/email-already-in-use':
+                          errorMessage = 'An account with this email already exists.';
+                          break;
+                        case 'auth/weak-password':
+                          errorMessage = 'Password should be at least 6 characters long.';
+                          break;
+                        case 'auth/network-request-failed':
+                          errorMessage = 'Network error. Please check your connection.';
+                          break;
+                        default:
+                          errorMessage = err.message || 'Authentication failed. Please try again.';
+                      }
+                    }
+                    
+                    setError(errorMessage);
                   } finally { setBusy(false); }
               }}>
                 <input 
@@ -390,6 +466,21 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
             </div>
           </div>
         </div>
+        
+        {/* Email Verification Modal */}
+        <EmailVerificationModal 
+          isOpen={showEmailVerification}
+          onClose={(verified) => {
+            setShowEmailVerification(false);
+            if (verified) {
+              // User verified email, proceed with navigation
+              onClose();
+              // The AuthRedirect component will handle navigation based on role
+            }
+          }}
+          userEmail={registeredEmail}
+        />
+        
         <style>{`
             @keyframes fadeInScale {
               0% { 

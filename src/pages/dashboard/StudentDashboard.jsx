@@ -11,7 +11,7 @@ import {
   getStudentSkills,
   getEducationalBackground,
 } from '../../services/students';
-import { getStudentApplications, applyToJob } from '../../services/applications';
+import { getStudentApplications, applyToJob, subscribeStudentApplications } from '../../services/applications';
 import { subscribeJobs } from '../../services/jobs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
@@ -47,7 +47,11 @@ import {
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import PDFLivePreview from '../../components/resume/PDFLivePreview';
 import ResumeEnhancer from '../../components/resume/ResumeEnhancer';
+import ResumeManager from '../../components/resume/ResumeManager';
+import ResumeAnalyzer from '../../components/resume/ResumeAnalyzer';
+import CustomResumeBuilder from '../../components/resume/CustomResumeBuilder';
 import { upsertResume, getResume } from '../../services/resumes';
+import { getResumeInfo } from '../../services/resumeStorage';
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -104,11 +108,14 @@ export default function StudentDashboard() {
   const [school, setSchool] = useState('');
   const [profilePhoto, setProfilePhoto] = useState('');
   const [jobFlexibility, setJobFlexibility] = useState('');
-  // Local UI-only state for Resume tab (no DB)
-  const [hasResume, setHasResume] = useState(false);
-  const [resumeUrl, setResumeUrl] = useState(null);
-  const resumeFileInputRef = useRef(null);
-  const [resumeActiveTab, setResumeActiveTab] = useState('editor');
+  // Resume state
+  const [resumeInfo, setResumeInfo] = useState({
+    url: null,
+    fileName: null,
+    uploadedAt: null,
+    hasResume: false
+  });
+  const [activeResumeTab, setActiveResumeTab] = useState('builder');
   
   // Skills state
   const [skillsEntries, setSkillsEntries] = useState([]);
@@ -216,10 +223,14 @@ export default function StudentDashboard() {
         setSchool(profileData.school || '');
         setProfilePhoto(profileData.profilePhoto || '');
         setJobFlexibility(profileData.jobFlexibility || '');
-        // Load resume if present on profile
+        // Load resume info if present on profile
         if (profileData.resumeUrl) {
-          setResumeUrl(profileData.resumeUrl);
-          setHasResume(true);
+          setResumeInfo({
+            url: profileData.resumeUrl,
+            fileName: profileData.resumeFileName || 'resume.pdf',
+            uploadedAt: profileData.resumeUploadedAt || null,
+            hasResume: true
+          });
         }
       }
       
@@ -273,19 +284,16 @@ export default function StudentDashboard() {
     }
   }, [user?.uid]);
 
-  const loadApplicationsData = useCallback(async () => {
+  const loadApplicationsData = useCallback(() => {
     if (!user?.uid) return;
-    try {
-      setLoadingApplications(true);
-      const applicationsData = await getStudentApplications(user.uid);
+    
+    setLoadingApplications(true);
+    const unsubscribe = subscribeStudentApplications(user.uid, (applicationsData) => {
       setApplications(applicationsData || []);
-    } catch (err) {
-      console.error('Failed to load applications data', err);
-      // Set empty array on error to prevent UI issues
-      setApplications([]);
-    } finally {
       setLoadingApplications(false);
-    }
+    });
+
+    return unsubscribe;
   }, [user?.uid]);
 
   const loadJobsData = useCallback(() => {
@@ -307,10 +315,21 @@ export default function StudentDashboard() {
     try {
       setApplying(prev => ({ ...prev, [job.id]: true }));
       
-      await applyToJob(user.uid, job.id, job.companyId);
+      console.log('Applying to job:', {
+        jobId: job.id,
+        jobTitle: job.jobTitle,
+        companyId: job.companyId,
+        companyName: job.company?.name,
+        fullJob: job
+      });
       
-      // Reload applications to update UI
-      await loadApplicationsData();
+      // Extract companyId from job data or company object
+      const companyId = job.companyId || job.company?.id || null;
+      console.log('Using companyId:', companyId);
+      
+      await applyToJob(user.uid, job.id, companyId);
+      
+      // No need to manually reload - real-time subscription will update automatically
       
     } catch (error) {
       console.error('Error applying to job:', error);
@@ -335,23 +354,26 @@ export default function StudentDashboard() {
     setSelectedJob(null);
   };
 
-  // Load data only when needed (not on component mount)
+  // Load data when user is available
   useEffect(() => {
-    // Only load data when switching to dashboard tab or when data is not loaded
-    if (activeTab === 'dashboard' && !dataLoaded) {
+    if (user?.uid && !dataLoaded) {
       loadProfile();
+      loadSkillsData();
     }
-  }, [activeTab, dataLoaded, loadProfile]);
+  }, [user?.uid, dataLoaded, loadProfile, loadSkillsData]);
 
-  // Load jobs data only when needed
+  // Always maintain real-time subscriptions for jobs and applications
   useEffect(() => {
-    if (activeTab === 'jobs' || activeTab === 'dashboard') {
-      const unsubscribe = loadJobsData();
+    if (user?.uid) {
+      const unsubscribeJobs = loadJobsData();
+      const unsubscribeApplications = loadApplicationsData();
+      
       return () => {
-        if (unsubscribe) unsubscribe();
+        if (unsubscribeJobs) unsubscribeJobs();
+        if (unsubscribeApplications) unsubscribeApplications();
       };
     }
-  }, [activeTab, loadJobsData]);
+  }, [user?.uid, loadJobsData, loadApplicationsData]);
 
   // Validation helper functions
   const validateEmail = (email) => {
@@ -633,6 +655,12 @@ export default function StudentDashboard() {
     }
   };
 
+  // Handle resume update callback
+  const handleResumeUpdate = (info) => {
+    console.log('handleResumeUpdate called with:', info);
+    setResumeInfo(info);
+  };
+
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'jobs', label: 'Explore Jobs', icon: Briefcase },
@@ -863,11 +891,11 @@ export default function StudentDashboard() {
                       className="grid grid-cols-5 gap-4 p-4 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:shadow-md transition-all duration-200 border border-gray-200"
                     >
                       <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 ${getCompanyColor(job.company?.name)}`}>
-                          {getCompanyInitial(job.company?.name)}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 ${getCompanyColor(job.company?.name || job.company)}`}>
+                          {getCompanyInitial(job.company?.name || job.company)}
                         </div>
                         <span className="text-sm font-medium text-gray-900 truncate">
-                          {job.company?.name || 'Company'}
+                          {job.company?.name || job.company || 'Company'}
                         </span>
                       </div>
 
@@ -885,7 +913,7 @@ export default function StudentDashboard() {
 
                       <div className="flex items-center">
                         <span className="text-sm font-medium text-green-600">
-                          ₹{(job.salary / 100000).toFixed(1)} LPA
+                          {job.salary ? `₹${(job.salary / 100000).toFixed(1)} LPA` : 'Not specified'}
                         </span>
                       </div>
 
@@ -939,176 +967,152 @@ export default function StudentDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <FileText className="h-6 w-6 text-blue-600" />
-                  Resume
+                  Resume Management
                 </h2>
               </div>
               
               {/* Tab Navigation */}
               <div className="mb-6">
-                <div className="border-b border-gray-200">
-                  <nav className="-mb-px flex space-x-8">
+                <div className="space-y-4">
+                  <div className="flex border-b border-gray-200">
                     <button
-                      onClick={() => setResumeActiveTab('editor')}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                        resumeActiveTab === 'editor'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      onClick={() => setActiveResumeTab('builder')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeResumeTab === 'builder'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      Live Preview
+                      Resume Builder
                     </button>
                     <button
-                      onClick={() => setResumeActiveTab('enhancer')}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                        resumeActiveTab === 'enhancer'
-                          ? 'border-purple-500 text-purple-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      AI Enhancer
-                    </button>
-                    <button
-                      onClick={() => setResumeActiveTab('upload')}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                        resumeActiveTab === 'upload'
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      onClick={() => setActiveResumeTab('upload')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeResumeTab === 'upload'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
                       Upload & Manage
                     </button>
-                  </nav>
+                    <button
+                      onClick={() => setActiveResumeTab('analysis')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeResumeTab === 'analysis'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      AI Analysis
+                    </button>
+                    <button
+                      onClick={() => setActiveResumeTab('editor')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeResumeTab === 'editor'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Live Editor
+                    </button>
+                    <button
+                      onClick={() => setActiveResumeTab('enhancer')}
+                      className={`px-4 py-2 text-sm font-medium ${
+                        activeResumeTab === 'enhancer'
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      AI Enhancer
+                    </button>
+                  </div>
+
+                  <div className="mt-6">
+                    {activeResumeTab === 'builder' && user?.uid && (
+                      <ErrorBoundary>
+                        <CustomResumeBuilder userId={user.uid} />
+                      </ErrorBoundary>
+                    )}
+                    {activeResumeTab === 'upload' && user?.uid && (
+                      <ErrorBoundary>
+                        <ResumeManager 
+                          userId={user.uid} 
+                          onResumeUpdate={handleResumeUpdate}
+                        />
+                      </ErrorBoundary>
+                    )}
+                    {activeResumeTab === 'analysis' && user?.uid && (
+                      <ErrorBoundary>
+                        <ResumeAnalyzer 
+                          userId={user.uid}
+                          resumeInfo={resumeInfo}
+                        />
+                      </ErrorBoundary>
+                    )}
+                    {activeResumeTab === 'editor' && user?.uid && (
+                      <ErrorBoundary>
+                        <PDFLivePreview uid={user.uid} resumeId="main" />
+                      </ErrorBoundary>
+                    )}
+                    {activeResumeTab === 'enhancer' && user?.uid && (
+                      <ErrorBoundary>
+                        <ResumeEnhancer uid={user.uid} resumeId="main" />
+                      </ErrorBoundary>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Tab Content */}
-              {resumeActiveTab === 'editor' && (
+              {activeResumeTab === 'manager' && (
+                <div className="w-full">
+                  <ErrorBoundary>
+                    {user?.uid && (
+                      <ResumeManager 
+                        userId={user.uid}
+                        onResumeUpdate={handleResumeUpdate}
+                      />
+                    )}
+                  </ErrorBoundary>
+                </div>
+              )}
+
+              {activeResumeTab === 'analyzer' && (
+                <div className="w-full">
+                  <ErrorBoundary>
+                    {user?.uid && (
+                      <ResumeAnalyzer 
+                        resumeInfo={resumeInfo}
+                        userId={user.uid}
+                      />
+                    )}
+                  </ErrorBoundary>
+                </div>
+              )}
+
+              {activeResumeTab === 'editor' && (
                 <div className="w-full h-[70vh]">
                   <ErrorBoundary>
                     {user?.uid && (
                       <PDFLivePreview 
                         uid={user.uid} 
                         resumeId="default"
-                        resumeUrl={resumeUrl}
-                        hasResume={hasResume}
-                        onUploadClick={() => resumeFileInputRef.current?.click()}
+                        resumeUrl={resumeInfo.url}
+                        hasResume={resumeInfo.hasResume}
+                        onUploadClick={() => setActiveResumeTab('manager')}
                       />
                     )}
                   </ErrorBoundary>
                 </div>
               )}
 
-              {resumeActiveTab === 'enhancer' && (
+              {activeResumeTab === 'enhancer' && (
                 <div className="w-full h-[70vh]">
                   <ErrorBoundary>
                     {user?.uid && (
                       <ResumeEnhancer uid={user.uid} resumeId="default" />
                     )}
                   </ErrorBoundary>
-                </div>
-              )}
-
-              {resumeActiveTab === 'upload' && (
-                <div className="space-y-4">
-                  {/* Subheading row with actions */}
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <p className="text-sm text-gray-600">
-                      Upload and manage your resume files
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => resumeFileInputRef.current?.click()}
-                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
-                        title={hasResume ? 'Choose a PDF to replace your resume' : 'Choose a PDF to add'}
-                      >
-                        <Upload className="h-4 w-4" /> {hasResume ? 'Replace Resume' : 'Add Resume'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => window.open('https://www.open-resume.com/resume-import', '_blank', 'noopener')}
-                        className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md bg-white hover:bg-gray-50 text-sm"
-                        title="Create resume"
-                      >
-                        <FilePlus className="h-4 w-4" /> Create Resume
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Dropzone area */}
-                  <div
-                    className={`relative w-full h-[60vh] border-2 border-dashed border-gray-300 rounded-md bg-gray-50 flex items-center justify-center overflow-hidden ${!hasResume ? 'cursor-pointer' : ''}`}
-                    onClick={() => {
-                      if (!hasResume) {
-                        resumeFileInputRef.current?.click();
-                      }
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const file = e.dataTransfer?.files?.[0];
-                      if (file && (file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
-                        if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                          URL.revokeObjectURL(resumeUrl);
-                        }
-                        const blobUrl = URL.createObjectURL(file);
-                        setResumeUrl(blobUrl);
-                        setHasResume(true);
-                      }
-                    }}
-                  >
-                    {hasResume && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                            URL.revokeObjectURL(resumeUrl);
-                          }
-                          setHasResume(false);
-                          setResumeUrl(null);
-                        }}
-                        className="absolute top-3 right-3 inline-flex items-center justify-center p-2 rounded-md bg-red-200 text-red-500 hover:bg-red-700 hover:text-white"
-                        title="Delete Resume"
-                        aria-label="Delete resume"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                    {!hasResume && (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                        <p className="text-gray-700 font-medium">Drag & drop your resume here</p>
-                        <p className="text-gray-500 text-sm">Or click 'Add Resume' above to select a file.</p>
-                      </div>
-                    )}
-                    {hasResume && resumeUrl && (
-                      <iframe
-                        src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                        title="Resume preview"
-                        className="w-[70%] h-full rounded shadow"
-                      />
-                    )}
-                  </div>
-
-                  {/* Hidden file input for uploads */}
-                  <input
-                    ref={resumeFileInputRef}
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files && e.target.files[0];
-                      if (file) {
-                        if (resumeUrl && typeof resumeUrl === 'string' && resumeUrl.startsWith('blob:')) {
-                          URL.revokeObjectURL(resumeUrl);
-                        }
-                        const blobUrl = URL.createObjectURL(file);
-                        setResumeUrl(blobUrl);
-                        setHasResume(true);
-                      }
-                    }}
-                  />
                 </div>
               )}
             </div>
@@ -1144,52 +1148,118 @@ export default function StudentDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Column Headers */}
-                  <div className="grid grid-cols-5 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="text-black font-bold text-lg">Company</div>
-                    <div className="text-black font-bold text-lg">Job Title</div>
-                    <div className="text-black font-bold text-lg">Date Applied</div>
-                    <div className="text-black font-bold text-lg">Interview Date</div>
-                    <div className="text-black font-bold text-lg text-right">Status</div>
-                  </div>
-
-                  {/* Application Rows */}
+                  {/* Application Cards with Full Job Details */}
                   {applications.map((application) => (
                     <div
                       key={application.id}
-                      className={`grid grid-cols-5 gap-4 p-4 rounded-xl bg-gradient-to-r ${getRowBgColor(application.status)} hover:shadow-md transition-all duration-200 border border-gray-100`}
+                      className={`p-6 rounded-xl bg-gradient-to-r ${getRowBgColor(application.status)} hover:shadow-lg transition-all duration-200 border border-gray-100`}
                     >
-                      <div className="flex items-center">
-                        <div className={`${getCompanyColor(application.company?.name)} w-10 h-10 rounded-lg mr-3 flex items-center justify-center`}>
-                          <span className="text-white font-bold text-sm">
-                            {getCompanyInitial(application.company?.name)}
-                          </span>
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <div className={`${getCompanyColor(application.company?.name)} w-12 h-12 rounded-lg mr-4 flex items-center justify-center`}>
+                            <span className="text-white font-bold text-lg">
+                              {getCompanyInitial(application.company?.name)}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                              {application.job?.jobTitle || 'Unknown Position'}
+                            </h3>
+                            <p className="text-lg font-semibold text-gray-700">
+                              {application.company?.name || 'Unknown Company'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-base font-semibold text-black">
-                          {application.company?.name || 'Unknown Company'}
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm font-medium text-gray-800 flex items-center">
-                        {application.job?.jobTitle || 'Unknown Position'}
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 flex items-center">
-                        {formatDate(application.appliedDate)}
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 flex items-center">
-                        {application.interviewDate ? formatDate(application.interviewDate) : 'TBD'}
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <span className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
+                        <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
                           {getStatusIcon(application.status)}
                           {application.status
                             ? application.status.charAt(0).toUpperCase() + application.status.slice(1)
                             : 'Unknown'}
                         </span>
                       </div>
+
+                      {/* Job Details Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div className="bg-white/50 p-3 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Location</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {application.job?.location || 'Not specified'}
+                          </p>
+                        </div>
+                        <div className="bg-white/50 p-3 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Experience</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {application.job?.experienceLevel || 'Not specified'}
+                          </p>
+                        </div>
+                        <div className="bg-white/50 p-3 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Job Type</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {application.job?.jobType || 'Not specified'}
+                          </p>
+                        </div>
+                        <div className="bg-white/50 p-3 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Salary</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {application.job?.salaryRange || 'Not disclosed'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Application Timeline */}
+                      <div className="flex items-center justify-between text-sm text-gray-600 bg-white/30 p-3 rounded-lg">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span className="font-medium">Applied: {formatDate(application.appliedDate)}</span>
+                        </div>
+                        {application.interviewDate && (
+                          <div className="flex items-center">
+                            <Clock className="w-4 h-4 mr-2" />
+                            <span className="font-medium">Interview: {formatDate(application.interviewDate)}</span>
+                          </div>
+                        )}
+                        {application.job?.deadline && (
+                          <div className="flex items-center">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="font-medium">Deadline: {formatDate(application.job.deadline)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Job Description Preview */}
+                      {application.job?.description && (
+                        <div className="mt-4 bg-white/30 p-3 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Job Description</p>
+                          <p className="text-sm text-gray-700 line-clamp-2">
+                            {application.job.description.length > 150 
+                              ? `${application.job.description.substring(0, 150)}...` 
+                              : application.job.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Skills Required */}
+                      {application.job?.requiredSkills && application.job.requiredSkills.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Required Skills</p>
+                          <div className="flex flex-wrap gap-2">
+                            {application.job.requiredSkills.slice(0, 6).map((skill, index) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {application.job.requiredSkills.length > 6 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                                +{application.job.requiredSkills.length - 6} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
 

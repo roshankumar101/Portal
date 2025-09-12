@@ -13,6 +13,7 @@ export default function ProtectedRoute({ allowRoles }) {
     return <Navigate to="/" replace />;
   }
 
+
   if (allowRoles && Array.isArray(allowRoles) && !allowRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }

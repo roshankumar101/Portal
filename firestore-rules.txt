@@ -127,6 +127,22 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
     }
 
+    // Resumes collection - top-level collection for base64 resume storage
+    match /resumes/{resumeId} {
+      // Allow users to create/read/update/delete their own resumes
+      // resumeId format: ${userId}_${timestamp}
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      
+      allow read, update, delete: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Allow admins to read all resumes
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // Users/{userId}/resumes subcollection - per-user access control
     match /users/{userId}/resumes/{resumeId} {
       // Owner can create their resume doc(s)

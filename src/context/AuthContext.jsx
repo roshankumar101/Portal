@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -9,10 +9,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null); // 'student' | 'recruiter' | 'admin'
   const [loading, setLoading] = useState(true);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      setEmailVerified(firebaseUser?.emailVerified || false);
       if (firebaseUser) {
         // Fetch role from Firestore: users/{uid} -> { role }
         try {
@@ -45,6 +47,7 @@ export function AuthProvider({ children }) {
         }
       } else {
         setRole(null);
+        setEmailVerified(false);
       }
       setLoading(false);
     });
@@ -82,11 +85,16 @@ export function AuthProvider({ children }) {
   const registerWithEmail = async ({ email, password, role, profile = {} }) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = res.user;
+    
+    // Send email verification
+    await sendEmailVerification(firebaseUser);
+    
     const normalizedRole = role ?? 'student';
     const base = {
       email,
       role: normalizedRole,
       profile,
+      emailVerified: false,
       createdAt: serverTimestamp(),
     };
     // Ensure recruiterVerified exists for recruiters
@@ -99,7 +107,41 @@ export function AuthProvider({ children }) {
     await sendPasswordResetEmail(auth, email);
   };
 
-  const value = useMemo(() => ({ user, role, loading, login, logout, loginWithGoogle, registerWithEmail, resetPassword }), [user, role, loading]);
+  const resendEmailVerification = async () => {
+    if (user && !user.emailVerified) {
+      await sendEmailVerification(user);
+    }
+  };
+
+  const checkEmailVerification = async () => {
+    if (user) {
+      await user.reload();
+      setEmailVerified(user.emailVerified);
+      
+      // Update Firestore document if email is now verified
+      if (user.emailVerified) {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { emailVerified: true }, { merge: true });
+      }
+      
+      return user.emailVerified;
+    }
+    return false;
+  };
+
+  const value = useMemo(() => ({ 
+    user, 
+    role, 
+    loading, 
+    emailVerified, 
+    login, 
+    logout, 
+    loginWithGoogle, 
+    registerWithEmail, 
+    resetPassword, 
+    resendEmailVerification, 
+    checkEmailVerification 
+  }), [user, role, loading, emailVerified]);
 
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

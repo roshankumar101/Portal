@@ -1,14 +1,15 @@
 import { 
   collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
   query, 
   where, 
-  orderBy, 
-  writeBatch 
+  getDocs, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  writeBatch,
+  orderBy,
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -26,19 +27,76 @@ export const getStudentApplications = async (studentId) => {
     for (const docSnap of querySnapshot.docs) {
       const appData = { id: docSnap.id, ...docSnap.data() };
       
-      // Fetch company and job details
+      // Fetch company and job details with better error handling
       try {
-        const [companyDoc, jobDoc] = await Promise.all([
-          getDoc(doc(db, 'companies', appData.companyId)),
-          getDoc(doc(db, 'jobs', appData.jobId))
-        ]);
+        // First, always try to fetch the job document
+        let jobData = null;
+        let companyData = null;
         
-        appData.company = companyDoc.exists() ? companyDoc.data() : null;
-        appData.job = jobDoc.exists() ? jobDoc.data() : null;
+        if (appData.jobId) {
+          try {
+            const jobDoc = await getDoc(doc(db, 'jobs', appData.jobId));
+            if (jobDoc.exists()) {
+              jobData = jobDoc.data();
+              console.log('Available company fields in job:', {
+                company: jobData.company,
+                companyName: jobData.companyName,
+                companyId: jobData.companyId,
+                allFields: Object.keys(jobData)
+              });
+              
+              // If job has company info embedded, use it
+              if (jobData.company) {
+                companyData = jobData.company;
+              } else if (jobData.companyId || appData.companyId) {
+                // Try to fetch company document
+                const companyId = jobData.companyId || appData.companyId;
+                try {
+                  const companyDoc = await getDoc(doc(db, 'companies', companyId));
+                  if (companyDoc.exists()) {
+                    companyData = companyDoc.data();
+                  }
+                } catch (companyErr) {
+                  console.warn('Error fetching company document:', companyErr);
+                }
+              }
+            }
+          } catch (jobErr) {
+            console.warn('Error fetching job document:', jobErr);
+          }
+        }
+        
+        // Set the final data with multiple fallback options for company name
+        appData.company = companyData ? {
+          name: companyData.name || companyData.companyName || companyData.company || 'Unknown Company',
+          ...companyData
+        } : (jobData && jobData.company) ? {
+          name: jobData.company,
+          ...jobData
+        } : {
+          name: 'Unknown Company',
+          id: appData.companyId || 'unknown'
+        };
+        
+        appData.job = jobData ? {
+          jobTitle: jobData.jobTitle || jobData.title || 'Unknown Position',
+          ...jobData
+        } : {
+          jobTitle: 'Unknown Position',
+          id: appData.jobId || 'unknown'
+        };
+        
       } catch (err) {
         console.warn('Error fetching related data for application:', err);
-        appData.company = null;
-        appData.job = null;
+        // Provide fallback data instead of null
+        appData.company = {
+          name: 'Unknown Company',
+          id: appData.companyId || 'unknown'
+        };
+        appData.job = {
+          jobTitle: 'Unknown Position',
+          id: appData.jobId || 'unknown'
+        };
       }
       
       applications.push(appData);
@@ -76,17 +134,23 @@ export const applyToJob = async (studentId, jobId, companyId) => {
     
     const batch = writeBatch(db);
     
-    // Add application
+    // Add application - handle undefined companyId
     const applicationRef = doc(collection(db, 'applications'));
-    batch.set(applicationRef, {
+    const applicationData = {
       studentId,
       jobId,
-      companyId,
       appliedDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
       status: 'applied',
       interviewDate: null,
       createdAt: new Date()
-    });
+    };
+    
+    // Only add companyId if it's defined
+    if (companyId && companyId !== undefined) {
+      applicationData.companyId = companyId;
+    }
+    
+    batch.set(applicationRef, applicationData);
     
     // Update student stats
     const studentRef = doc(db, 'students', studentId);
@@ -196,5 +260,124 @@ export const getApplicationStats = async (studentId) => {
   } catch (error) {
     console.error('Error getting application stats:', error);
     throw error;
+  }
+};
+
+// Subscribe to real-time application updates for a student
+export const subscribeStudentApplications = (studentId, onChange) => {
+  try {
+    const q = query(
+      collection(db, 'applications'),
+      where('studentId', '==', studentId),
+      orderBy('appliedDate', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const applications = [];
+      
+      for (const docSnap of snapshot.docs) {
+        const appData = { id: docSnap.id, ...docSnap.data() };
+        
+        // Fetch company and job details with better error handling
+        console.log('Fetching data for application:', {
+          applicationId: appData.id,
+          jobId: appData.jobId,
+          companyId: appData.companyId
+        });
+        
+        try {
+          // First, always try to fetch the job document
+          let jobData = null;
+          let companyData = null;
+          
+          if (appData.jobId) {
+            try {
+              const jobDoc = await getDoc(doc(db, 'jobs', appData.jobId));
+              if (jobDoc.exists()) {
+                jobData = jobDoc.data();
+                console.log('Job document found:', jobData);
+                console.log('Available company fields in job:', {
+                  company: jobData.company,
+                  companyName: jobData.companyName,
+                  companyId: jobData.companyId,
+                  allFields: Object.keys(jobData)
+                });
+                
+                // If job has company info embedded, use it
+                if (jobData.company) {
+                  companyData = jobData.company;
+                  console.log('Using embedded company data from job:', companyData);
+                } else if (jobData.companyId || appData.companyId) {
+                  // Try to fetch company document
+                  const companyId = jobData.companyId || appData.companyId;
+                  try {
+                    const companyDoc = await getDoc(doc(db, 'companies', companyId));
+                    if (companyDoc.exists()) {
+                      companyData = companyDoc.data();
+                      console.log('Company document found:', companyData);
+                    }
+                  } catch (companyErr) {
+                    console.warn('Error fetching company document:', companyErr);
+                  }
+                }
+              } else {
+                console.warn('Job document not found for ID:', appData.jobId);
+              }
+            } catch (jobErr) {
+              console.warn('Error fetching job document:', jobErr);
+            }
+          }
+          
+          // Set the final data with multiple fallback options for company name
+          appData.company = companyData ? {
+            name: companyData.name || companyData.companyName || companyData.company || 'Unknown Company',
+            ...companyData
+          } : (jobData && jobData.company) ? {
+            name: jobData.company,
+            ...jobData
+          } : {
+            name: 'Unknown Company',
+            id: appData.companyId || 'unknown'
+          };
+          
+          appData.job = jobData ? {
+            jobTitle: jobData.jobTitle || jobData.title || 'Unknown Position',
+            ...jobData
+          } : {
+            jobTitle: 'Unknown Position',
+            id: appData.jobId || 'unknown'
+          };
+          
+          console.log('Final application data:', {
+            company: appData.company,
+            job: appData.job,
+            rawJobData: jobData,
+            rawCompanyData: companyData
+          });
+          
+        } catch (err) {
+          console.warn('Error fetching related data for application:', err);
+          // Provide fallback data instead of null
+          appData.company = {
+            name: 'Unknown Company',
+            id: appData.companyId || 'unknown'
+          };
+          appData.job = {
+            jobTitle: 'Unknown Position',
+            id: appData.jobId || 'unknown'
+          };
+        }
+        
+        applications.push(appData);
+      }
+      
+      onChange(applications);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error subscribing to applications:', error);
+    onChange([]);
+    return () => {}; // Return empty unsubscribe function
   }
 };

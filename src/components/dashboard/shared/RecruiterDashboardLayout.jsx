@@ -1,19 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FiHome, FiBriefcase, FiUsers, FiCalendar, FiMessageSquare, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PWIOILOGO from '../../assets/brand_logo.webp';
-import Dashboard from '../recruiter/dashboard';
+import { FiHome, FiBriefcase, FiUsers, FiCalendar, FiMessageSquare, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
+import PWIOILOGO from '../../../assets/brand_logo.webp';
 
-const RecruiterDashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarWidth, setSidebarWidth] = useState(15); // % width, 5-15 like admin
+const RecruiterDashboardLayout = ({ children }) => {
+  const [sidebarWidth, setSidebarWidth] = useState(15); // Sidebar width in percentage
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef(null);
   const navigate = useNavigate();
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: FiHome, path: '/recruiter/dashboard' },
-    { id: 'jobPostings', label: 'Job Postings', icon: FiBriefcase },
+    { id: 'jobs', label: 'Job Postings', icon: FiBriefcase },
     { id: 'candidates', label: 'Candidates', icon: FiUsers },
     { id: 'calendar', label: 'Calendar', icon: FiCalendar },
     { id: 'messages', label: 'Messages', icon: FiMessageSquare },
@@ -21,22 +18,24 @@ const RecruiterDashboard = () => {
     { id: 'settings', label: 'Settings', icon: FiSettings },
   ];
 
-  const handleMouseDown = useCallback((e) => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  const handleMouseDown = (e) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove = (e) => {
     if (!isDragging) return;
     const windowWidth = window.innerWidth;
     const newWidth = (e.clientX / windowWidth) * 100;
     const constrainedWidth = Math.min(Math.max(newWidth, 5), 15);
     setSidebarWidth(constrainedWidth);
-  }, [isDragging]);
+  };
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-  }, []);
+  };
 
   useEffect(() => {
     if (isDragging) {
@@ -54,32 +53,13 @@ const RecruiterDashboard = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging]);
 
   const handleLogout = () => {
     navigate('/login');
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'jobPostings':
-        return <div>Job Postings Content</div>;
-      case 'candidates':
-        return <div>Candidates Content</div>;
-      case 'calendar':
-        return <div>Calendar Content</div>;
-      case 'messages':
-        return <div>Messages Content</div>;
-      case 'analytics':
-        return <div>Analytics Content</div>;
-      case 'settings':
-        return <div>Settings Content</div>;
-      default:
-        return <div>Recruiter Dashboard Content</div>;
-    }
-  };
+  const recruiterTagline = 'Connecting Opportunities with Talent.';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
@@ -97,20 +77,22 @@ const RecruiterDashboard = () => {
                   </h2>
                 </div>
                 <div className='ml-2 -mt-0 mb-1 italic'>
-                  <p>Connecting Opportunities with Talent.</p>
+                  <p>{recruiterTagline}</p>
                 </div>
               </div>
 
               <div className='absolute top-1 start-1/2 -translate-x-1/5 w-fit flex flex-col items-center gap-2'>
                 <img src={PWIOILOGO} alt="" className='w-30' />
-                <h1 className='text-nowrap text-3xl text-black-300 opacity-90 font-caveat'>Connecting Opportunities with Talent.</h1>
+                <h1 className='text-nowrap text-3xl text-black-300 opacity-90 font-caveat'>{recruiterTagline}</h1>
               </div>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="flex min-h-[calc(100vh-5rem)] relative">
+      {/* Sidebar and Main Content */}
+      <div className="flex min-h-[calc(100vh-5rem)]">
+        {/* Sidebar */}
         <aside
           className="bg-white border-r border-gray-200 fixed h-[calc(100vh-5rem)] overflow-y-auto transition-all duration-200 ease-in-out"
           style={{ width: `${sidebarWidth}%` }}
@@ -126,7 +108,10 @@ const RecruiterDashboard = () => {
                   return (
                     <div key={tab.id} className="mb-1">
                       <button
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          if (tab.path) navigate(tab.path);
+                        }}
                         className={`w-full flex items-center rounded-lg text-xs font-medium transition-all duration-200 ${
                           activeTab === tab.id
                             ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
@@ -159,7 +144,6 @@ const RecruiterDashboard = () => {
         </aside>
 
         <div
-          ref={dragRef}
           onMouseDown={handleMouseDown}
           className="fixed top-0 h-screen w-1 bg-gray-300 hover:bg-blue-500 cursor-col-resize z-10 transition-colors duration-200 flex items-center justify-center group"
           style={{ left: `${sidebarWidth}%` }}
@@ -169,6 +153,7 @@ const RecruiterDashboard = () => {
           </div>
         </div>
 
+        {/* Main Content */}
         <main
           className="bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 min-h-screen transition-all duration-200 ease-in-out"
           style={{
@@ -177,7 +162,7 @@ const RecruiterDashboard = () => {
           }}
         >
           <div className="p-8">
-            {renderContent()}
+            {children}
           </div>
         </main>
       </div>
@@ -185,4 +170,4 @@ const RecruiterDashboard = () => {
   );
 };
 
-export default RecruiterDashboard;
+export default RecruiterDashboardLayout;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css'
 import Header from './components/landing/Header'
@@ -27,7 +27,6 @@ import { AuthProvider } from './context/AuthContext'
 import AuthRedirect from './components/AuthRedirect'
 import DatabaseTest from './components/DatabaseTest'
 
-// Landing page component
 function LandingPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true)

@@ -3,10 +3,11 @@ import { FiHome, FiBriefcase, FiUsers, FiCalendar, FiMessageSquare, FiBarChart2,
 import { useNavigate } from 'react-router-dom';
 import PWIOILOGO from '../../assets/brand_logo.webp';
 import Dashboard from '../recruiter/dashboard';
+import JobPostings from '../recruiter/JobPostings';
 
 const RecruiterDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarWidth, setSidebarWidth] = useState(15); // % width, 5-15 like admin
+  const [sidebarWidth, setSidebarWidth] = useState(15);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef(null);
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ const RecruiterDashboard = () => {
       case 'dashboard':
         return <Dashboard />;
       case 'jobPostings':
-        return <div>Job Postings Content</div>;
+        return <JobPostings/>;
       case 'candidates':
         return <div>Candidates Content</div>;
       case 'calendar':

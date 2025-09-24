@@ -47,7 +47,12 @@ export const getStudentApplications = async (studentId) => {
               
               // If job has company info embedded, use it
               if (jobData.company) {
-                companyData = jobData.company;
+                // If company is a string, convert to object
+                if (typeof jobData.company === 'string') {
+                  companyData = { name: jobData.company };
+                } else {
+                  companyData = jobData.company;
+                }
               } else if (jobData.companyId || appData.companyId) {
                 // Try to fetch company document
                 const companyId = jobData.companyId || appData.companyId;
@@ -71,7 +76,7 @@ export const getStudentApplications = async (studentId) => {
           name: companyData.name || companyData.companyName || companyData.company || 'Unknown Company',
           ...companyData
         } : (jobData && jobData.company) ? {
-          name: jobData.company,
+          name: typeof jobData.company === 'string' ? jobData.company : (jobData.company.name || 'Unknown Company'),
           ...jobData
         } : {
           name: 'Unknown Company',
@@ -305,7 +310,12 @@ export const subscribeStudentApplications = (studentId, onChange) => {
                 
                 // If job has company info embedded, use it
                 if (jobData.company) {
-                  companyData = jobData.company;
+                  // If company is a string, convert to object
+                  if (typeof jobData.company === 'string') {
+                    companyData = { name: jobData.company };
+                  } else {
+                    companyData = jobData.company;
+                  }
                   console.log('Using embedded company data from job:', companyData);
                 } else if (jobData.companyId || appData.companyId) {
                   // Try to fetch company document
@@ -333,7 +343,7 @@ export const subscribeStudentApplications = (studentId, onChange) => {
             name: companyData.name || companyData.companyName || companyData.company || 'Unknown Company',
             ...companyData
           } : (jobData && jobData.company) ? {
-            name: jobData.company,
+            name: typeof jobData.company === 'string' ? jobData.company : (jobData.company.name || 'Unknown Company'),
             ...jobData
           } : {
             name: 'Unknown Company',

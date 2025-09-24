@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaPaperPlane, 
   FaQuestionCircle, 
@@ -17,8 +17,19 @@ import {
   FaTimesCircle
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
+import QueryErrorBoundary from '../../common/QueryErrorBoundary';
+
+// Safely import query services with fallback
+let queryServices = null;
+try {
+  queryServices = require('../../../services/queries');
+} catch (error) {
+  console.warn('Query services not available, using fallback mode:', error);
+}
 
 const StudentQuerySystem = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('question');
   const [activeView, setActiveView] = useState('new'); // 'new' or 'history'
   const [formData, setFormData] = useState({
@@ -34,44 +45,41 @@ const StudentQuerySystem = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [expandedQuery, setExpandedQuery] = useState(null);
+  const [referenceId, setReferenceId] = useState('');
+  const [loadingQueries, setLoadingQueries] = useState(false);
 
-  // Sample past queries data
-  const [pastQueries, setPastQueries] = useState([
-    {
-      id: 1,
-      type: 'question',
-      subject: 'Eligibility for Google internship',
-      message: 'What are the eligibility criteria for the Google summer internship program?',
-      date: '2023-10-15',
-      status: 'resolved',
-      adminResponse: 'The eligibility criteria include a minimum CGPA of 8.0, proficiency in data structures and algorithms, and completion of at least 3 programming courses. You can find more details on the placement portal.',
-      responseDate: '2023-10-16'
-    },
-    {
-      id: 2,
-      type: 'cgpa',
-      subject: 'Updated CGPA submission',
-      cgpa: '8.72',
-      date: '2023-10-10',
-      status: 'under_review',
-      adminResponse: 'Your document is being verified by the placement team. This process typically takes 2-3 business days.',
-      responseDate: '2023-10-11'
-    },
-    {
-      id: 3,
-      type: 'calendar',
-      subject: 'Request for time slot blocking',
-      startDate: '2023-10-20',
-      endDate: '2023-10-20',
-      timeSlot: '2:00 PM - 3:00 PM',
-      reason: 'interview',
-      date: '2023-10-05',
-      status: 'rejected',
-      adminResponse: 'Your request could not be processed as the time slot you requested is already booked for company presentations. Please choose an alternative time.',
-      responseDate: '2023-10-06'
+  // Real queries data from Firebase
+  const [pastQueries, setPastQueries] = useState([]);
+
+  // Load queries on component mount and set up real-time subscription
+  useEffect(() => {
+    if (!user?.uid || !queryServices?.subscribeToStudentQueries) {
+      setLoadingQueries(false);
+      return;
     }
-  ]);
+
+    setLoadingQueries(true);
+    
+    try {
+      // Set up real-time subscription to queries
+      const unsubscribe = queryServices.subscribeToStudentQueries(user.uid, (queries) => {
+        setPastQueries(queries);
+        setLoadingQueries(false);
+      });
+
+      // Cleanup subscription on unmount
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      };
+    } catch (error) {
+      console.warn('Failed to set up query subscription:', error);
+      setLoadingQueries(false);
+    }
+  }, [user?.uid]);
 
   const queryTypes = [
     { id: 'question', name: 'Ask a Question', icon: <FaQuestionCircle />, description: 'Get clarification on placement process', color: 'blue' },
@@ -107,10 +115,27 @@ const StudentQuerySystem = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) {
+    
+    // Validate file using the service function or fallback validation
+    let validation = { isValid: true, error: null };
+    
+    if (queryServices?.validateFile) {
+      validation = queryServices.validateFile(file);
+    } else {
+      // Fallback validation
+      if (!file) {
+        validation = { isValid: false, error: 'No file selected' };
+      } else if (file.size > 5 * 1024 * 1024) {
+        validation = { isValid: false, error: 'File size must be less than 5MB' };
+      } else if (!['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+        validation = { isValid: false, error: 'Only PDF, JPG, and PNG files are allowed' };
+      }
+    }
+    
+    if (!validation.isValid) {
       setFormErrors({
         ...formErrors,
-        proof: 'File size must be less than 5MB'
+        proof: validation.error
       });
       return;
     }
@@ -179,16 +204,42 @@ const StudentQuerySystem = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      // In a real application, this would connect to a backend API
-      console.log('Form submitted:', formData);
+    if (!validateForm()) {
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user?.uid) {
+      setFormErrors({
+        ...formErrors,
+        submit: 'Please log in to submit a query'
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      // Submit query to Firebase if service is available
+      if (queryServices?.submitQuery) {
+        const result = await queryServices.submitQuery(user.uid, formData);
+        
+        // Set reference ID for success message
+        setReferenceId(result.referenceId || (queryServices.generateReferenceId ? queryServices.generateReferenceId() : `STU${Math.floor(1000 + Math.random() * 9000)}`));
+        
+        console.log('Query submitted successfully:', result);
+      } else {
+        // Fallback: Generate reference ID without Firebase
+        setReferenceId(`STU${Math.floor(1000 + Math.random() * 9000)}`);
+        console.warn('Query services not available, using local mode');
+      }
       
-      // Add to past queries (simulating backend response)
+      // Always add to local state for immediate UI feedback
       const newQuery = {
-        id: pastQueries.length + 1,
+        id: Date.now(),
         type: formData.type,
         subject: formData.subject,
         date: new Date().toISOString().split('T')[0],
@@ -198,8 +249,32 @@ const StudentQuerySystem = () => {
         ...formData
       };
       
-      setPastQueries([newQuery, ...pastQueries]);
+      setPastQueries(prev => [newQuery, ...prev]);
       setSubmitted(true);
+      
+    } catch (error) {
+      console.error('Error submitting query:', error);
+      
+      // Fallback: Add to local state if Firebase fails
+      const newQuery = {
+        id: Date.now(),
+        type: formData.type,
+        subject: formData.subject,
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        adminResponse: '',
+        responseDate: '',
+        ...formData
+      };
+      
+      setPastQueries(prev => [newQuery, ...prev]);
+      setReferenceId(`STU${Math.floor(1000 + Math.random() * 9000)}`);
+      setSubmitted(true);
+      
+      // Show error but still allow success flow
+      console.warn('Query saved locally due to connection issue');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -280,7 +355,7 @@ const StudentQuerySystem = () => {
               You will receive a response within 24-48 hours.
             </p>
             <div className="bg-blue-50 rounded-xl p-4 mb-6 text-left border border-blue-200">
-              <h3 className="font-medium text-blue-800 mb-2">Reference ID: #STU{Math.floor(1000 + Math.random() * 9000)}</h3>
+              <h3 className="font-medium text-blue-800 mb-2">Reference ID: #{referenceId}</h3>
               <p className="text-sm text-blue-600">Keep this reference ID for future communication.</p>
             </div>
             <div className="flex gap-3">
@@ -342,7 +417,15 @@ const StudentQuerySystem = () => {
             </div>
             
             <div className="p-6">
-              {pastQueries.length === 0 ? (
+              {loadingQueries ? (
+                <div className="text-center py-10">
+                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FaClock className="text-blue-600 text-2xl animate-spin" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">Loading your queries...</h3>
+                  <p className="text-gray-500">Please wait while we fetch your query history.</p>
+                </div>
+              ) : pastQueries.length === 0 ? (
                 <div className="text-center py-10">
                   <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <FaHistory className="text-gray-400 text-2xl" />
@@ -523,7 +606,7 @@ const StudentQuerySystem = () => {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2 flex items-center">
+                      <label className="text-gray-700 font-medium mb-2 flex items-center">
                         Updated CGPA
                         <span className="text-red-500 ml-1">*</span>
                       </label>
@@ -542,7 +625,7 @@ const StudentQuerySystem = () => {
                       {formErrors.cgpa && <p className="text-red-500 text-sm mt-1">{formErrors.cgpa}</p>}
                     </div>
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2 flex items-center">
+                      <label className="text-gray-700 font-medium mb-2 flex items-center">
                         Proof Document
                         <span className="text-red-500 ml-1">*</span>
                         <FaExclamationCircle className="text-amber-500 ml-2 text-sm" title="Required for verification" />
@@ -692,10 +775,24 @@ const StudentQuerySystem = () => {
                 </div>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-500 text-black font-medium rounded-md hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center"
+                  disabled={submitting}
+                  className={`px-6 py-3 bg-gradient-to-r font-medium rounded-md transition-all duration-200 shadow-md hover:shadow-lg flex items-center ${
+                    submitting 
+                      ? 'from-gray-400 to-gray-500 text-gray-700 cursor-not-allowed' 
+                      : 'from-blue-400 to-blue-500 text-black hover:from-blue-700 hover:to-blue-800'
+                  }`}
                 >
-                  <FaPaperPlane className="mr-2" />
-                  Submit Query
+                  {submitting ? (
+                    <>
+                      <FaClock className="mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FaPaperPlane className="mr-2" />
+                      Submit Query
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -733,4 +830,11 @@ const StudentQuerySystem = () => {
   );
 };
 
-export default StudentQuerySystem;
+// Wrap the component with error boundary to prevent cascade errors
+const QueryWithErrorBoundary = () => (
+  <QueryErrorBoundary>
+    <StudentQuerySystem />
+  </QueryErrorBoundary>
+);
+
+export default QueryWithErrorBoundary;

@@ -606,7 +606,7 @@ const StudentQuerySystem = () => {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2 flex items-center">
+                      <label className="text-gray-700 font-medium mb-2 flex items-center">
                         Updated CGPA
                         <span className="text-red-500 ml-1">*</span>
                       </label>
@@ -625,7 +625,7 @@ const StudentQuerySystem = () => {
                       {formErrors.cgpa && <p className="text-red-500 text-sm mt-1">{formErrors.cgpa}</p>}
                     </div>
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2 flex items-center">
+                      <label className="text-gray-700 font-medium mb-2 flex items-center">
                         Proof Document
                         <span className="text-red-500 ml-1">*</span>
                         <FaExclamationCircle className="text-amber-500 ml-2 text-sm" title="Required for verification" />

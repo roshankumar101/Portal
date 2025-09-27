@@ -578,7 +578,7 @@ const StudentQuerySystem = () => {
                   value={formData.subject}
                   onChange={handleInputChange}
                   placeholder="Brief description of your query"
-                  className={`w-full px-4 py-3 border ${formErrors.subject ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
+                  className={`w-full px-4 py-3 border ${formErrors.subject ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-100`}
                   required
                 />
                 {formErrors.subject && <p className="text-red-500 text-sm mt-1">{formErrors.subject}</p>}
@@ -594,7 +594,7 @@ const StudentQuerySystem = () => {
                     onChange={handleInputChange}
                     placeholder="Please provide details about your question or concern..."
                     rows={4}
-                    className={`w-full px-4 py-3 border ${formErrors.message ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200`}
+                    className={`w-full px-4 py-3 border min-h-[120px] max-h-[300px] resize-y ${formErrors.message ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     required
                   />
                   {formErrors.message && <p className="text-red-500 text-sm mt-1">{formErrors.message}</p>}

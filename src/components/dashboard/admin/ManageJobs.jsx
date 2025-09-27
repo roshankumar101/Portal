@@ -222,7 +222,7 @@ export default function ManageJobs() {
                       <Building2 className="w-4 h-4 text-slate-500" />
                       <span className="text-sm font-medium text-slate-600">Company</span>
                     </div>
-                    <div className="font-semibold text-slate-900 truncate">
+                    <div className="font-semibold text-slate-900 text-xl truncate ml-[5%]">
                       {job.company?.name || job.companyName || job.company || 'N/A'}
                     </div>
                   </div>

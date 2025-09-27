@@ -1697,7 +1697,7 @@ export default function StudentDashboard() {
                       <div key={skill.id} className="mb-1">
                         <button
                           onClick={() => handleSkillClick(skill.id)}
-                          className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-200 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-3' : 'px-3 py-2'
+                          className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-200 transition-all duration-200 group ${sidebarWidth < 12 ? 'justify-center px-2 py-2' : 'px-3 py-2'
                             }`}
                           title={sidebarWidth < 9 ? skill.label : ''}
                         >
@@ -1718,7 +1718,7 @@ export default function StudentDashboard() {
               <div className="mt-auto pt-4 pb-[35%] border-t border-gray-300">
                 <button
                   onClick={handleLogout}
-                  className={`w-full flex items-center rounded-lg text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 ${sidebarWidth < 9 ? 'justify-center px-2 py-2' : 'px-2 py-3'
+                  className={`w-full flex items-center rounded-lg text-xs font-medium text-red-500 hover:bg-red-100 transition-all duration-200 ${sidebarWidth < 9 ? 'justify-center px-2 py-2 mb-10' : 'px-2 py-3'
                     }`}
                   title={sidebarWidth < 9 ? 'Logout' : ''}
                 >

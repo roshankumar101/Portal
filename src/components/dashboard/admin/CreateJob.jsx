@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { Calendar, Info, Plus, X, Loader, ChevronUp, ChevronDown } from 'lucide-react';
+import { Calendar, Info, Plus, X, Loader, ChevronsUp, ChevronsDown, ChevronDown } from 'lucide-react';
 import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../services/jobs';
 
 // Utility helpers
@@ -916,25 +916,24 @@ export default function CreateJob({ onCreated }) {
             </>
           )}
           
-          {isCompanyDetailsComplete && (
-            <div className={`flex justify-end ${isSectionCollapsed('company') ? '-mt-8' : 'pt-4'}`}>
-              <button
-                type="button"
-                onClick={() => toggleSection('company')}
-                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
-                title={isSectionCollapsed('company') ? 'Expand section' : 'Minimize section'}
-              >
-                {isSectionCollapsed('company') ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
-              </button>
-            </div>
-          )}
+          {/* Always show collapse/expand button - removed mandatory check */}
+          <div className={`flex justify-end ${isSectionCollapsed('company') ? '-mt-8' : 'pt-4'}`}>
+            <button
+              type="button"
+              onClick={() => toggleSection('company')}
+              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+              title={isSectionCollapsed('company') ? 'Expand section' : 'Minimize section'}
+            >
+              {isSectionCollapsed('company') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+            </button>
+          </div>
         </section>
 
-        {/* Section 2: About Drive */}
+        {/* Section 2: About Drive - Removed canShowSection check */}
         <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
           <h3 className="text-lg font-semibold">About Drive</h3>
           
-          {canShowSection('drive') && !isSectionCollapsed('drive') ? (
+          {!isSectionCollapsed('drive') && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
                 <div className="flex flex-col gap-1">
@@ -986,29 +985,26 @@ export default function CreateJob({ onCreated }) {
                 </div>
               </div>
             </>
-          ) : !canShowSection('drive') ? (
-            <p className="text-sm text-slate-500 italic">Complete Company Details section to continue</p>
-          ) : null}
-          
-          {isDriveDetailsComplete && (
-            <div className={`flex justify-end ${isSectionCollapsed('drive') ? '-mt-8' : 'pt-4'}`}>
-              <button
-                type="button"
-                onClick={() => toggleSection('drive')}
-                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-100 rounded-md"
-                title={isSectionCollapsed('drive') ? 'Expand section' : 'Minimize section'}
-              >
-                {isSectionCollapsed('drive') ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
-              </button>
-            </div>
           )}
+          
+          {/* Always show collapse/expand button - removed mandatory check */}
+          <div className={`flex justify-end ${isSectionCollapsed('drive') ? '-mt-8' : 'pt-4'}`}>
+            <button
+              type="button"
+              onClick={() => toggleSection('drive')}
+              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+              title={isSectionCollapsed('drive') ? 'Expand section' : 'Minimize section'}
+            >
+              {isSectionCollapsed('drive') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+            </button>
+          </div>
         </section>
 
-        {/* Section 3: Skills & Eligibility */}
+        {/* Section 3: Skills & Eligibility - Removed canShowSection check */}
         <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
           <h3 className="text-lg font-semibold">Skills & Eligibility</h3>
           
-          {canShowSection('skills') && !isSectionCollapsed('skills') ? (
+          {!isSectionCollapsed('skills') && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1">
@@ -1172,29 +1168,26 @@ export default function CreateJob({ onCreated }) {
                 </div>
               </div>
             </>
-          ) : !canShowSection('skills') ? (
-            <p className="text-sm text-slate-500 italic">Complete About Drive section to continue</p>
-          ) : null}
-          
-          {isSkillsEligibilityComplete && (
-            <div className={`flex justify-end ${isSectionCollapsed('skills') ? '-mt-8' : 'pt-4'}`}>
-              <button
-                type="button"
-                onClick={() => toggleSection('skills')}
-                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-100 rounded-md"
-                title={isSectionCollapsed('skills') ? 'Expand section' : 'Minimize section'}
-              >
-                {isSectionCollapsed('skills') ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
-              </button>
-            </div>
           )}
+          
+          {/* Always show collapse/expand button - removed mandatory check */}
+          <div className={`flex justify-end ${isSectionCollapsed('skills') ? '-mt-8' : 'pt-4'}`}>
+            <button
+              type="button"
+              onClick={() => toggleSection('skills')}
+              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+              title={isSectionCollapsed('skills') ? 'Expand section' : 'Minimize section'}
+            >
+              {isSectionCollapsed('skills') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+            </button>
+          </div>
         </section>
 
-        {/* Section 4: Interview Process */}
+        {/* Section 4: Interview Process - Removed canShowSection check */}
         <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
           <h3 className="text-lg font-semibold">Interview Process</h3>
           
-          {canShowSection('interview') && !isSectionCollapsed('interview') ? (
+          {!isSectionCollapsed('interview') && (
             <>
               {/* Base fixed rounds */}
               <div className="flex flex-wrap items-center gap-4">
@@ -1265,22 +1258,19 @@ export default function CreateJob({ onCreated }) {
                 </div>
               </div>
             </>
-          ) : !canShowSection('interview') ? (
-            <p className="text-sm text-slate-500 italic">Complete Skills & Eligibility section to continue</p>
-          ) : null}
-          
-          {canShowSection('interview') && (
-            <div className={`flex justify-end ${isSectionCollapsed('interview') ? '-mt-8' : 'pt-4'}`}>
-              <button
-                type="button"
-                onClick={() => toggleSection('interview')}
-                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-100 rounded-md"
-                title={isSectionCollapsed('interview') ? 'Expand section' : 'Minimize section'}
-              >
-                {isSectionCollapsed('interview') ? <ChevronDown className="w-6 h-6" /> : <ChevronUp className="w-6 h-6" />}
-              </button>
-            </div>
           )}
+          
+          {/* Always show collapse/expand button - removed mandatory check */}
+          <div className={`flex justify-end ${isSectionCollapsed('interview') ? '-mt-8' : 'pt-4'}`}>
+            <button
+              type="button"
+              onClick={() => toggleSection('interview')}
+              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+              title={isSectionCollapsed('interview') ? 'Expand section' : 'Minimize section'}
+            >
+              {isSectionCollapsed('interview') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+            </button>
+          </div>
         </section>
 
         {/* Final Section: Instructions + Buttons */}
@@ -1362,6 +1352,7 @@ export default function CreateJob({ onCreated }) {
           </div>
         </section>
       </form>
+
 
       {/* Saved positions fieldset */}
       {savedPositions.length > 0 && (

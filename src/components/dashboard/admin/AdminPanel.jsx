@@ -10,7 +10,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Colors
+  Colors,
+  Filler
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { AgCharts } from 'ag-charts-react';
@@ -34,7 +35,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Colors
+  Colors,
+  Filler
 );
 
 const CustomDropdown = ({ 

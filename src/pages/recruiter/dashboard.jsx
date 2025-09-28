@@ -11,6 +11,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler
 } from 'chart.js';
 import { 
   FaFileAlt, FaCheckCircle, FaBullseye, FaPauseCircle, FaTimesCircle,
@@ -28,7 +29,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const RecruiterDashboard = () => {

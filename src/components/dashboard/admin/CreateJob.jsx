@@ -45,10 +45,7 @@ const toDDMMYYYY = (date) => {
 };
 
 const DRIVE_VENUES = [
-  'PW IOI Campus, Bangalore',
-  'PW IOI Campus, Pune',
-  'PW IOI Campus, Noida',
-  'PW IOI Campus, Lucknow',
+  'PW IOI Campus',
   'Company Premises',
 ];
 

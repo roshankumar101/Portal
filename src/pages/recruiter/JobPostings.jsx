@@ -106,30 +106,43 @@ const JobPostings = () => {
     });
   };
 
+  const mapColumnToField = (header) => {
+    const mappings = {
+      'job title': 'jobTitle',
+      'position': 'jobTitle',
+      'company': 'company',
+      'organization': 'company',
+      'location': 'location',
+      'city': 'location',
+      'skills': 'skills',
+      'technologies': 'skills'
+    };
+
+    const normalizedHeader = header.toLowerCase().trim();
+    return mappings[normalizedHeader] || normalizedHeader;
+  };
+
   const processExcelData = (data) => {
     if (!data || data.length === 0) return [];
 
-    // Assuming first row is headers
-    const headers = data[0];
+    const headers = data[0].map(mapColumnToField);
     const rows = data.slice(1);
-    
-    // Map headers to expected job fields
+
     const jobData = rows.map((row, index) => {
-      const job = {};
-      
+      const job = { id: `excel-${index}`, rowNumber: index + 2 };
+
       headers.forEach((header, colIndex) => {
-        if (header && row[colIndex] !== undefined) {
-          const key = header.toLowerCase().replace(/\s+/g, '_');
-          job[key] = row[colIndex];
+        if (header && row[colIndex] !== undefined && row[colIndex] !== null) {
+          if (header === 'skills') {
+            job[header] = String(row[colIndex]).split(',').map(skill => skill.trim());
+          } else {
+            job[header] = String(row[colIndex]);
+          }
         }
       });
-      
-      return {
-        ...job,
-        id: `excel-${index}`,
-        rowNumber: index + 2 // +2 because of header row and 1-based indexing in Excel
-      };
-    }).filter(job => Object.keys(job).length > 1); // Filter out empty rows
+
+      return job;
+    }).filter(job => Object.keys(job).length > 2);
 
     return jobData;
   };
@@ -700,58 +713,39 @@ const ExcelUploadForm = ({
       {excelData && excelData.length > 0 && (
         <div className="bg-gray-50 rounded-lg p-6 space-y-4">
           <h3 className="font-medium text-gray-900">Excel Data Preview</h3>
-          <p className="text-sm text-gray-600">
-            Found {excelData.length} job(s) in the Excel file. Click "Use This Data" to fill the manual entry form.
-          </p>
+          <p className="text-sm text-gray-600">Previewing the first 5 rows of the uploaded Excel file.</p>
 
-          <div className="bg-white rounded-md border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-100">
-                  <tr>
-                    {Object.keys(excelData[0]).map((key) => (
-                      <th key={key} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                        {key.replace(/_/g, ' ')}
-                      </th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100">
+                <tr>
+                  {Object.keys(excelData[0]).map((key) => (
+                    <th key={key} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {key.replace(/_/g, ' ')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {excelData.slice(0, 5).map((row, index) => (
+                  <tr key={index}>
+                    {Object.values(row).map((value, colIndex) => (
+                      <td key={colIndex} className="px-4 py-2 text-sm text-gray-900">
+                        {String(value)}
+                      </td>
                     ))}
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {excelData.slice(0, 5).map((row, index) => (
-                    <tr key={index}>
-                      {Object.values(row).map((value, cellIndex) => (
-                        <td key={cellIndex} className="px-4 py-2 text-sm text-gray-900">
-                          {String(value || '')}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {excelData.length > 5 && (
-              <div className="px-4 py-2 bg-gray-50 text-sm text-gray-500">
-                Showing first 5 of {excelData.length} rows
-              </div>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => excelFileInputRef.current?.click()}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
-            >
-              Upload Different File
-            </button>
-            <button
-              type="button"
-              onClick={handleUseExcelData}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-            >
-              Use This Data for Manual Entry
-            </button>
-          </div>
+          <button
+            onClick={handleUseExcelData}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Use This Data
+          </button>
         </div>
       )}
     </div>

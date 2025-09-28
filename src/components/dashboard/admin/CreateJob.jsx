@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { Calendar, Info, Plus, X, Loader, ChevronsUp, ChevronsDown, ChevronDown } from 'lucide-react';
 import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../services/jobs';
+import * as XLSX from 'xlsx';
 
 // Utility helpers
 const toISOFromDDMMYYYY = (val) => {
@@ -59,6 +60,9 @@ export default function CreateJob({ onCreated }) {
   const { user } = useAuth();
   const [posting, setPosting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [creationMethod, setCreationMethod] = useState('manual');
+  const [excelData, setExcelData] = useState([]);
+  const [currentJobIndex, setCurrentJobIndex] = useState(0);
   
   // Dropdown states for all custom dropdowns
   const [showVenues, setShowVenues] = useState(false);
@@ -661,6 +665,57 @@ export default function CreateJob({ onCreated }) {
     }
   };
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(sheet);
+        setExcelData(parsedData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const columnMapping = {
+    'Job Title': 'jobTitle',
+    Position: 'jobTitle',
+    Company: 'company',
+    Organization: 'company',
+    Location: 'location',
+    City: 'location',
+    Skills: 'skills',
+    Technologies: 'skills',
+  };
+
+  const mapColumnsToForm = (row) => {
+    const mappedForm = {};
+    for (const [key, value] of Object.entries(row)) {
+      const formField = columnMapping[key];
+      if (formField) {
+        if (formField === 'skills') {
+          mappedForm[formField] = value.split(',').map((skill) => skill.trim());
+        } else {
+          mappedForm[formField] = value;
+        }
+      }
+    }
+    return mappedForm;
+  };
+
+  const handleUseData = () => {
+    if (excelData.length > 0 && currentJobIndex < excelData.length) {
+      const jobData = excelData[currentJobIndex];
+      const mappedData = mapColumnsToForm(jobData);
+      setForm((prevForm) => ({ ...prevForm, ...mappedData }));
+      setCurrentJobIndex(currentJobIndex + 1);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -669,404 +724,432 @@ export default function CreateJob({ onCreated }) {
         <p className="text-sm text-slate-600">Please fill the following details</p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-4 space-y-6">
-        {/* Section 1: Company Details */}
-        <section className="space-y-4 border-b-[1.5px] border-gray-700 pb-6 mb-6">
-          <h3 className="text-lg font-semibold">Company Details</h3>
-          
-          {!isSectionCollapsed('company') && (
-            <>
-              {/* Company field taking full row */}
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
-                <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
-              </div>
+      {/* Sub-Navigation Tabs: Manual vs. Upload */}
+      <div className="flex justify-center mb-8">
+        <div className="bg-white rounded-sm p-1 shadow-sm border border-gray-200 inline-flex gap-2">
+          <button
+            onClick={() => setCreationMethod('manual')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'manual'
+                ? 'bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Manual Entry
+          </button>
 
-              {/* LinkedIn and Website fields half-half */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <button
+            onClick={() => setCreationMethod('upload')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'upload'
+                ? 'bg-gradient-to-tr to-blue-600 from-purple-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Upload JD
+          </button>
+        </div>
+      </div>
+
+      {/* Render content based on creationMethod */}
+      {creationMethod === 'manual' && (
+        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-4 space-y-6">
+          {/* Section 1: Company Details */}
+          <section className="space-y-4 border-b-[1.5px] border-gray-700 pb-6 mb-6">
+            <h3 className="text-lg font-semibold">Company Details</h3>
+            
+            {!isSectionCollapsed('company') && (
+              <>
+                {/* Company field taking full row */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-blue-600 font-medium">LinkedIn <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${linkedinError ? 'border-red-400 bg-red-50' : form.linkedin?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="https://linkedin.com/company/example" value={form.linkedin} onChange={(e) => onLinkedInChange(e.target.value)} required />
-                  {linkedinError && <p className="text-xs text-red-600 mt-1">{linkedinError}</p>}
+                  <label className="text-sm text-black font-medium">Company <span className="text-red-500">*</span>:</label>
+                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.company?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. ABC Corp" value={form.company} onChange={(e) => update({ company: e.target.value })} />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-blue-600 font-medium">Website <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${websiteError ? 'border-red-400 bg-red-50' : form.website?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="www.company.com" value={form.website} onChange={(e) => onWebsiteChange(e.target.value)} required />
-                  {websiteError && <p className="text-xs text-red-600 mt-1">{websiteError}</p>}
-                </div>
-              </div>
+                {/* LinkedIn and Website fields half-half */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-blue-600 font-medium">LinkedIn <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${linkedinError ? 'border-red-400 bg-red-50' : form.linkedin?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="https://linkedin.com/company/example" value={form.linkedin} onChange={(e) => onLinkedInChange(e.target.value)} required />
+                    {linkedinError && <p className="text-xs text-red-600 mt-1">{linkedinError}</p>}
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* Job Type Dropdown with Toggle Effect */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
-                  <div className="relative" ref={jobTypeDropdownRef}>
-                    <button
-                      type="button"
-                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
-                      onClick={() => setShowJobTypes(prev => !prev)}
-                    >
-                      <span className="truncate">
-                        {form.jobType || 'Select Job Type'}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    </button>
-                    {showJobTypes && (
-                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
-                        <button
-                          type="button"
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 text-left"
-                          onClick={() => {
-                            onJobTypeChange('Internship');
-                            setShowJobTypes(false);
-                          }}
-                        >
-                          <span>Internship</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer text-left"
-                          onClick={() => {
-                            onJobTypeChange('Full-Time');
-                            setShowJobTypes(false);
-                          }}
-                        >
-                          <span>Full-Time</span>
-                        </button>
-                      </div>
-                    )}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-blue-600 font-medium">Website <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-blue-200 rounded-md px-3 py-2 text-sm text-blue-700 placeholder:text-gray-400 ${websiteError ? 'border-red-400 bg-red-50' : form.website?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="www.company.com" value={form.website} onChange={(e) => onWebsiteChange(e.target.value)} required />
+                    {websiteError && <p className="text-xs text-red-600 mt-1">{websiteError}</p>}
                   </div>
                 </div>
 
-                {form.jobType === 'Internship' ? (
-                  <>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
-                      <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${stipendError ? 'border-red-400 bg-red-50' : form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => onStipendChange(e.target.value)} />
-                      {stipendError && <p className="text-xs text-red-600 mt-1">{stipendError}</p>}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
-                      <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${durationError ? 'border-red-400 bg-red-50' : form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => onDurationChange(e.target.value)} />
-                      {durationError && <p className="text-xs text-red-600 mt-1">{durationError}</p>}
-                    </div>
-                  </>
-                ) : form.jobType === 'Full-Time' ? (
-                  <div className="flex flex-col gap-1 sm:col-span-2">
-                    <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
-                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${salaryError ? 'border-red-400 bg-red-50' : form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => onSalaryChange(e.target.value)} />
-                    {salaryError && <p className="text-xs text-red-600 mt-1">{salaryError}</p>}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Job Title <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
-                </div>
-                
-                {/* Work Mode Dropdown with Toggle Effect */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
-                  <div className="relative" ref={workModeDropdownRef}>
-                    <button
-                      type="button"
-                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
-                      onClick={() => setShowWorkModes(prev => !prev)}
-                    >
-                      <span className="truncate">
-                        {form.workMode || 'Select Work Mode'}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    </button>
-                    {showWorkModes && (
-                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
-                        {['On-site', 'Hybrid', 'Remote'].map((mode) => (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {/* Job Type Dropdown with Toggle Effect */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
+                    <div className="relative" ref={jobTypeDropdownRef}>
+                      <button
+                        type="button"
+                        className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.jobType && form.jobType !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                        onClick={() => setShowJobTypes(prev => !prev)}
+                      >
+                        <span className="truncate">
+                          {form.jobType || 'Select Job Type'}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      </button>
+                      {showJobTypes && (
+                        <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
                           <button
-                            key={mode}
                             type="button"
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 text-left"
                             onClick={() => {
-                              update({ workMode: mode });
-                              setShowWorkModes(false);
+                              onJobTypeChange('Internship');
+                              setShowJobTypes(false);
                             }}
                           >
-                            <span>{mode}</span>
+                            <span>Internship</span>
                           </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="flex flex-col gap-1 sm:col-span-2">
-                  <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${companyLocationError ? 'border-red-400 bg-red-50' : form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => onCompanyLocationChange(e.target.value)} />
-                  {companyLocationError && <p className="text-xs text-red-600 mt-1">{companyLocationError}</p>}
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Open Positions:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 15" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-black font-medium">Roles & Responsibilities:</label>
-                <textarea 
-                  className={`border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[120px] max-h-[300px] resize-y ${form.responsibilities?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
-                  placeholder="Outline responsibilities, tech stack, team, etc. (optional)" 
-                  value={form.responsibilities} 
-                  onChange={(e) => update({ responsibilities: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const textarea = e.target;
-                      const cursorPosition = textarea.selectionStart;
-                      const textBefore = textarea.value.substring(0, cursorPosition);
-                      const textAfter = textarea.value.substring(cursorPosition);
-                      
-                      const lines = textBefore.split('\n');
-                      const currentLine = lines[lines.length - 1];
-                      
-                      let newText;
-                      if (currentLine?.trim() === '' || currentLine?.trim() === '•') {
-                        newText = textBefore + '\n• ' + textAfter;
-                      } else if (currentLine.startsWith('• ')) {
-                        newText = textBefore + '\n• ' + textAfter;
-                      } else {
-                        const updatedCurrentLine = '• ' + currentLine;
-                        const updatedLines = [...lines.slice(0, -1), updatedCurrentLine];
-                        newText = updatedLines.join('\n') + '\n• ' + textAfter;
-                      }
-                      
-                      update({ responsibilities: newText });
-                      
-                      setTimeout(() => {
-                        const newCursorPosition = newText.length - textAfter.length;
-                        textarea.setSelectionRange(newCursorPosition, newCursorPosition);
-                      }, 0);
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Company SPOC Subsection */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <h4 className="text-md font-medium text-gray-800 mb-4">Company SPOC</h4>
-                {form.spocs.map((spoc, idx) => (
-                  <div key={idx} className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <div className="flex items-center justify-between mb-3">
-                      <h5 className="text-sm font-medium text-gray-700">SPOC {idx + 1}</h5>
-                      {form.spocs.length > 1 && (
-                        <button 
-                          type="button" 
-                          onClick={() => removeSpoc(idx)} 
-                          className="text-red-500 hover:text-red-700" 
-                          title="Remove this SPOC"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                          <button
+                            type="button"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer text-left"
+                            onClick={() => {
+                              onJobTypeChange('Full-Time');
+                              setShowJobTypes(false);
+                            }}
+                          >
+                            <span>Full-Time</span>
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  </div>
+
+                  {form.jobType === 'Internship' ? (
+                    <>
                       <div className="flex flex-col gap-1">
-                        <label className="text-sm text-black font-medium">Full Name:</label>
-                        <input 
-                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.fullName?.trim() ? 'bg-green-50' : 'bg-white'}`} 
-                          placeholder="e.g. Amit Kumar" 
-                          value={spoc.fullName} 
-                          onChange={(e) => updateSpoc(idx, 'fullName', e.target.value)} 
-                        />
+                        <label className="text-sm text-black font-medium">Stipend <span className="text-red-500">*</span>:</label>
+                        <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${stipendError ? 'border-red-400 bg-red-50' : form.stipend?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per month (e.g. 15000)" value={form.stipend} onChange={(e) => onStipendChange(e.target.value)} />
+                        {stipendError && <p className="text-xs text-red-600 mt-1">{stipendError}</p>}
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-sm text-black font-medium">Email ID:</label>
-                        <input 
-                          type="email"
-                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.email?.trim() ? 'bg-green-50' : 'bg-white'}`} 
-                          placeholder="e.g. amit.kumar@company.com" 
-                          value={spoc.email} 
-                          onChange={(e) => updateSpoc(idx, 'email', e.target.value)} 
-                        />
+                        <label className="text-sm text-black font-medium">Duration <span className="text-red-500">*</span>:</label>
+                        <input className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${durationError ? 'border-red-400 bg-red-50' : form.duration?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 6 months" value={form.duration} onChange={(e) => onDurationChange(e.target.value)} />
+                        {durationError && <p className="text-xs text-red-600 mt-1">{durationError}</p>}
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-sm text-black font-medium">Phone Number:</label>
-                        <input 
-                          type="tel"
-                          className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.phone?.trim() ? 'bg-green-50' : 'bg-white'}`} 
-                          placeholder="e.g. +91 9876543210" 
-                          value={spoc.phone} 
-                          onChange={(e) => updateSpoc(idx, 'phone', e.target.value)} 
-                        />
-                      </div>
+                    </>
+                  ) : form.jobType === 'Full-Time' ? (
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <label className="text-sm text-black font-medium">Salary (CTC) <span className="text-red-500">*</span>:</label>
+                      <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${salaryError ? 'border-red-400 bg-red-50' : form.salary?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="₹ per annum (e.g. 12,00,000)" value={form.salary} onChange={(e) => onSalaryChange(e.target.value)} />
+                      {salaryError && <p className="text-xs text-red-600 mt-1">{salaryError}</p>}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Job Title <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
+                  </div>
+                  
+                  {/* Work Mode Dropdown with Toggle Effect */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
+                    <div className="relative" ref={workModeDropdownRef}>
+                      <button
+                        type="button"
+                        className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.workMode && form.workMode !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                        onClick={() => setShowWorkModes(prev => !prev)}
+                      >
+                        <span className="truncate">
+                          {form.workMode || 'Select Work Mode'}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      </button>
+                      {showWorkModes && (
+                        <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-md">
+                          {['On-site', 'Hybrid', 'Remote'].map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
+                              onClick={() => {
+                                update({ workMode: mode });
+                                setShowWorkModes(false);
+                              }}
+                            >
+                              <span>{mode}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-                <div className="flex justify-start">
-                  <button 
-                    type="button" 
-                    onClick={addSpoc} 
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
-                  >
-                    <Plus className="w-4 h-4" /> Add More
-                  </button>
                 </div>
-              </div>
-            </>
-          )}
-          
-          {/* Always show collapse/expand button - removed mandatory check */}
-          <div className={`flex justify-end ${isSectionCollapsed('company') ? '-mt-8' : 'pt-4'}`}>
-            <button
-              type="button"
-              onClick={() => toggleSection('company')}
-              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
-              title={isSectionCollapsed('company') ? 'Expand section' : 'Minimize section'}
-            >
-              {isSectionCollapsed('company') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
-            </button>
-          </div>
-        </section>
 
-        {/* Section 2: About Drive - Removed canShowSection check */}
-        <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
-          <h3 className="text-lg font-semibold">About Drive</h3>
-          
-          {!isSectionCollapsed('drive') && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Drive Date <span className="text-red-500">*</span>:</label>
-                  <div className="relative">
-                    <input
-                      className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${driveDraft.driveDateText?.trim() ? 'bg-green-100' : 'bg-gray-100'}`}
-                      placeholder="DD/MM/YYYY"
-                      value={driveDraft.driveDateText || ''}
-                      onChange={(e) => onDriveDateText(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => hiddenDateRef.current?.showPicker?.() || hiddenDateRef.current?.click()}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900"
-                      title="Pick a date"
-                    >
-                      <Calendar className="w-4 h-4" />
-                    </button>
-                    <input ref={hiddenDateRef} type="date" className="sr-only" onChange={onPickDate} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-sm text-black font-medium">Company Location <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${companyLocationError ? 'border-red-400 bg-red-50' : form.companyLocation?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="City, State (e.g. Bangalore, Karnataka)" value={form.companyLocation} onChange={(e) => onCompanyLocationChange(e.target.value)} />
+                    {companyLocationError && <p className="text-xs text-red-600 mt-1">{companyLocationError}</p>}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Open Positions:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.openings?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. 15" value={form.openings} onChange={(e) => update({ openings: e.target.value })} />
                   </div>
                 </div>
 
-                {/* Drive Venue Dropdown with Toggle Effect - Updated */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
-                  <div ref={venueDropdownRef} className="relative">
-                    <button 
-                      type="button" 
-                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'} ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} 
-                      onClick={() => setShowVenues((v) => !v)}
-                    >
-                      <span>
-                        {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(', ') : 'Select venues'}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    </button>
-                    {showVenues && (
-                      <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                        {DRIVE_VENUES.map((v) => (
-                          <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0">
-                            <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
-                            <span>{v}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-          
-          {/* Always show collapse/expand button - removed mandatory check */}
-          <div className={`flex justify-end ${isSectionCollapsed('drive') ? '-mt-8' : 'pt-4'}`}>
-            <button
-              type="button"
-              onClick={() => toggleSection('drive')}
-              className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
-              title={isSectionCollapsed('drive') ? 'Expand section' : 'Minimize section'}
-            >
-              {isSectionCollapsed('drive') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
-            </button>
-          </div>
-        </section>
-
-        {/* Section 3: Skills & Eligibility - Removed canShowSection check */}
-        <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
-          <h3 className="text-lg font-semibold">Skills & Eligibility</h3>
-          
-          {!isSectionCollapsed('skills') && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Qualification <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Specialization:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025 or 25" value={form.yop} onChange={(e) => onYopChange(e.target.value)} />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
-                  <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${minCgpaError ? 'border-red-400 bg-red-50' : form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 or 70%" value={form.minCgpa} onChange={(e) => onMinCgpaChange(e.target.value)} onBlur={(e) => onMinCgpaBlur(e.target.value)} />
-                  {minCgpaError && <p className="text-xs text-red-600 mt-1">{minCgpaError}</p>}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-black font-medium">Skills <span className="text-red-500">*</span>:</label>
-                <div className={`relative border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[42px] flex flex-wrap items-center gap-1 ${form.skills.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
-                  {form.skills.map((s, idx) => (
-                    <span key={`${s}-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                      {s}
-                      <button type="button" className="ml-1 hover:text-blue-900" onClick={() => removeSkill(idx)}>
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm"
-                    placeholder={form.skills.length === 0 ? "e.g. JavaScript, React, Node.js (comma separated)" : ""}
-                    value={form.skillsInput}
-                    onChange={(e) => update({ skillsInput: e.target.value })}
-                    onKeyDown={onSkillsKeyDown}
-                    required
+                  <label className="text-sm text-black font-medium">Roles & Responsibilities:</label>
+                  <textarea 
+                    className={`border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[120px] max-h-[300px] resize-y ${form.responsibilities?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} 
+                    placeholder="Outline responsibilities, tech stack, team, etc. (optional)" 
+                    value={form.responsibilities} 
+                    onChange={(e) => update({ responsibilities: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const textarea = e.target;
+                        const cursorPosition = textarea.selectionStart;
+                        const textBefore = textarea.value.substring(0, cursorPosition);
+                        const textAfter = textarea.value.substring(cursorPosition);
+                        
+                        const lines = textBefore.split('\n');
+                        const currentLine = lines[lines.length - 1];
+                        
+                        let newText;
+                        if (currentLine?.trim() === '' || currentLine?.trim() === '•') {
+                          newText = textBefore + '\n• ' + textAfter;
+                        } else if (currentLine.startsWith('• ')) {
+                          newText = textBefore + '\n• ' + textAfter;
+                        } else {
+                          const updatedCurrentLine = '• ' + currentLine;
+                          const updatedLines = [...lines.slice(0, -1), updatedCurrentLine];
+                          newText = updatedLines.join('\n') + '\n• ' + textAfter;
+                        }
+                        
+                        update({ responsibilities: newText });
+                        
+                        setTimeout(() => {
+                          const newCursorPosition = newText.length - textAfter.length;
+                          textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+                        }, 0);
+                      }
+                    }}
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* Year Gaps Dropdown - Keep the custom behavior as it is unique */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black font-medium">Year Gaps <span className="text-red-500">*</span>:</label>
-                  <div className="relative" ref={gapAllowedDropdownRef}>
-                    {!gapInputMode ? (
-                      <>
-                        <button
-                          type="button"
-                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
-                          onClick={() => setShowGapAllowed(prev => !prev)}
-                        >
-                          <span className="truncate">
-                            {form.gapAllowed === 'Custom' && form.gapYears 
-                              ? `${form.gapYears} Year/s Allowed` 
-                              : form.gapAllowed || 'Select Gap Policy'}
+                {/* Company SPOC Subsection */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <h4 className="text-md font-medium text-gray-800 mb-4">Company SPOC</h4>
+                  {form.spocs.map((spoc, idx) => (
+                    <div key={idx} className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="text-sm font-medium text-gray-700">SPOC {idx + 1}</h5>
+                        {form.spocs.length > 1 && (
+                          <button 
+                            type="button" 
+                            onClick={() => removeSpoc(idx)} 
+                            className="text-red-500 hover:text-red-700" 
+                            title="Remove this SPOC"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-sm text-black font-medium">Full Name:</label>
+                          <input 
+                            className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.fullName?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                            placeholder="e.g. Amit Kumar" 
+                            value={spoc.fullName} 
+                            onChange={(e) => updateSpoc(idx, 'fullName', e.target.value)} 
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-sm text-black font-medium">Email ID:</label>
+                          <input 
+                            type="email"
+                            className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.email?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                            placeholder="e.g. amit.kumar@company.com" 
+                            value={spoc.email} 
+                            onChange={(e) => updateSpoc(idx, 'email', e.target.value)} 
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-sm text-black font-medium">Phone Number:</label>
+                          <input 
+                            type="tel"
+                            className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${spoc.phone?.trim() ? 'bg-green-50' : 'bg-white'}`} 
+                            placeholder="e.g. +91 9876543210" 
+                            value={spoc.phone} 
+                            onChange={(e) => updateSpoc(idx, 'phone', e.target.value)} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-start">
+                    <button 
+                      type="button" 
+                      onClick={addSpoc} 
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+                    >
+                      <Plus className="w-4 h-4" /> Add More
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Always show collapse/expand button - removed mandatory check */}
+            <div className={`flex justify-end ${isSectionCollapsed('company') ? '-mt-8' : 'pt-4'}`}>
+              <button
+                type="button"
+                onClick={() => toggleSection('company')}
+                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+                title={isSectionCollapsed('company') ? 'Expand section' : 'Minimize section'}
+              >
+                {isSectionCollapsed('company') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+              </button>
+            </div>
+          </section>
+
+          {/* Section 2: About Drive - Removed canShowSection check */}
+          <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
+            <h3 className="text-lg font-semibold">About Drive</h3>
+            
+            {!isSectionCollapsed('drive') && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Drive Date <span className="text-red-500">*</span>:</label>
+                    <div className="relative">
+                      <input
+                        className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-10 ${driveDraft.driveDateText?.trim() ? 'bg-green-100' : 'bg-gray-100'}`}
+                        placeholder="DD/MM/YYYY"
+                        value={driveDraft.driveDateText || ''}
+                        onChange={(e) => onDriveDateText(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => hiddenDateRef.current?.showPicker?.() || hiddenDateRef.current?.click()}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-900"
+                        title="Pick a date"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                      <input ref={hiddenDateRef} type="date" className="sr-only" onChange={onPickDate} />
+                    </div>
+                  </div>
+
+                  {/* Drive Venue Dropdown with Toggle Effect - Updated */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
+                    <div ref={venueDropdownRef} className="relative">
+                      <button 
+                        type="button" 
+                        className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'} ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} 
+                        onClick={() => setShowVenues((v) => !v)}
+                      >
+                        <span>
+                          {driveDraft.driveVenues.length ? driveDraft.driveVenues.join(', ') : 'Select venues'}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      </button>
+                      {showVenues && (
+                        <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                          {DRIVE_VENUES.map((v) => (
+                            <label key={v} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0">
+                              <input type="checkbox" checked={driveDraft.driveVenues.includes(v)} onChange={() => toggleVenue(v)} />
+                              <span>{v}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Always show collapse/expand button - removed mandatory check */}
+            <div className={`flex justify-end ${isSectionCollapsed('drive') ? '-mt-8' : 'pt-4'}`}>
+              <button
+                type="button"
+                onClick={() => toggleSection('drive')}
+                className="text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-200 rounded-md"
+                title={isSectionCollapsed('drive') ? 'Expand section' : 'Minimize section'}
+              >
+                {isSectionCollapsed('drive') ? <ChevronsDown className="w-6 h-6" /> : <ChevronsUp className="w-6 h-6" />}
+              </button>
+            </div>
+          </section>
+
+          {/* Section 3: Skills & Eligibility - Removed canShowSection check */}
+          <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
+            <h3 className="text-lg font-semibold">Skills & Eligibility</h3>
+            
+            {!isSectionCollapsed('skills') && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Qualification <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.qualification?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. B.Tech, BCA, MCA" value={form.qualification} onChange={(e) => update({ qualification: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Specialization:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.specialization?.trim() ? 'bg-green-50' : 'bg-gray-50'}`} placeholder="e.g. Computer Science (optional)" value={form.specialization} onChange={(e) => update({ specialization: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Year of Passing <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.yop?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 2025 or 25" value={form.yop} onChange={(e) => onYopChange(e.target.value)} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Minimum CGPA/Percentage <span className="text-red-500">*</span>:</label>
+                    <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${minCgpaError ? 'border-red-400 bg-red-50' : form.minCgpa?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. 7.0 or 70%" value={form.minCgpa} onChange={(e) => onMinCgpaChange(e.target.value)} onBlur={(e) => onMinCgpaBlur(e.target.value)} />
+                    {minCgpaError && <p className="text-xs text-red-600 mt-1">{minCgpaError}</p>}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-black font-medium">Skills <span className="text-red-500">*</span>:</label>
+                  <div className={`relative border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[42px] flex flex-wrap items-center gap-1 ${form.skills.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
+                    {form.skills.map((s, idx) => (
+                      <span key={`${s}-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                        {s}
+                        <button type="button" className="ml-1 hover:text-blue-900" onClick={() => removeSkill(idx)}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm"
+                      placeholder={form.skills.length === 0 ? "e.g. JavaScript, React, Node.js (comma separated)" : ""}
+                      value={form.skillsInput}
+                      onChange={(e) => update({ skillsInput: e.target.value })}
+                      onKeyDown={onSkillsKeyDown}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {/* Year Gaps Dropdown - Keep the custom behavior as it is unique */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Year Gaps <span className="text-red-500">*</span>:</label>
+                    <div className="relative" ref={gapAllowedDropdownRef}>
+                      {!gapInputMode ? (
+                        <>
+                          <button
+                            type="button"
+                            className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.gapAllowed && form.gapAllowed !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                            onClick={() => setShowGapAllowed(prev => !prev)}
+                          >
+                            <span className="truncate">
+                              {form.gapAllowed === 'Custom' && form.gapYears 
+                                ? `${form.gapYears} Year/s Allowed` 
+                                : form.gapAllowed || 'Select Gap Policy'}
                           </span>
                           <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         </button>
@@ -1355,111 +1438,41 @@ export default function CreateJob({ onCreated }) {
           </div>
         </section>
       </form>
+      )}
 
-
-      {/* Saved positions fieldset */}
-      {savedPositions.length > 0 && (
-        <fieldset className="mt-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
-          <legend className="px-2 text-sm font-semibold text-gray-700">Added Positions ({savedPositions.length})</legend>
-          <div className="space-y-3">
-            {savedPositions.map((p, i) => (
-              <div key={`${p.company}-${p.jobTitle}-${i}`} className="grid grid-cols-1 sm:grid-cols-5 gap-4 p-3 bg-white rounded-md border border-gray-200">
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium">Company</span>
-                  <span className="text-sm text-gray-800 font-medium">{p.company}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium">Position</span>
-                  <span className="text-sm text-gray-800">{p.jobTitle}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium">Job Type</span>
-                  <span className="text-sm text-gray-800">{p.jobType}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium">Work Mode</span>
-                  <span className="text-sm text-gray-800">{p.workMode}</span>
-                </div>
-                <div className="flex justify-end items-center">
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedPositions.has(i)}
-                      onChange={(e) => {
-                        const newSelected = new Set(selectedPositions);
-                        if (e.target.checked) {
-                          newSelected.add(i);
-                        } else {
-                          newSelected.delete(i);
-                        }
-                        setSelectedPositions(newSelected);
-                      }}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        update({
-                          company: p.company,
-                          jobTitle: p.jobTitle,
-                          jobType: p.jobType,
-                          workMode: p.workMode,
-                          stipend: '',
-                          duration: '',
-                          salary: '',
-                          responsibilities: '',
-                          driveDateText: '',
-                          driveDateISO: '',
-                          driveVenues: [],
-                          qualification: '',
-                          specialization: '',
-                          yop: '',
-                          minCgpa: '',
-                          skills: [],
-                          skillsInput: '',
-                          gapAllowed: 'Not Allowed',
-                          gapYears: '',
-                          backlogs: 'Not Allowed',
-                          serviceAgreement: '',
-                          blockingPeriod: '',
-                          baseRoundDetails: ['', '', ''],
-                          extraRounds: [],
-                          instructions: ''
-                        });
-                        setDriveDraft({
-                          driveDateText: '',
-                          driveDateISO: '',
-                          driveVenues: []
-                        });
-                        setGapInputMode(false);
-                        setSavedPositions(list => list.filter((_, idx) => idx !== i));
-                        setCollapsedSections(new Set());
-                      }}
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      title="Edit position"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setSavedPositions(list => list.filter((_, idx) => idx !== i));
-                      }}
-                      className="text-red-600 hover:text-red-800 p-1"
-                      title="Delete position"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </fieldset>
+      {creationMethod === 'upload' && (
+        <div>
+          <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+          {excelData.length > 0 && (
+            <div>
+              <h3>Preview Data</h3>
+              <table>
+                <thead>
+                  <tr>
+                    {Object.keys(excelData[0]).map((key) => (
+                      <th key={key}>{key}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {excelData.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, i) => (
+                        <td key={i}>{value}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button onClick={handleUseData}>Use This Data</button>
+              <p>
+                {currentJobIndex < excelData.length
+                  ? `Processing Job ${currentJobIndex + 1} of ${excelData.length}`
+                  : 'All jobs processed.'}
+              </p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -45,8 +45,14 @@ const toDDMMYYYY = (date) => {
 };
 
 const DRIVE_VENUES = [
-  'PW IOI Campus',
-  'Company Premises',
+  'PW IOI Campus, Bangalore',
+  'PW IOI Campus, Noida',
+  'PW IOI Campus, Lucknow',
+  'PW IOI Campus, Pune',
+  'PW IOI Campus, Patna',
+  'PW IOI Campus, Indore',
+  'Company Premises',
+
 ];
 
 export default function CreateJob({ onCreated }) {
@@ -960,7 +966,7 @@ export default function CreateJob({ onCreated }) {
                   <div ref={venueDropdownRef} className="relative">
                     <button 
                       type="button" 
-                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} 
+                      className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${driveDraft.driveVenues.length ? driveDraft.driveVenues.join(' | ') : 'Select venues'} ${driveDraft.driveVenues.length ? 'bg-green-100' : 'bg-gray-100'}`} 
                       onClick={() => setShowVenues((v) => !v)}
                     >
                       <span>

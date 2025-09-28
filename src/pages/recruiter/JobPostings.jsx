@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Info, Plus, X, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import CreateJob from '../../components/dashboard/admin/CreateJob.jsx';
+import * as XLSX from 'xlsx';
 
 const ErrorBoundary = ({ children }) => {
   try {
@@ -17,7 +18,9 @@ const JobPostings = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState(null);
   const [uploadError, setUploadError] = useState('');
+  const [excelData, setExcelData] = useState(null);
   const fileInputRef = useRef(null);
+  const excelFileInputRef = useRef(null);
 
   // Mock data for job postings
   const [jobs, setJobs] = useState([
@@ -32,7 +35,116 @@ const JobPostings = () => {
     { id: 'd2', title: 'Backend Engineer', company: 'ServerStack', lastModified: '2023-10-23' },
   ]);
 
-  // Handle file upload for JD parsing
+  // Handle Excel file upload
+  const handleExcelUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.ms-excel.sheet.macroEnabled.12'
+    ];
+    
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      setUploadError('Please upload a valid Excel file (.xlsx or .xls).');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError('');
+    setExcelData(null);
+
+    try {
+      const data = await readExcelFile(file);
+      setExcelData(data);
+      
+      // Auto-populate the manual entry form if we're in manual mode
+      if (creationMethod === 'manual' && data.length > 0) {
+        // You can pass this data to CreateJob component or handle it as needed
+        console.log('Excel data ready for manual entry:', data);
+      }
+    } catch (err) {
+      setUploadError('Failed to read Excel file. Please make sure it\'s a valid Excel file.');
+      console.error('Excel upload error:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const readExcelFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get the first sheet
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Process the data to extract job information
+          const processedData = processExcelData(jsonData);
+          resolve(processedData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const processExcelData = (data) => {
+    if (!data || data.length === 0) return [];
+
+    // Assuming first row is headers
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    // Map headers to expected job fields
+    const jobData = rows.map((row, index) => {
+      const job = {};
+      
+      headers.forEach((header, colIndex) => {
+        if (header && row[colIndex] !== undefined) {
+          const key = header.toLowerCase().replace(/\s+/g, '_');
+          job[key] = row[colIndex];
+        }
+      });
+      
+      return {
+        ...job,
+        id: `excel-${index}`,
+        rowNumber: index + 2 // +2 because of header row and 1-based indexing in Excel
+      };
+    }).filter(job => Object.keys(job).length > 1); // Filter out empty rows
+
+    return jobData;
+  };
+
+  const handleUseExcelData = () => {
+    if (excelData && excelData.length > 0) {
+      // Switch to manual entry mode and pass the excel data
+      setCreationMethod('manual');
+      // You might want to pass this data to CreateJob component via props or context
+      console.log('Using Excel data for manual entry:', excelData);
+      alert(`Found ${excelData.length} job(s) in Excel file. Please review and complete the details in the manual entry form.`);
+    }
+  };
+
+  // Handle file upload for JD parsing (existing function)
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -94,6 +206,21 @@ const JobPostings = () => {
     }
   };
 
+  const handleExcelDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleExcelDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      excelFileInputRef.current.files = files;
+      handleExcelUpload({ target: { files } });
+    }
+  };
+
   const handleUseParsedData = () => {
     alert('Parsed data would be sent for approval or opened in an editable form.');
     setActiveView('active');
@@ -136,6 +263,12 @@ const JobPostings = () => {
           handleDrop={handleDrop} 
           handleUseParsedData={handleUseParsedData}
           onJobSubmit={handleJobSubmit}
+          excelData={excelData}
+          handleExcelUpload={handleExcelUpload}
+          handleExcelDragOver={handleExcelDragOver}
+          handleExcelDrop={handleExcelDrop}
+          handleUseExcelData={handleUseExcelData}
+          excelFileInputRef={excelFileInputRef}
         />;
       default:
         return <ActivePostingsView jobs={jobs} onCloseJob={handleCloseJob} onCloneJob={handleCloneJob} />;
@@ -284,7 +417,8 @@ const DraftPostingsView = ({ drafts }) => {
 
 const NewJobView = ({ 
   creationMethod, setCreationMethod, isUploading, parseResult, uploadError, 
-  fileInputRef, handleFileUpload, handleDragOver, handleDrop, handleUseParsedData, onJobSubmit 
+  fileInputRef, handleFileUpload, handleDragOver, handleDrop, handleUseParsedData, onJobSubmit,
+  excelData, handleExcelUpload, handleExcelDragOver, handleExcelDrop, handleUseExcelData, excelFileInputRef
 }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -301,6 +435,7 @@ const NewJobView = ({
           >
             Manual Entry
           </button>
+
           <button
             onClick={() => setCreationMethod('upload')}
             className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
@@ -311,12 +446,22 @@ const NewJobView = ({
           >
             Upload JD
           </button>
+          <button
+            onClick={() => setCreationMethod('upload Excel')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'upload Excel'
+                ? 'bg-gradient-to-tr to-blue-600 from-purple-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Upload Excel
+          </button>
         </div>
       </div>
 
       {creationMethod === 'manual' ? (
-        <CreateJob onJobSubmit={onJobSubmit} />
-      ) : (
+        <CreateJob onJobSubmit={onJobSubmit} excelData={excelData} />
+      ) : creationMethod === 'upload' ? (
         <JDUploadForm 
           isUploading={isUploading} 
           parseResult={parseResult} 
@@ -326,6 +471,17 @@ const NewJobView = ({
           handleDragOver={handleDragOver}
           handleDrop={handleDrop}
           handleUseParsedData={handleUseParsedData}
+        />
+      ) : (
+        <ExcelUploadForm 
+          isUploading={isUploading}
+          excelData={excelData}
+          uploadError={uploadError}
+          excelFileInputRef={excelFileInputRef}
+          handleExcelUpload={handleExcelUpload}
+          handleExcelDragOver={handleExcelDragOver}
+          handleExcelDrop={handleExcelDrop}
+          handleUseExcelData={handleUseExcelData}
         />
       )}
     </div>
@@ -468,7 +624,141 @@ const JDUploadForm = ({
   );
 };
 
-// Icon components
+const ExcelUploadForm = ({
+  isUploading,
+  excelData,
+  uploadError,
+  excelFileInputRef,
+  handleExcelUpload,
+  handleExcelDragOver,
+  handleExcelDrop,
+  handleUseExcelData
+}) => {
+  return (
+    <div className="space-y-6">
+      {/* Upload Zone */}
+      <div
+        onDragOver={handleExcelDragOver}
+        onDrop={handleExcelDrop}
+        className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+          isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+        }`}
+      >
+        <input
+          type="file"
+          ref={excelFileInputRef}
+          onChange={handleExcelUpload}
+          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+          className="hidden"
+          disabled={isUploading}
+        />
+        
+        {isUploading ? (
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <LoaderIcon />
+            <p className="text-gray-700">Reading Excel file...</p>
+          </div>
+        ) : excelData ? (
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <CheckCircleIcon />
+            <p className="text-lg font-medium text-gray-900">Excel File Processed Successfully!</p>
+            <p className="text-sm text-gray-600">Found {excelData.length} job(s). Ready for manual entry.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <FileTextIcon />
+            <div>
+              <p className="text-lg font-medium text-gray-900">Drag & Drop your Excel File</p>
+              <p className="text-sm text-gray-600">or</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => excelFileInputRef.current?.click()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            >
+              Browse Files
+            </button>
+            <p className="text-xs text-gray-500">Supports XLSX, XLS • Max 10MB</p>
+          </div>
+        )}
+      </div>
+
+      {/* Error Message */}
+      {uploadError && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <AlertCircleIcon />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{uploadError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Excel Data Preview */}
+      {excelData && excelData.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+          <h3 className="font-medium text-gray-900">Excel Data Preview</h3>
+          <p className="text-sm text-gray-600">
+            Found {excelData.length} job(s) in the Excel file. Click "Use This Data" to fill the manual entry form.
+          </p>
+
+          <div className="bg-white rounded-md border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    {Object.keys(excelData[0]).map((key) => (
+                      <th key={key} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        {key.replace(/_/g, ' ')}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {excelData.slice(0, 5).map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, cellIndex) => (
+                        <td key={cellIndex} className="px-4 py-2 text-sm text-gray-900">
+                          {String(value || '')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {excelData.length > 5 && (
+              <div className="px-4 py-2 bg-gray-50 text-sm text-gray-500">
+                Showing first 5 of {excelData.length} rows
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={() => excelFileInputRef.current?.click()}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
+            >
+              Upload Different File
+            </button>
+            <button
+              type="button"
+              onClick={handleUseExcelData}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            >
+              Use This Data for Manual Entry
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Icon components (add FileTextIcon)
 const BarChart3Icon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -496,6 +786,12 @@ const ArchiveIcon = () => (
 const UploadIcon = () => (
   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+  </svg>
+);
+
+const FileTextIcon = () => (
+  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
 

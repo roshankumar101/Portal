@@ -1,28 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Save, 
-  Download, 
-  Eye, 
-  Edit3, 
-  Plus, 
-  Trash2, 
-  Move, 
-  Palette, 
-  Type, 
-  Layout,
-  FileText,
-  User,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Code,
-  Languages,
-  Heart,
-  Loader,
-  CheckCircle,
-  AlertCircle
+  Save, Download, Eye, Edit3, Plus, Trash2, Palette, Type, Layout,
+  FileText, User, Briefcase, GraduationCap, Award, Code, Languages, Heart,
+  Loader, CheckCircle, AlertCircle, ChevronUp, ChevronDown
 } from 'lucide-react';
-// Removed drag-and-drop dependency to prevent cascade errors
 import ResumePreview from './ResumePreview';
 import { saveResumeData, getResumeData } from '../../services/resumeData';
 import { ExperienceForm, EducationForm } from './SectionForms';
@@ -92,7 +73,6 @@ export default function CustomResumeBuilder({ userId }) {
   }, [userId]);
 
   useEffect(() => {
-    // Auto-save after 2 seconds of inactivity
     if (autoSaveRef.current) {
       clearTimeout(autoSaveRef.current);
     }
@@ -123,14 +103,12 @@ export default function CustomResumeBuilder({ userId }) {
   };
 
   const handleAutoSave = async () => {
-    if (loading) return;
-    
     try {
       await saveResumeData(userId, resumeData);
-      setSaveStatus({ type: 'success', message: 'Auto-saved' });
-      setTimeout(() => setSaveStatus(null), 2000);
+      setSaveStatus({ type: 'success', message: 'Autosaved successfully' });
     } catch (error) {
-      console.error('Auto-save failed:', error);
+      console.error('Error auto-saving resume:', error);
+      setSaveStatus({ type: 'error', message: 'Auto-save failed' });
     }
   };
 
@@ -138,23 +116,20 @@ export default function CustomResumeBuilder({ userId }) {
     try {
       setSaving(true);
       await saveResumeData(userId, resumeData);
-      setSaveStatus({ type: 'success', message: 'Resume saved successfully!' });
-      setTimeout(() => setSaveStatus(null), 3000);
+      setSaveStatus({ type: 'success', message: 'Saved successfully' });
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('Error saving resume:', error);
       setSaveStatus({ type: 'error', message: 'Failed to save resume' });
     } finally {
       setSaving(false);
+      setTimeout(() => setSaveStatus(null), 3000);
     }
   };
 
   const updatePersonalInfo = (field, value) => {
     setResumeData(prev => ({
       ...prev,
-      personal: {
-        ...prev.personal,
-        [field]: value
-      }
+      personal: { ...prev.personal, [field]: value }
     }));
   };
 
@@ -168,7 +143,7 @@ export default function CustomResumeBuilder({ userId }) {
   const updateSection = (sectionId, updates) => {
     setResumeData(prev => ({
       ...prev,
-      sections: prev.sections.map(section =>
+      sections: prev.sections.map(section => 
         section.id === sectionId ? { ...section, ...updates } : section
       )
     }));
@@ -177,9 +152,9 @@ export default function CustomResumeBuilder({ userId }) {
   const addSectionItem = (sectionId, item) => {
     setResumeData(prev => ({
       ...prev,
-      sections: prev.sections.map(section =>
-        section.id === sectionId
-          ? { ...section, items: [...section.items, { ...item, id: Date.now().toString() }] }
+      sections: prev.sections.map(section => 
+        section.id === sectionId 
+          ? { ...section, items: [...section.items, { ...item, id: Date.now().toString() }] } 
           : section
       )
     }));
@@ -188,27 +163,28 @@ export default function CustomResumeBuilder({ userId }) {
   const updateSectionItem = (sectionId, itemId, updates) => {
     setResumeData(prev => ({
       ...prev,
-      sections: prev.sections.map(section =>
-        section.id === sectionId
-          ? {
-              ...section,
-              items: section.items.map(item =>
-                item.id === itemId ? { ...item, ...updates } : item
-              )
-            }
-          : section
-      )
+      sections: prev.sections.map(section => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          items: section.items.map(item => 
+            item.id === itemId ? { ...item, ...updates } : item
+          )
+        };
+      })
     }));
   };
 
   const deleteSectionItem = (sectionId, itemId) => {
     setResumeData(prev => ({
       ...prev,
-      sections: prev.sections.map(section =>
-        section.id === sectionId
-          ? { ...section, items: section.items.filter(item => item.id !== itemId) }
-          : section
-      )
+      sections: prev.sections.map(section => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          items: section.items.filter(item => item.id !== itemId)
+        };
+      })
     }));
   };
 
@@ -227,301 +203,239 @@ export default function CustomResumeBuilder({ userId }) {
   };
 
   const deleteSection = (sectionId) => {
-    setResumeData(prev => ({
-      ...prev,
-      sections: prev.sections.filter(section => section.id !== sectionId)
-    }));
-    if (activeSection === sectionId) {
-      setActiveSection('personal');
+    if (window.confirm('Are you sure you want to delete this section?')) {
+      setResumeData(prev => ({
+        ...prev,
+        sections: prev.sections.filter(section => section.id !== sectionId)
+      }));
+      if (activeSection === sectionId) {
+        setActiveSection('personal');
+      }
     }
   };
 
-  const moveSectionUp = (sectionId) => {
-    const sectionIndex = resumeData.sections.findIndex(s => s.id === sectionId);
-    if (sectionIndex <= 0) return;
-
-    const newSections = [...resumeData.sections];
-    [newSections[sectionIndex - 1], newSections[sectionIndex]] = 
-    [newSections[sectionIndex], newSections[sectionIndex - 1]];
-
+  const moveSection = (sectionId, direction) => {
+    const sections = [...resumeData.sections];
+    const index = sections.findIndex(s => s.id === sectionId);
+    if (index === -1) return;
+    
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= sections.length) return;
+    
+    [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
+    
     setResumeData(prev => ({
       ...prev,
-      sections: newSections
+      sections
     }));
   };
 
-  const moveSectionDown = (sectionId) => {
-    const sectionIndex = resumeData.sections.findIndex(s => s.id === sectionId);
-    if (sectionIndex >= resumeData.sections.length - 1) return;
+  const handlePreviewToggle = () => {
+    setPreviewMode(!previewMode);
+  };
 
-    const newSections = [...resumeData.sections];
-    [newSections[sectionIndex], newSections[sectionIndex + 1]] = 
-    [newSections[sectionIndex + 1], newSections[sectionIndex]];
-
-    setResumeData(prev => ({
-      ...prev,
-      sections: newSections
-    }));
+  const handleDownload = () => {
+    // Implement download functionality
+    console.log('Downloading resume...');
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600">Loading resume builder...</span>
-      </div>
-    );
-  }
-
-  if (previewMode) {
-    return (
-      <div className="h-full">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Resume Preview</h2>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setPreviewMode(false)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <Edit3 className="h-4 w-4 mr-2 inline" />
-              Edit
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              <Download className="h-4 w-4 mr-2 inline" />
-              Download PDF
-            </button>
-          </div>
-        </div>
-        <ResumePreview resumeData={resumeData} />
+        <span className="ml-2 text-gray-600">Loading your resume...</span>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex">
-      {/* Sidebar */}
-      <div className="w-80 border-r border-gray-200 bg-gray-50 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">Resume Builder</h2>
-            {saveStatus && (
-              <div className={`flex items-center text-sm ${
-                saveStatus.type === 'success' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {saveStatus.type === 'success' ? (
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                )}
-                {saveStatus.message}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with actions */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Resume Builder</h1>
+          <div className="flex space-x-2">
             <button
-              onClick={handleManualSave}
-              disabled={saving}
-              className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+              onClick={handlePreviewToggle}
+              className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              {saving ? (
-                <Loader className="h-4 w-4 animate-spin mx-auto" />
+              {previewMode ? (
+                <>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Mode
+                </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-1 inline" />
-                  Save
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview Mode
                 </>
               )}
             </button>
             <button
-              onClick={() => setPreviewMode(true)}
-              className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm"
+              onClick={handleManualSave}
+              disabled={saving}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              <Eye className="h-4 w-4" />
+              {saving ? (
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
             </button>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <div className="space-y-1">
-              {/* Personal Info */}
-              <button
-                onClick={() => setActiveSection('personal')}
-                className={`w-full flex items-center px-3 py-2 text-left rounded-md text-sm ${
-                  activeSection === 'personal'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Personal Information
-              </button>
+        {saveStatus && (
+          <div className={`mb-4 p-3 rounded-md ${
+            saveStatus.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {saveStatus.message}
+          </div>
+        )}
 
-              {/* Summary */}
-              <button
-                onClick={() => setActiveSection('summary')}
-                className={`w-full flex items-center px-3 py-2 text-left rounded-md text-sm ${
-                  activeSection === 'summary'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Professional Summary
-              </button>
-
-              {/* Sections */}
-              <div>
-                {resumeData.sections.map((section, index) => {
-                  const IconComponent = SECTION_ICONS[section.type] || Layout;
-                  return (
-                    <div key={section.id} className="flex items-center group">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column - Editor */}
+          <div className="lg:w-1/2 space-y-6">
+            {/* Navigation Tabs */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="flex overflow-x-auto">
+                <button
+                  onClick={() => setActiveSection('personal')}
+                  className={`px-4 py-3 text-sm font-medium ${
+                    activeSection === 'personal'
+                      ? 'border-b-2 border-blue-500 text-blue-600'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Personal
+                </button>
+                <button
+                  onClick={() => setActiveSection('summary')}
+                  className={`px-4 py-3 text-sm font-medium ${
+                    activeSection === 'summary'
+                      ? 'border-b-2 border-blue-500 text-blue-600'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Summary
+                </button>
+                {resumeData.sections.map(section => (
+                  <div key={section.id} className="flex items-center">
+                    <button
+                      onClick={() => setActiveSection(section.id)}
+                      className={`px-4 py-3 text-sm font-medium ${
+                        activeSection === section.id
+                          ? 'border-b-2 border-blue-500 text-blue-600'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      {section.title}
+                    </button>
+                    <div className="flex flex-col">
                       <button
-                        onClick={() => setActiveSection(section.id)}
-                        className={`flex-1 flex items-center px-3 py-2 text-left rounded-md text-sm ${
-                          activeSection === section.id
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
+                        onClick={() => moveSection(section.id, 'up')}
+                        className="h-3 w-4 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                        title="Move up"
                       >
-                        <IconComponent className="h-4 w-4 mr-2" />
-                        {section.title}
-                        <span className="ml-auto text-xs text-gray-400">
-                          {section.items?.length || 0}
-                        </span>
+                        <ChevronUp className="h-3 w-3" />
                       </button>
-                      <div className="flex items-center opacity-0 group-hover:opacity-100">
-                        <button
-                          onClick={() => moveSectionUp(section.id)}
-                          disabled={index === 0}
-                          className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          title="Move Up"
-                        >
-                          <Move className="h-3 w-3 rotate-180" />
-                        </button>
-                        <button
-                          onClick={() => moveSectionDown(section.id)}
-                          disabled={index === resumeData.sections.length - 1}
-                          className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          title="Move Down"
-                        >
-                          <Move className="h-3 w-3" />
-                        </button>
-                        {section.type === SECTION_TYPES.CUSTOM && (
-                          <button
-                            onClick={() => deleteSection(section.id)}
-                            className="p-1 text-gray-400 hover:text-red-600"
-                            title="Delete Section"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => moveSection(section.id, 'down')}
+                        className="h-3 w-4 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                        title="Move down"
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
                     </div>
-                  );
-                })}
+                    <button
+                      onClick={() => deleteSection(section.id)}
+                      className="px-2 text-gray-400 hover:text-red-500"
+                      title="Delete section"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={addCustomSection}
+                  className="flex items-center px-4 py-3 text-sm font-medium text-blue-600 hover:text-blue-800"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Section
+                </button>
               </div>
+            </div>
 
-              {/* Add Section */}
-              <button
-                onClick={addCustomSection}
-                className="w-full flex items-center px-3 py-2 text-left rounded-md text-sm text-gray-500 hover:bg-gray-100 border-2 border-dashed border-gray-300"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Custom Section
-              </button>
+            {/* Form Editor */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              {activeSection === 'personal' && (
+                <PersonalInfoForm
+                  data={resumeData.personal}
+                  onChange={updatePersonalInfo}
+                />
+              )}
+              {activeSection === 'summary' && (
+                <SummaryForm
+                  data={resumeData.summary}
+                  onChange={updateSummary}
+                />
+              )}
+              {resumeData.sections.map(section => (
+                activeSection === section.id && (
+                  <div key={section.id}>
+                    {section.type === SECTION_TYPES.EXPERIENCE && (
+                      <ExperienceForm
+                        items={section.items}
+                        onAddItem={addSectionItem}
+                        onUpdateItem={updateSectionItem}
+                        onDeleteItem={deleteSectionItem}
+                        sectionId={section.id}
+                      />
+                    )}
+                    {section.type === SECTION_TYPES.EDUCATION && (
+                      <EducationForm
+                        items={section.items}
+                        onAddItem={addSectionItem}
+                        onUpdateItem={updateSectionItem}
+                        onDeleteItem={deleteSectionItem}
+                        sectionId={section.id}
+                      />
+                    )}
+                    {(section.type === SECTION_TYPES.SKILLS || 
+                      section.type === SECTION_TYPES.PROJECTS || 
+                      section.type === SECTION_TYPES.CERTIFICATIONS ||
+                      section.type === SECTION_TYPES.LANGUAGES ||
+                      section.type === SECTION_TYPES.INTERESTS ||
+                      section.type === SECTION_TYPES.CUSTOM) && (
+                      <SectionForm
+                        section={section}
+                        onUpdateSection={updateSection}
+                        onAddItem={addSectionItem}
+                        onUpdateItem={updateSectionItem}
+                        onDeleteItem={deleteSectionItem}
+                      />
+                    )}
+                  </div>
+                )
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Settings */}
-        <div className="p-4 border-t border-gray-200 bg-white">
-          <h3 className="text-sm font-medium text-gray-900 mb-2">Customization</h3>
-          <div className="space-y-2">
-            <button className="w-full flex items-center px-3 py-2 text-left rounded-md text-sm text-gray-600 hover:bg-gray-100">
-              <Palette className="h-4 w-4 mr-2" />
-              Colors & Theme
-            </button>
-            <button className="w-full flex items-center px-3 py-2 text-left rounded-md text-sm text-gray-600 hover:bg-gray-100">
-              <Type className="h-4 w-4 mr-2" />
-              Typography
-            </button>
-            <button className="w-full flex items-center px-3 py-2 text-left rounded-md text-sm text-gray-600 hover:bg-gray-100">
-              <Layout className="h-4 w-4 mr-2" />
-              Layout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Form Editor */}
-        <div className="w-1/2 p-6 overflow-y-auto">
-          {activeSection === 'personal' && (
-            <PersonalInfoForm
-              data={resumeData.personal}
-              onChange={updatePersonalInfo}
-            />
-          )}
-          {activeSection === 'summary' && (
-            <SummaryForm
-              data={resumeData.summary}
-              onChange={updateSummary}
-            />
-          )}
-          {resumeData.sections.map(section => (
-            activeSection === section.id && (
-              <div key={section.id}>
-                {section.type === SECTION_TYPES.EXPERIENCE && (
-                  <ExperienceForm
-                    items={section.items}
-                    onAddItem={addSectionItem}
-                    onUpdateItem={updateSectionItem}
-                    onDeleteItem={deleteSectionItem}
-                    sectionId={section.id}
-                  />
-                )}
-                {section.type === SECTION_TYPES.EDUCATION && (
-                  <EducationForm
-                    items={section.items}
-                    onAddItem={addSectionItem}
-                    onUpdateItem={updateSectionItem}
-                    onDeleteItem={deleteSectionItem}
-                    sectionId={section.id}
-                  />
-                )}
-                {(section.type === SECTION_TYPES.SKILLS || 
-                  section.type === SECTION_TYPES.PROJECTS || 
-                  section.type === SECTION_TYPES.CERTIFICATIONS ||
-                  section.type === SECTION_TYPES.LANGUAGES ||
-                  section.type === SECTION_TYPES.INTERESTS ||
-                  section.type === SECTION_TYPES.CUSTOM) && (
-                  <SectionForm
-                    section={section}
-                    onUpdateSection={updateSection}
-                    onAddItem={addSectionItem}
-                    onUpdateItem={updateSectionItem}
-                    onDeleteItem={deleteSectionItem}
-                  />
-                )}
+          {/* Right Column - Preview */}
+          <div className="lg:w-1/2">
+            <div className="sticky top-6">
+              <div className="bg-white rounded-lg shadow-lg p-8">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Live Preview</h2>
+                <ResumePreview resumeData={resumeData} />
               </div>
-            )
-          ))}
-        </div>
-
-        {/* Live Preview */}
-        <div className="w-1/2 border-l border-gray-200 bg-gray-50">
-          <div className="p-4 border-b border-gray-200 bg-white">
-            <h3 className="text-sm font-medium text-gray-900">Live Preview</h3>
-          </div>
-          <div className="p-4 h-full overflow-y-auto">
-            <ResumePreview resumeData={resumeData} scale={0.75} />
+            </div>
           </div>
         </div>
       </div>
@@ -535,7 +449,7 @@ function PersonalInfoForm({ data, onChange }) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Full Name *
@@ -546,33 +460,33 @@ function PersonalInfoForm({ data, onChange }) {
               onChange={(e) => onChange('fullName', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="John Doe"
+              required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email *
-              </label>
-              <input
-                type="email"
-                value={data.email}
-                onChange={(e) => onChange('email', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="john@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone *
-              </label>
-              <input
-                type="tel"
-                value={data.phone}
-                onChange={(e) => onChange('phone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
+            <input
+              type="email"
+              value={data.email}
+              onChange={(e) => onChange('email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="john@example.com"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone
+            </label>
+            <input
+              type="tel"
+              value={data.phone}
+              onChange={(e) => onChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="(123) 456-7890"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -583,46 +497,44 @@ function PersonalInfoForm({ data, onChange }) {
               value={data.location}
               onChange={(e) => onChange('location', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="City, State, Country"
+              placeholder="City, Country"
             />
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Website
-              </label>
-              <input
-                type="url"
-                value={data.website}
-                onChange={(e) => onChange('website', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://yourwebsite.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                LinkedIn
-              </label>
-              <input
-                type="url"
-                value={data.linkedin}
-                onChange={(e) => onChange('linkedin', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                GitHub
-              </label>
-              <input
-                type="url"
-                value={data.github}
-                onChange={(e) => onChange('github', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://github.com/username"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Website
+            </label>
+            <input
+              type="url"
+              value={data.website}
+              onChange={(e) => onChange('website', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://example.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              LinkedIn
+            </label>
+            <input
+              type="url"
+              value={data.linkedin}
+              onChange={(e) => onChange('linkedin', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://linkedin.com/in/username"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              GitHub
+            </label>
+            <input
+              type="url"
+              value={data.github}
+              onChange={(e) => onChange('github', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://github.com/username"
+            />
           </div>
         </div>
       </div>
@@ -656,22 +568,62 @@ function SummaryForm({ data, onChange }) {
   );
 }
 
-// Section Form Component (placeholder - will be expanded)
+// Section Form Component
 function SectionForm({ section, onUpdateSection, onAddItem, onUpdateItem, onDeleteItem }) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{section.title}</h3>
-        <p className="text-gray-600 mb-4">
-          Manage your {section.title.toLowerCase()} entries.
-        </p>
-        <button
-          onClick={() => onAddItem(section.id, { title: '', description: '' })}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          <Plus className="h-4 w-4 mr-2 inline" />
-          Add {section.title.slice(0, -1)}
-        </button>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">{section.title}</h3>
+        </div>
+        
+        <div className="space-y-4">
+          {section.items.map((item, index) => (
+            <div key={item.id || index} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-medium text-gray-900">
+                  {item.title || `Item ${index + 1}`}
+                </h4>
+                <button
+                  onClick={() => onDeleteItem(section.id, item.id)}
+                  className="text-gray-400 hover:text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(item).map(([key, value]) => {
+                  if (key === 'id') return null;
+                  return (
+                    <div key={key} className="flex">
+                      <span className="text-sm font-medium text-gray-500 w-24 capitalize">
+                        {key}:
+                      </span>
+                      <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => onUpdateItem(section.id, item.id, { [key]: e.target.value })}
+                        className="flex-1 text-sm border-b border-dashed border-gray-300 px-1 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          
+          <button
+            onClick={() => {
+              const newItem = { id: Date.now().toString(), title: '', description: '' };
+              onAddItem(section.id, newItem);
+            }}
+            className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 border-dashed rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add {section.title.slice(0, -1)}
+          </button>
+        </div>
       </div>
     </div>
   );

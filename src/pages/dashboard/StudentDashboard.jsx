@@ -45,8 +45,6 @@ import {
   X
 } from 'lucide-react';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
-import PDFLivePreview from '../../components/resume/PDFLivePreview';
-import ResumeEnhancer from '../../components/resume/ResumeEnhancer';
 import ResumeManager from '../../components/resume/ResumeManager';
 import ResumeAnalyzer from '../../components/resume/ResumeAnalyzer';
 import CustomResumeBuilder from '../../components/resume/CustomResumeBuilder';
@@ -1008,26 +1006,6 @@ export default function StudentDashboard() {
                     >
                       AI Analysis
                     </button>
-                    <button
-                      onClick={() => setActiveResumeTab('editor')}
-                      className={`px-4 py-2 text-sm font-medium ${
-                        activeResumeTab === 'editor'
-                          ? 'border-b-2 border-blue-500 text-blue-600'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      Live Editor
-                    </button>
-                    <button
-                      onClick={() => setActiveResumeTab('enhancer')}
-                      className={`px-4 py-2 text-sm font-medium ${
-                        activeResumeTab === 'enhancer'
-                          ? 'border-b-2 border-blue-500 text-blue-600'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                    >
-                      AI Enhancer
-                    </button>
                   </div>
 
                   <div className="mt-6">
@@ -1050,16 +1028,6 @@ export default function StudentDashboard() {
                           userId={user.uid}
                           resumeInfo={resumeInfo}
                         />
-                      </ErrorBoundary>
-                    )}
-                    {activeResumeTab === 'editor' && user?.uid && (
-                      <ErrorBoundary>
-                        <PDFLivePreview uid={user.uid} resumeId="main" />
-                      </ErrorBoundary>
-                    )}
-                    {activeResumeTab === 'enhancer' && user?.uid && (
-                      <ErrorBoundary>
-                        <ResumeEnhancer uid={user.uid} resumeId="main" />
                       </ErrorBoundary>
                     )}
                   </div>
@@ -1093,21 +1061,6 @@ export default function StudentDashboard() {
                 </div>
               )}
 
-              {activeResumeTab === 'editor' && (
-                <div className="w-full h-[70vh]">
-                  <ErrorBoundary>
-                    {user?.uid && (
-                      <PDFLivePreview 
-                        uid={user.uid} 
-                        resumeId="default"
-                        resumeUrl={resumeInfo.url}
-                        hasResume={resumeInfo.hasResume}
-                        onUploadClick={() => setActiveResumeTab('manager')}
-                      />
-                    )}
-                  </ErrorBoundary>
-                </div>
-              )}
 
               {activeResumeTab === 'enhancer' && (
                 <div className="w-full h-[70vh]">

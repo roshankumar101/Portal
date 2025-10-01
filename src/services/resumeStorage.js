@@ -1,5 +1,6 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db, storage } from '../firebase';
 
 // Convert file to base64 for Firestore storage
 const fileToBase64 = (file) => {
@@ -11,43 +12,55 @@ const fileToBase64 = (file) => {
   });
 };
 
-// Upload resume file using Firestore (base64 storage)
-export const uploadResumeFile = async (userId, file) => {
+// Upload resume file to Firebase Storage
+const uploadResumeFile = async (userId, file) => {
   try {
     // Validate file
     if (!file) throw new Error('No file provided');
     if (file.type !== 'application/pdf') throw new Error('Only PDF files are allowed');
-    if (file.size > 5 * 1024 * 1024) throw new Error('File size must be less than 5MB');
+    if (file.size > 10 * 1024 * 1024) throw new Error('File size must be less than 10MB');
 
-    // Convert file to base64
-    const base64Data = await fileToBase64(file);
     const timestamp = Date.now();
+    const storageRef = ref(storage, `resumes/${userId}/${timestamp}_${file.name}`);
     
-    // Store in Firestore instead of Storage
-    const resumeDocRef = doc(db, 'resumes', `${userId}_${timestamp}`);
-    await setDoc(resumeDocRef, {
+    // Upload file to Firebase Storage
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    
+    // Store metadata in Firestore
+    const resumeData = {
       userId,
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      base64Data,
+      url: downloadURL,
+      storagePath: snapshot.ref.fullPath,
       uploadedAt: new Date(),
       timestamp
+    };
+    
+    // Store in Firestore with the user's ID as the document ID
+    const resumeDocRef = doc(db, 'resumes', userId);
+    await setDoc(resumeDocRef, {
+      ...resumeData,
+      userId, // Ensure userId is set for security rules
+      lastUpdated: new Date()
     });
-
-    // Update user profile with resume reference
+    
+    // Update user document
     const userDocRef = doc(db, 'users', userId);
     await setDoc(userDocRef, {
-      resumeId: `${userId}_${timestamp}`,
+      hasResume: true,
+      resumeUrl: downloadURL,
       resumeFileName: file.name,
-      resumeUploadedAt: new Date(),
-      hasResume: true
+      resumeUploadedAt: new Date()
     }, { merge: true });
 
     return {
-      url: `firestore://${userId}_${timestamp}`, // Custom URL format
+      url: downloadURL,
       fileName: file.name,
-      size: file.size,
+      fileSize: file.size,
+      fileType: file.type,
       uploadedAt: new Date()
     };
   } catch (error) {
@@ -56,110 +69,133 @@ export const uploadResumeFile = async (userId, file) => {
   }
 };
 
-// Delete resume file from Firestore
-export const deleteResumeFile = async (userId) => {
+// Delete resume file from both Storage and Firestore
+const deleteResumeFile = async (userId) => {
   try {
-    // Get user document to find resume ID
-    const userDocRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
+    // Get resume document using the user's ID as the document ID
+    const resumeDocRef = doc(db, 'resumes', userId);
+    const resumeDoc = await getDoc(resumeDocRef);
     
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
+    if (resumeDoc.exists()) {
+      const resumeData = resumeDoc.data();
       
-      // Delete from resumes collection if resume ID exists
-      if (userData.resumeId) {
-        const resumeDocRef = doc(db, 'resumes', userData.resumeId);
-        await setDoc(resumeDocRef, {}, { merge: false }); // Clear the document
+      // Delete from Storage if path exists
+      if (resumeData.storagePath) {
+        try {
+          const fileRef = ref(storage, resumeData.storagePath);
+          await deleteObject(fileRef);
+        } catch (error) {
+          console.error('Error deleting storage file:', error);
+          // Continue with Firestore deletion even if storage delete fails
+        }
       }
-
-      // Update user document
-      await setDoc(userDocRef, {
-        resumeId: null,
-        resumeFileName: null,
-        resumeUploadedAt: null,
-        hasResume: false
-      }, { merge: true });
+      
+      // Delete from Firestore
+      await deleteDoc(resumeDocRef);
     }
-
+    
+    // Update user document
+    const userDocRef = doc(db, 'users', userId);
+    await setDoc(userDocRef, {
+      hasResume: false,
+      resumeUrl: null,
+      resumeFileName: null,
+      resumeUploadedAt: null
+    }, { merge: true });
+    
     return true;
   } catch (error) {
     console.error('Error deleting resume:', error);
-    throw error;
+    throw new Error('Failed to delete resume. Please try again.');
   }
 };
 
 // Get resume information
-export const getResumeInfo = async (userId) => {
+const getResumeInfo = async (userId) => {
   try {
+    const resumeDocRef = doc(db, 'resumes', userId);
+    const resumeDoc = await getDoc(resumeDocRef);
+    
+    if (resumeDoc.exists()) {
+      const resumeData = resumeDoc.data();
+      return {
+        url: resumeData.url,
+        fileName: resumeData.fileName,
+        fileSize: resumeData.fileSize,
+        uploadedAt: resumeData.uploadedAt?.toDate() || new Date(),
+        hasResume: true,
+        fileType: resumeData.fileType || 'application/pdf',
+        storagePath: resumeData.storagePath
+      };
+    }
+    
+    // Fallback to user document if resume document doesn't exist
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     
     if (userDoc.exists()) {
       const userData = userDoc.data();
-      return {
-        url: userData.resumeId ? `firestore://${userData.resumeId}` : null,
-        fileName: userData.resumeFileName || null,
-        uploadedAt: userData.resumeUploadedAt || null,
-        hasResume: !!userData.resumeId
-      };
+      if (userData.hasResume && userData.resumeUrl) {
+        return {
+          url: userData.resumeUrl,
+          fileName: userData.resumeFileName || 'resume.pdf',
+          fileSize: userData.resumeFileSize || 0,
+          uploadedAt: userData.resumeUploadedAt?.toDate() || new Date(),
+          hasResume: true,
+          fileType: userData.resumeFileType || 'application/pdf'
+        };
+      }
     }
     
     return {
       url: null,
       fileName: null,
+      fileSize: null,
       uploadedAt: null,
-      hasResume: false
+      hasResume: false,
+      fileType: null
     };
   } catch (error) {
     console.error('Error getting resume info:', error);
-    throw error;
+    return {
+      url: null,
+      fileName: null,
+      fileSize: null,
+      uploadedAt: null,
+      hasResume: false,
+      fileType: null
+    };
   }
 };
 
-// Get resume base64 data for display
-export const getResumeData = async (resumeId) => {
+// Get resume data for display
+const getResumeData = async (userId) => {
   try {
-    const resumeDocRef = doc(db, 'resumes', resumeId);
+    const resumeDocRef = doc(db, 'resumes', `${userId}_resume`);
     const resumeDoc = await getDoc(resumeDocRef);
     
     if (resumeDoc.exists()) {
-      const resumeData = resumeDoc.data();
-      return resumeData.base64Data;
+      const data = resumeDoc.data();
+      return data.url; // Return the public URL
+    }
+    
+    // Fallback to user document
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (userDoc.exists() && userDoc.data().resumeUrl) {
+      return userDoc.data().resumeUrl;
     }
     
     return null;
   } catch (error) {
     console.error('Error getting resume data:', error);
-    throw error;
-  }
-};
-
-// Create or update resume metadata
-export const updateResumeMetadata = async (userId, metadata) => {
-  try {
-    const userDocRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    
-    const updateData = {
-      ...metadata,
-      resumeUpdatedAt: new Date()
-    };
-
-    if (userDoc.exists()) {
-      await updateDoc(userDocRef, updateData);
-    } else {
-      await setDoc(userDocRef, updateData, { merge: true });
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error updating resume metadata:', error);
-    throw error;
+    return null;
   }
 };
 
 // Validate resume file
-export const validateResumeFile = (file) => {
+const validateResumeFile = (file) => {
   const errors = [];
   
   if (!file) {
@@ -183,12 +219,19 @@ export const validateResumeFile = (file) => {
 };
 
 // Format file size for display
-export const formatFileSize = (bytes) => {
+const formatFileSize = (bytes) => {
+  if (!bytes && bytes !== 0) return '0 Bytes';
   if (bytes === 0) return '0 Bytes';
-  
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+export {
+  uploadResumeFile,
+  deleteResumeFile,
+  getResumeInfo,
+  getResumeData,
+  formatFileSize
 };

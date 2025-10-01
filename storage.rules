@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow users to upload and manage their own resumes
+    match /resumes/{userId}/{fileName} {
+      // Allow read access to the file owner and admins
+      allow read: if request.auth != null && 
+                 (request.auth.uid == userId || 
+                  isAdmin());
+      
+      // Allow create/update for the file owner with validations
+      allow create: if request.auth != null && 
+                   request.auth.uid == userId &&
+                   request.resource.contentType == 'application/pdf' &&
+                   request.resource.size < 10 * 1024 * 1024; // 10MB limit
+      
+      // Allow delete for the file owner and admins
+      allow delete: if request.auth != null && 
+                   (request.auth.uid == userId || 
+                    isAdmin());
+      
+      // Allow updates only for metadata, not content
+      allow update: if request.auth != null && 
+                   (request.auth.uid == userId || 
+                    isAdmin()) &&
+                   request.resource.size == resource.size; // Prevent content updates
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

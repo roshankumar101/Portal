@@ -56,7 +56,7 @@ const DRIVE_VENUES = [
 
 ];
 
-export default function CreateJob({ onCreated }) {
+export default function CreateJob({ onCreated, initialFormData, onInitialDataUsed }) {
   const { user } = useAuth();
   const [posting, setPosting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,6 +92,14 @@ export default function CreateJob({ onCreated }) {
   const [gapInputMode, setGapInputMode] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState({ serviceAgreement: false, blockingPeriod: false });
 
+  // Handle initial form data when component mounts or changes
+  useEffect(() => {
+    if (initialFormData && onInitialDataUsed) {
+      // Notify parent that we've used the initial data
+      onInitialDataUsed();
+    }
+  }, [initialFormData, onInitialDataUsed]);
+
   // Enhanced useEffect for click outside detection for all dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
@@ -118,38 +126,46 @@ export default function CreateJob({ onCreated }) {
     };
   }, []);
 
-  // Form state
-  const [form, setForm] = useState({
-    company: '',
-    website: '',
-    linkedin: '',
-    jobType: '',
-    stipend: '',
-    duration: '',
-    salary: '',
-    jobTitle: '',
-    workMode: '',
-    companyLocation: '',
-    openings: '',
-    responsibilities: '',
-    spocs: [{ fullName: '', email: '', phone: '' }],
-    driveDateText: '',
-    driveDateISO: '',
-    driveVenues: [],
-    qualification: '',
-    specialization: '',
-    yop: '',
-    minCgpa: '',
-    skillsInput: '',
-    skills: [],
-    gapAllowed: '',
-    gapYears: '',
-    backlogs: '',
-    serviceAgreement: '',
-    blockingPeriod: '',
-    baseRoundDetails: ['', '', ''],
-    extraRounds: [],
-    instructions: '',
+  // Initialize form state with default values or parsed data
+  const [form, setForm] = useState(() => {
+    const initialSkills = initialFormData?.skills ? 
+      (Array.isArray(initialFormData.skills) ? 
+        initialFormData.skills : 
+        initialFormData.skills.split(',').map(s => s.trim()).filter(Boolean)
+      ) : [];
+
+    return {
+      company: initialFormData?.company || '',
+      website: '',
+      linkedin: '',
+      jobType: initialFormData?.jobType || '',
+      stipend: '',
+      duration: '',
+      salary: initialFormData?.salary || '',
+      jobTitle: initialFormData?.jobTitle || '',
+      workMode: initialFormData?.workMode || '',
+      companyLocation: initialFormData?.companyLocation || '',
+      openings: '',
+      responsibilities: initialFormData?.responsibilities || '',
+      spocs: [{ fullName: '', email: '', phone: '' }],
+      driveDateText: '',
+      driveDateISO: '',
+      driveVenues: [],
+      qualification: initialFormData?.qualification || '',
+      specialization: '',
+      yop: '',
+      minCgpa: initialFormData?.minCgpa || '',
+      skillsInput: initialFormData?.skills || '',
+      skills: initialSkills,
+      gapAllowed: '',
+      gapYears: '',
+      backlogs: '',
+      serviceAgreement: '',
+      blockingPeriod: '',
+      baseRoundDetails: ['', '', ''],
+      extraRounds: [],
+      instructions: '',
+    };
   });
 
   // Local draft for About Drive section

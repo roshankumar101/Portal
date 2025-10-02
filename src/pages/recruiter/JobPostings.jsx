@@ -14,11 +14,12 @@ const ErrorBoundary = ({ children }) => {
 
 const JobPostings = () => {
   const [activeView, setActiveView] = useState('active');
-  const [creationMethod, setCreationMethod] = useState('manual');
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState(null);
   const [uploadError, setUploadError] = useState('');
-  const [excelData, setExcelData] = useState(null);
+  const [creationMethod, setCreationMethod] = useState('manual');
+  const [excelData, setExcelData] = useState([]);
+  const [parsedFormData, setParsedFormData] = useState(null);
   const fileInputRef = useRef(null);
   const excelFileInputRef = useRef(null);
 
@@ -149,11 +150,26 @@ const JobPostings = () => {
 
   const handleUseExcelData = () => {
     if (excelData && excelData.length > 0) {
-      // Switch to manual entry mode and pass the excel data
+      // Use the first row of Excel data to prefill the form
+      const firstJob = excelData[0];
+      const formData = {
+        jobTitle: firstJob.jobTitle || firstJob.position || '',
+        company: firstJob.company || firstJob.organization || '',
+        companyLocation: firstJob.location || firstJob.city || '',
+        skills: Array.isArray(firstJob.skills) ? firstJob.skills.join(', ') : (firstJob.skills || ''),
+        salary: firstJob.salary || firstJob.ctc || '',
+        jobType: firstJob.jobType || firstJob.type || '',
+        workMode: firstJob.workMode || firstJob.locationType || '',
+        qualification: firstJob.qualification || firstJob.education || '',
+        minCgpa: firstJob.minCgpa || firstJob.cgpa || '',
+        // Add more mappings as needed
+      };
+      
+      // Set the parsed form data and switch to manual entry
+      setParsedFormData(formData);
       setCreationMethod('manual');
-      // You might want to pass this data to CreateJob component via props or context
+      
       console.log('Using Excel data for manual entry:', excelData);
-      alert(`Found ${excelData.length} job(s) in Excel file. Please review and complete the details in the manual entry form.`);
     }
   };
 
@@ -235,8 +251,33 @@ const JobPostings = () => {
   };
 
   const handleUseParsedData = () => {
-    alert('Parsed data would be sent for approval or opened in an editable form.');
-    setActiveView('active');
+    if (parseResult?.data) {
+      // Map the parsed data to match the form structure
+      const formData = {
+        jobTitle: parseResult.data.jobTitle || '',
+        company: parseResult.data.company || '',
+        responsibilities: parseResult.data.responsibilities || parseResult.data.jobDescription || '',
+        skills: Array.isArray(parseResult.data.skills) ? parseResult.data.skills.join(', ') : (parseResult.data.skills || ''),
+        salary: parseResult.data.salary || parseResult.data.ctc || '',
+        jobType: parseResult.data.jobType || '',
+        workMode: parseResult.data.workMode || parseResult.data.locationType || '',
+        companyLocation: parseResult.data.location || parseResult.data.companyLocation || '',
+        qualification: parseResult.data.qualification || parseResult.data.education || '',
+        minCgpa: parseResult.data.minCgpa || parseResult.data.cgpa || '',
+        // Add more mappings as needed
+      };
+      
+      // Set the parsed form data and switch to manual entry
+      setParsedFormData(formData);
+      setCreationMethod('manual');
+      
+      // Reset the upload state
+      setParseResult(null);
+      setUploadError('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleCloseJob = (jobId) => {
@@ -258,22 +299,22 @@ const JobPostings = () => {
 
   // Render the active view based on state
   const renderActiveView = () => {
-    switch (activeView) {
-      case 'active':
-        return <ActivePostingsView jobs={jobs} onCloseJob={handleCloseJob} onCloneJob={handleCloneJob} />;
-      case 'drafts':
-        return <DraftPostingsView drafts={drafts} />;
-      case 'new':
-        return <NewJobView 
-          creationMethod={creationMethod} 
-          setCreationMethod={setCreationMethod} 
-          isUploading={isUploading} 
-          parseResult={parseResult} 
+    if (activeView === 'active') {
+      return <ActivePostingsView jobs={jobs} onCloseJob={handleCloseJob} onCloneJob={handleCloneJob} />;
+    } else if (activeView === 'drafts') {
+      return <DraftPostingsView drafts={drafts} />;
+    } else if (activeView === 'new') {
+      return (
+        <NewJobView 
+          creationMethod={creationMethod}
+          setCreationMethod={setCreationMethod}
+          isUploading={isUploading}
+          parseResult={parseResult}
           uploadError={uploadError}
-          fileInputRef={fileInputRef} 
-          handleFileUpload={handleFileUpload} 
-          handleDragOver={handleDragOver} 
-          handleDrop={handleDrop} 
+          fileInputRef={fileInputRef}
+          handleFileUpload={handleFileUpload}
+          handleDragOver={handleDragOver}
+          handleDrop={handleDrop}
           handleUseParsedData={handleUseParsedData}
           onJobSubmit={handleJobSubmit}
           excelData={excelData}
@@ -282,9 +323,10 @@ const JobPostings = () => {
           handleExcelDrop={handleExcelDrop}
           handleUseExcelData={handleUseExcelData}
           excelFileInputRef={excelFileInputRef}
-        />;
-      default:
-        return <ActivePostingsView jobs={jobs} onCloseJob={handleCloseJob} onCloneJob={handleCloneJob} />;
+          parsedFormData={parsedFormData}
+          onParsedDataUsed={() => setParsedFormData(null)}
+        />
+      );
     }
   };
 
@@ -334,6 +376,95 @@ const JobPostings = () => {
         {renderActiveView()}
       </div>
     </ErrorBoundary>
+  );
+};
+
+const NewJobView = ({ 
+  creationMethod, setCreationMethod, isUploading, parseResult, uploadError, 
+  fileInputRef, handleFileUpload, handleDragOver, handleDrop, handleUseParsedData, onJobSubmit,
+  excelData, handleExcelUpload, handleExcelDragOver, handleExcelDrop, handleUseExcelData, excelFileInputRef,
+  parsedFormData, onParsedDataUsed
+}) => {
+  const [formData, setFormData] = useState(parsedFormData || null);
+
+  // Update form data when parsedFormData changes
+  useEffect(() => {
+    if (parsedFormData) {
+      setFormData(parsedFormData);
+      // Notify parent that we've used the parsed data
+      onParsedDataUsed?.();
+    }
+  }, [parsedFormData, onParsedDataUsed]);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      {/* Sub-Navigation Tabs: Manual vs. Upload */}
+      <div className="flex justify-center mb-8">
+        <div className="bg-white rounded-sm p-1 shadow-sm border border-gray-200 inline-flex gap-2">
+          <button
+            onClick={() => setCreationMethod('manual')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'manual'
+                ? 'bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Manual Entry
+          </button>
+
+          <button
+            onClick={() => setCreationMethod('upload')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'upload'
+                ? 'bg-gradient-to-tr from-blue-600 to-purple-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Upload JD
+          </button>
+          <button
+            onClick={() => setCreationMethod('excel')}
+            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+              creationMethod === 'excel'
+                ? 'bg-gradient-to-tr from-green-600 to-teal-700 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Upload Excel
+          </button>
+        </div>
+      </div>
+
+      {creationMethod === 'manual' ? (
+        <CreateJob 
+          onCreated={onJobSubmit} 
+          initialFormData={formData}
+          onInitialDataUsed={() => setFormData(null)}
+        />
+      ) : creationMethod === 'upload' ? (
+        <JDUploadForm 
+          isUploading={isUploading}
+          parseResult={parseResult}
+          uploadError={uploadError}
+          fileInputRef={fileInputRef}
+          handleFileUpload={handleFileUpload}
+          handleDragOver={handleDragOver}
+          handleDrop={handleDrop}
+          handleUseParsedData={handleUseParsedData}
+        />
+      ) : (
+        <ExcelUploadForm
+          isUploading={isUploading}
+          excelData={excelData}
+          uploadError={uploadError}
+          excelFileInputRef={excelFileInputRef}
+          handleExcelUpload={handleExcelUpload}
+          handleExcelDragOver={handleExcelDragOver}
+          handleExcelDrop={handleExcelDrop}
+          handleUseExcelData={handleUseExcelData}
+        />
+      )}
+    </div>
   );
 };
 
@@ -428,78 +559,30 @@ const DraftPostingsView = ({ drafts }) => {
   );
 };
 
-const NewJobView = ({ 
-  creationMethod, setCreationMethod, isUploading, parseResult, uploadError, 
-  fileInputRef, handleFileUpload, handleDragOver, handleDrop, handleUseParsedData, onJobSubmit,
-  excelData, handleExcelUpload, handleExcelDragOver, handleExcelDrop, handleUseExcelData, excelFileInputRef
-}) => {
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      {/* Sub-Navigation Tabs: Manual vs. Upload */}
-      <div className="flex justify-center mb-8">
-        <div className="bg-white rounded-sm p-1 shadow-sm border border-gray-200 inline-flex gap-2">
-          <button
-            onClick={() => setCreationMethod('manual')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              creationMethod === 'manual'
-                ? 'bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Manual Entry
-          </button>
+// Icon components
+const BarChart3Icon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+);
 
-          <button
-            onClick={() => setCreationMethod('upload')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              creationMethod === 'upload'
-                ? 'bg-gradient-to-tr to-blue-600 from-purple-700 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Upload JD
-          </button>
-          <button
-            onClick={() => setCreationMethod('upload Excel')}
-            className={`px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-              creationMethod === 'upload Excel'
-                ? 'bg-gradient-to-tr to-blue-600 from-purple-700 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Upload Excel
-          </button>
-        </div>
-      </div>
+const EditIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+);
 
-      {creationMethod === 'manual' ? (
-        <CreateJob onJobSubmit={onJobSubmit} excelData={excelData} />
-      ) : creationMethod === 'upload' ? (
-        <JDUploadForm 
-          isUploading={isUploading} 
-          parseResult={parseResult} 
-          uploadError={uploadError}
-          fileInputRef={fileInputRef} 
-          handleFileUpload={handleFileUpload}
-          handleDragOver={handleDragOver}
-          handleDrop={handleDrop}
-          handleUseParsedData={handleUseParsedData}
-        />
-      ) : (
-        <ExcelUploadForm 
-          isUploading={isUploading}
-          excelData={excelData}
-          uploadError={uploadError}
-          excelFileInputRef={excelFileInputRef}
-          handleExcelUpload={handleExcelUpload}
-          handleExcelDragOver={handleExcelDragOver}
-          handleExcelDrop={handleExcelDrop}
-          handleUseExcelData={handleUseExcelData}
-        />
-      )}
-    </div>
-  );
-};
+const CopyIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
+const ArchiveIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+  </svg>
+);
 
 const JDUploadForm = ({ 
   isUploading, parseResult, uploadError, fileInputRef, handleFileUpload, 
@@ -752,31 +835,7 @@ const ExcelUploadForm = ({
   );
 };
 
-// Icon components (add FileTextIcon)
-const BarChart3Icon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-  </svg>
-);
-
-const CopyIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-  </svg>
-);
-
-const ArchiveIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-  </svg>
-);
-
+// Additional icon components
 const UploadIcon = () => (
   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />

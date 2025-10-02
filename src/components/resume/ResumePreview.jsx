@@ -58,6 +58,8 @@ export default function ResumePreview({ resumeUrl, resumeData, scale = 1 }) {
           setPdfData(null);
           setLoading(false);
         });
+    } else if (resumeUrl) {
+      setPdfData(resumeUrl);
     } else {
       setPdfData(null);
       setLoading(false);
@@ -85,6 +87,157 @@ export default function ResumePreview({ resumeUrl, resumeData, scale = 1 }) {
             setPdfData(null);
           }}
         />
+      </div>
+    );
+  }
+
+  // If we have resumeData, render the resume preview directly
+  if (resumeData) {
+    return (
+      <div className="bg-white p-8 max-w-4xl mx-auto my-8 shadow-lg">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {resumeData.personal?.fullName || 'Your Name'}
+          </h1>
+          <div className="flex flex-wrap justify-center gap-4 mt-2 text-gray-600">
+            {resumeData.personal?.email && (
+              <div className="flex items-center">
+                <Mail className="h-4 w-4 mr-1" />
+                <span>{resumeData.personal.email}</span>
+              </div>
+            )}
+            {resumeData.personal?.phone && (
+              <div className="flex items-center">
+                <Phone className="h-4 w-4 mr-1" />
+                <span>{resumeData.personal.phone}</span>
+              </div>
+            )}
+            {resumeData.personal?.location && (
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span>{resumeData.personal.location}</span>
+              </div>
+            )}
+            {resumeData.personal?.website && (
+              <a 
+                href={resumeData.personal.website.startsWith('http') ? resumeData.personal.website : `https://${resumeData.personal.website}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center text-blue-600 hover:underline"
+              >
+                <Globe className="h-4 w-4 mr-1" />
+                <span>Website</span>
+              </a>
+            )}
+            {resumeData.personal?.linkedin && (
+              <a 
+                href={resumeData.personal.linkedin.startsWith('http') ? resumeData.personal.linkedin : `https://${resumeData.personal.linkedin}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center text-blue-600 hover:underline"
+              >
+                <Linkedin className="h-4 w-4 mr-1" />
+                <span>LinkedIn</span>
+              </a>
+            )}
+            {resumeData.personal?.github && (
+              <a 
+                href={resumeData.personal.github.startsWith('http') ? resumeData.personal.github : `https://${resumeData.personal.github}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center text-gray-700 hover:underline"
+              >
+                <Github className="h-4 w-4 mr-1" />
+                <span>GitHub</span>
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Summary */}
+        {resumeData.summary && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold border-b border-gray-200 pb-1 mb-3">
+              Summary
+            </h2>
+            <p className="text-gray-700">{resumeData.summary}</p>
+          </div>
+        )}
+
+        {/* Sections */}
+        {resumeData.sections?.map((section) => (
+          <div key={section.id} className="mb-8">
+            <h2 className="text-xl font-semibold border-b border-gray-200 pb-1 mb-3">
+              {section.title}
+            </h2>
+            {section.items?.map((item, index) => (
+              <div key={item.id || index} className="mb-4">
+                {section.type === 'experience' && (
+                  <div className="mb-4">
+                    <div className="flex justify-between">
+                      <h3 className="font-semibold">{item.position}</h3>
+                      <div className="text-gray-600">
+                        {item.startDate} - {item.current ? 'Present' : item.endDate}
+                      </div>
+                    </div>
+                    <div className="text-gray-700">
+                      {item.company}
+                      {item.location && `, ${item.location}`}
+                    </div>
+                    {item.description && (
+                      <p className="mt-1 text-gray-600 whitespace-pre-line">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {section.type === 'education' && (
+                  <div className="mb-4">
+                    <div className="flex justify-between">
+                      <h3 className="font-semibold">{item.degree}</h3>
+                      <div className="text-gray-600">
+                        {item.startDate} - {item.endDate || 'Present'}
+                      </div>
+                    </div>
+                    <div className="text-gray-700">
+                      {item.school}
+                      {item.location && `, ${item.location}`}
+                    </div>
+                    {item.description && (
+                      <p className="mt-1 text-gray-600">{item.description}</p>
+                    )}
+                  </div>
+                )}
+                {section.type === 'skills' && (
+                  <div className="mb-2">
+                    <h3 className="font-medium">{item.category || 'Skills'}</h3>
+                    <p className="text-gray-700">{item.skills?.join(', ')}</p>
+                  </div>
+                )}
+                {section.type === 'projects' && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold">{item.name}</h3>
+                    <div className="text-sm text-gray-600 mb-1">
+                      {item.technologies?.join(' • ')}
+                    </div>
+                    <p className="text-gray-700">{item.description}</p>
+                    {item.url && (
+                      <a 
+                        href={item.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        View Project
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     );
   }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImEye } from 'react-icons/im';
-import { MdEditNote } from 'react-icons/md';
-import { GoBlocked } from 'react-icons/go';
-import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
+import { MdBlock  } from 'react-icons/md';
+import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUserEdit, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import { Loader } from 'lucide-react';
 import { getAllStudents, updateStudentStatus, updateStudentProfile } from '../../../services/students';
 
@@ -887,7 +886,7 @@ export default function StudentDirectory() {
                             onClick={() => handleEditStudent(student)}
                             className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
                           >
-                            <MdEditNote className="text-xl" />
+                            <FaUserEdit className="text-xl" />
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                             Edit Student
@@ -898,7 +897,7 @@ export default function StudentDirectory() {
                             onClick={() => handleBlockClick(student)}
                             className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                           >
-                            <GoBlocked className="text-xl" />
+                            <MdBlock  className="text-xl" />
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                             {student.status === 'Blocked' ? 'Unblock' : 'Block'} Student

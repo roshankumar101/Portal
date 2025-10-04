@@ -382,13 +382,13 @@ export default function StudentDashboard() {
   };
 
   const validatePhone = (phone) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    const phoneRegex = /^[\+]?[1-9][\d]{0,11}$/;
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
   };
 
   const validateCGPA = (cgpa) => {
     const cgpaNum = parseFloat(cgpa);
-    return !isNaN(cgpaNum) && cgpaNum >= 0 && cgpaNum <= 10;
+    return !isNaN(cgpaNum) && cgpaNum >= 0.0 && cgpaNum <= 10.0;
   };
 
   const validateURL = (url) => {

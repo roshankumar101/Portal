@@ -8,7 +8,8 @@ import {
   where, 
   orderBy, 
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  deleteDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
@@ -29,6 +30,24 @@ export const QUERY_STATUS = {
   UNDER_REVIEW: 'under_review',
   RESOLVED: 'resolved',
   REJECTED: 'rejected'
+};
+
+// Notification types
+export const NOTIFICATION_TYPES = {
+  STUDENT_QUERY: 'student_query',
+  JD_APPROVAL: 'jd_approval',
+  JOB_APPLICATION: 'job_application',
+  CGPA_UPDATE: 'cgpa_update',
+  CALENDAR_BLOCK: 'calendar_block',
+  PLACEMENT_UPDATE: 'placement_update',
+  DOCUMENT_UPLOAD: 'document_upload'
+};
+
+// Priority levels
+export const PRIORITY_LEVELS = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low'
 };
 
 // Submit a new query
@@ -97,7 +116,6 @@ export const getStudentQueries = async (studentId) => {
       queries.push({
         id: doc.id,
         ...data,
-        // Convert Firestore timestamps to readable dates
         date: data.createdAt?.toDate?.()?.toISOString()?.split('T')[0] || new Date().toISOString().split('T')[0],
         responseDate: data.responseDate?.toDate?.()?.toISOString()?.split('T')[0] || null
       });
@@ -127,7 +145,6 @@ export const subscribeToStudentQueries = (studentId, callback) => {
         queries.push({
           id: doc.id,
           ...data,
-          // Convert Firestore timestamps to readable dates
           date: data.createdAt?.toDate?.()?.toISOString()?.split('T')[0] || new Date().toISOString().split('T')[0],
           responseDate: data.responseDate?.toDate?.()?.toISOString()?.split('T')[0] || null
         });
@@ -187,27 +204,32 @@ const createAdminNotification = async (queryId, queryData, studentId) => {
     // Create notification based on query type
     let notificationTitle = '';
     let notificationMessage = '';
+    let notificationType = '';
     
     switch (queryData.type) {
       case QUERY_TYPES.QUESTION:
         notificationTitle = 'New Student Query';
         notificationMessage = `${studentName} asked: "${queryData.subject}"`;
+        notificationType = 'question_request';
         break;
       case QUERY_TYPES.CGPA_UPDATE:
         notificationTitle = 'CGPA Update Request';
         notificationMessage = `${studentName} has requested to update CGPA to ${queryData.cgpa}. Proof document attached.`;
+        notificationType = 'cgpa_request';
         break;
       case QUERY_TYPES.CALENDAR_BLOCK:
         notificationTitle = 'Calendar Block Request';
         notificationMessage = `${studentName} has requested to block calendar from ${queryData.startDate} to ${queryData.endDate} for ${queryData.reason}.`;
+        notificationType = 'calendar_request';
         break;
       default:
         notificationTitle = 'New Student Request';
         notificationMessage = `${studentName} has submitted a new request: "${queryData.subject}"`;
+        notificationType = 'student_query';
     }
     
     const notificationDoc = {
-      type: `${queryData.type}_request`,
+      type: notificationType,
       title: notificationTitle,
       message: notificationMessage,
       from: `${studentName} (${enrollmentId})`,
@@ -219,13 +241,14 @@ const createAdminNotification = async (queryId, queryData, studentId) => {
       }),
       date: new Date().toISOString().split('T')[0],
       isRead: false,
-      priority: queryData.type === QUERY_TYPES.CGPA_UPDATE ? 'high' : 'medium',
+      priority: queryData.type === QUERY_TYPES.CGPA_UPDATE ? PRIORITY_LEVELS.HIGH : PRIORITY_LEVELS.MEDIUM,
       queryId,
       studentId,
       meta: {
         queryId,
         studentId,
         studentName,
+        enrollmentId,
         queryType: queryData.type,
         subject: queryData.subject,
         status: 'pending'
@@ -234,6 +257,7 @@ const createAdminNotification = async (queryId, queryData, studentId) => {
     };
     
     await addDoc(collection(db, NOTIFICATIONS_COLLECTION), notificationDoc);
+    console.log('✅ Admin notification created successfully');
   } catch (error) {
     console.error('Error creating admin notification:', error);
     // Don't throw error here as query submission should still succeed
@@ -288,6 +312,84 @@ export const getAllQueries = async (filters = {}) => {
   } catch (error) {
     console.error('Error fetching all queries:', error);
     throw new Error('Failed to load queries.');
+  }
+};
+
+// ========== ADMIN NOTIFICATION FUNCTIONS ==========
+
+// Subscribe to all notifications with real-time updates
+export const subscribeToNotifications = (callback) => {
+  try {
+    console.log('🔄 Setting up notifications subscription...');
+    const q = query(
+      collection(db, NOTIFICATIONS_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log('📡 Notifications snapshot received, documents:', snapshot.docs.length);
+      const notifications = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        notifications.push({
+          id: doc.id,
+          ...data,
+          // Convert Firestore timestamps to readable format
+          date: data.createdAt?.toDate?.()?.toLocaleDateString() || new Date().toLocaleDateString(),
+          time: data.time || data.createdAt?.toDate?.()?.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+          }) || new Date().toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+          }),
+          timestamp: data.createdAt?.toDate?.() || new Date()
+        });
+      });
+      
+      console.log('📊 Processed notifications:', notifications.length);
+      callback(notifications);
+    }, (error) => {
+      console.error('❌ Error in notifications subscription:', error);
+      callback([]);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error('❌ Error setting up notifications subscription:', error);
+    return () => {};
+  }
+};
+
+// Mark notification as read
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    console.log('📖 Marking notification as read:', notificationId);
+    await updateDoc(doc(db, NOTIFICATIONS_COLLECTION, notificationId), {
+      isRead: true,
+      readAt: serverTimestamp()
+    });
+    console.log('✅ Notification marked as read');
+    return true;
+  } catch (error) {
+    console.error('❌ Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+// Delete notification
+export const deleteNotification = async (notificationId) => {
+  try {
+    console.log('🗑️ Deleting notification:', notificationId);
+    await deleteDoc(doc(db, NOTIFICATIONS_COLLECTION, notificationId));
+    console.log('✅ Notification deleted');
+    return true;
+  } catch (error) {
+    console.error('❌ Error deleting notification:', error);
+    throw error;
   }
 };
 

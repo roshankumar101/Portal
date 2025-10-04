@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ImMail } from 'react-icons/im';
-import { MdEditNote } from 'react-icons/md';
-import { GoBlocked } from 'react-icons/go';
+import { MdEditNote, MdBlock } from 'react-icons/md';
 import { FaEye, FaChevronDown, FaChevronUp, FaSearch, FaBriefcase, FaMapMarkerAlt, FaCalendarAlt, FaMoneyBillWave, FaBuilding, FaUsers, FaClock, FaExternalLinkAlt } from 'react-icons/fa';
 import { TbHistoryToggle } from 'react-icons/tb';
 import { getRecruiterDirectory } from '../../../services/jobs';
@@ -382,7 +381,7 @@ export default function RecruiterDirectory() {
                             </span>
                           </div>
                           <div className="relative group">
-                            <GoBlocked 
+                            <MdBlock 
                               className="text-red-500 cursor-pointer text-xl hover:text-red-700 transition-colors" 
                               onClick={() => setBlockModal({ 
                                 isOpen: true, 

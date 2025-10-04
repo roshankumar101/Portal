@@ -544,7 +544,7 @@ const StudentQuerySystem = () => {
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
             {/* Query Type Selection */}
             <div className="border-b border-gray-200 bg-gray-50/50">
-              <div className="flex overflow-x-auto px-6 scrollbar-hide">
+              <div className="flex overflow-x-auto justify-center px-6 scrollbar-hide">
                 {queryTypes.map((type) => (
                   <button
                     key={type.id}
@@ -779,7 +779,7 @@ const StudentQuerySystem = () => {
                   className={`px-6 py-3 bg-gradient-to-r font-medium rounded-md transition-all duration-200 shadow-md hover:shadow-lg flex items-center ${
                     submitting 
                       ? 'from-gray-400 to-gray-500 text-gray-700 cursor-not-allowed' 
-                      : 'from-blue-400 to-blue-500 text-black hover:from-blue-700 hover:to-blue-800'
+                      : 'from-blue-600 to-blue-800 text-black hover:from-blue-700 hover:to-blue-900'
                   }`}
                 >
                   {submitting ? (

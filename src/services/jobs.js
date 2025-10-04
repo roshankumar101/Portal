@@ -4,6 +4,7 @@ import { db } from '../firebase';
 const JOBS_COLL = 'jobs';
 const APPS_COLL = 'applications';
 
+// EXISTING FUNCTIONS (keeping your original functions)
 export async function listJobs({ limitTo = 50, recruiterId, status } = {}) {
   try {
     const constraints = [orderBy('postedDate', 'desc'), limit(limitTo)];
@@ -17,7 +18,6 @@ export async function listJobs({ limitTo = 50, recruiterId, status } = {}) {
     for (const docSnap of snap.docs) {
       const jobData = { id: docSnap.id, ...docSnap.data() };
       
-      // Fetch company details
       try {
         if (jobData.companyId) {
           const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
@@ -44,7 +44,6 @@ export async function getJob(jobId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-// Get comprehensive job details with all related data
 export async function getJobDetails(jobId) {
   try {
     const jobSnap = await getDoc(doc(db, JOBS_COLL, jobId));
@@ -54,7 +53,6 @@ export async function getJobDetails(jobId) {
 
     const jobData = { id: jobSnap.id, ...jobSnap.data() };
 
-    // Fetch company details if companyId exists
     if (jobData.companyId) {
       try {
         const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
@@ -126,14 +124,14 @@ export async function listApplicationsForStudent(studentId) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-// Job status type definition
+// Job status constants
 export const JOB_STATUS = {
   DRAFT: 'draft',
   ACTIVE: 'active',
+  POSTED: 'posted', // NEW: Added for your use case
   ARCHIVED: 'archived'
 };
 
-// Save job as draft
 export async function saveJobDraft(jobData) {
   try {
     const payload = {
@@ -150,13 +148,10 @@ export async function saveJobDraft(jobData) {
   }
 }
 
-// Add another position (same company, auto-fill)
 export async function addAnotherPositionDraft(jobData) {
   try {
-    // Save the current job as draft
     const saved = await saveJobDraft(jobData);
     
-    // Return autofill data for next form
     const autofill = {
       company: jobData.company || '',
       website: jobData.website || '',
@@ -175,21 +170,40 @@ export async function addAnotherPositionDraft(jobData) {
   }
 }
 
-// Post job (change status from draft to active)
-export async function postJob(jobId) {
+// MODIFIED: Enhanced postJob function for your ManageJobs component
+export async function postJob(jobId, postData = {}) {
   try {
+    console.log('🚀 Posting job in database:', jobId, postData);
+    
     await updateDoc(doc(db, JOBS_COLL, jobId), {
-      status: JOB_STATUS.ACTIVE,
+      // Status fields for posted jobs
+      status: JOB_STATUS.POSTED,
+      isPosted: true,
+      posted: true,
+      
+      // Posted metadata
+      postedAt: serverTimestamp(),
+      postedBy: postData.postedBy || 'admin',
+      
+      // School and batch targeting (NEW for your use case)
+      targetSchools: postData.selectedSchools || [],
+      targetBatches: postData.selectedBatches || [],
+      
+      // Update tracking
       updatedAt: serverTimestamp()
     });
+    
+    console.log('✅ Job posted successfully in database:', jobId);
+    return { success: true, jobId };
+    
   } catch (error) {
-    console.error('Error posting job:', error);
+    console.error('❌ Error posting job:', error);
     throw error;
   }
 }
 
-// Fetch jobs with optional status filter
-export async function fetchJobs(opts = {}) {
+// NEW: Enhanced subscribeJobs for your ManageJobs component
+export function subscribeJobs(onChange, opts = {}) {
   try {
     let constraints = [];
     
@@ -206,13 +220,65 @@ export async function fetchJobs(opts = {}) {
     constraints.push(limit(opts.limitTo || 50));
     
     const q = query(collection(db, JOBS_COLL), ...constraints);
+    
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      console.log('📡 Real-time update - Jobs snapshot received');
+      const jobs = [];
+      
+      for (const docSnap of snapshot.docs) {
+        const jobData = { id: docSnap.id, ...docSnap.data() };
+        
+        // Fetch company details if needed
+        try {
+          if (jobData.companyId) {
+            const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
+            if (companyDoc.exists()) {
+              jobData.company = companyDoc.data();
+            }
+          }
+        } catch (err) {
+          console.warn('Error fetching company for job:', err);
+        }
+        
+        jobs.push(jobData);
+      }
+      
+      console.log('📊 Jobs processed:', jobs.length, 'total');
+      onChange(jobs);
+    }, (error) => {
+      console.error('❌ Error in jobs subscription:', error);
+      onChange([]);
+    });
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error('❌ Error setting up jobs subscription:', error);
+    return () => {};
+  }
+}
+
+// EXISTING FUNCTIONS (keeping the rest of your original functions)
+export async function fetchJobs(opts = {}) {
+  try {
+    let constraints = [];
+    
+    if (opts.status) {
+      constraints.push(where('status', '==', opts.status));
+    }
+    if (opts.recruiterId) {
+      constraints.push(where('recruiterId', '==', opts.recruiterId));
+    }
+    
+    constraints.push(orderBy('createdAt', 'desc'));
+    constraints.push(limit(opts.limitTo || 50));
+    
+    const q = query(collection(db, JOBS_COLL), ...constraints);
     const snap = await getDocs(q);
     
     const jobs = [];
     for (const docSnap of snap.docs) {
       const jobData = { id: docSnap.id, ...docSnap.data() };
       
-      // Fetch company details if needed
       try {
         if (jobData.companyId) {
           const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
@@ -234,60 +300,6 @@ export async function fetchJobs(opts = {}) {
   }
 }
 
-// Subscribe to jobs with real-time updates
-export function subscribeJobs(onChange, opts = {}) {
-  try {
-    let constraints = [];
-    
-    // Add filters first, then ordering and limit
-    if (opts.status) {
-      constraints.push(where('status', '==', opts.status));
-    }
-    if (opts.recruiterId) {
-      constraints.push(where('recruiterId', '==', opts.recruiterId));
-    }
-    
-    // Add ordering and limit last
-    constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(opts.limitTo || 50));
-    
-    const q = query(collection(db, JOBS_COLL), ...constraints);
-    
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const jobs = [];
-      
-      for (const docSnap of snapshot.docs) {
-        const jobData = { id: docSnap.id, ...docSnap.data() };
-        
-        // Fetch company details if needed
-        try {
-          if (jobData.companyId) {
-            const companyDoc = await getDoc(doc(db, 'companies', jobData.companyId));
-            if (companyDoc.exists()) {
-              jobData.company = companyDoc.data();
-            }
-          }
-        } catch (err) {
-          console.warn('Error fetching company for job:', err);
-        }
-        
-        jobs.push(jobData);
-      }
-      
-      onChange(jobs);
-    }, (error) => {
-      console.error('Error in jobs subscription:', error);
-      onChange([]);
-    });
-    
-    return unsubscribe;
-  } catch (error) {
-    console.error('Error setting up jobs subscription:', error);
-    return () => {};
-  }
-}
-
-// Update job
 export async function updateJobData(jobId, patch) {
   try {
     await updateDoc(doc(db, JOBS_COLL, jobId), {
@@ -300,7 +312,6 @@ export async function updateJobData(jobId, patch) {
   }
 }
 
-// Fetch recruiter directory data from jobs collection
 export async function getRecruiterDirectory() {
   try {
     const q = query(
@@ -309,7 +320,6 @@ export async function getRecruiterDirectory() {
     );
     const snap = await getDocs(q);
     
-    // Group jobs by company and extract recruiter info
     const companyMap = new Map();
     
     snap.docs.forEach(docSnap => {
@@ -318,11 +328,9 @@ export async function getRecruiterDirectory() {
       
       if (!companyName) return;
       
-      // Extract recruiter info from first SPOC
       const firstSpoc = jobData.spocs?.[0];
       if (!firstSpoc?.fullName || !firstSpoc?.email) return;
       
-      // Extract location from driveVenues (first venue)
       const location = jobData.driveVenues?.[0] || jobData.companyLocation || 'Not specified';
       
       const companyKey = companyName.toLowerCase();
@@ -336,7 +344,7 @@ export async function getRecruiterDirectory() {
           location: location,
           lastJobPostedAt: jobData.createdAt,
           totalJobPostings: 1,
-          status: 'Active', // Default status
+          status: 'Active',
           jobs: [jobData]
         });
       } else {
@@ -344,14 +352,12 @@ export async function getRecruiterDirectory() {
         existing.totalJobPostings += 1;
         existing.jobs.push(jobData);
         
-        // Update last job posted date if this job is newer
         if (jobData.createdAt && jobData.createdAt.toMillis() > existing.lastJobPostedAt.toMillis()) {
           existing.lastJobPostedAt = jobData.createdAt;
         }
       }
     });
     
-    // Convert map to array and format dates
     const recruiters = Array.from(companyMap.values()).map(recruiter => ({
       ...recruiter,
       lastJobPostedAt: recruiter.lastJobPostedAt 
@@ -372,3 +378,78 @@ export async function getRecruiterDirectory() {
   }
 }
 
+// NEW: Additional helper functions for your use case
+export async function unpostJob(jobId) {
+  try {
+    await updateDoc(doc(db, JOBS_COLL, jobId), {
+      status: JOB_STATUS.DRAFT,
+      isPosted: false,
+      posted: false,
+      unpostedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    return { success: true, jobId };
+  } catch (error) {
+    console.error('Error unposting job:', error);
+    throw error;
+  }
+}
+
+// NEW: Get only posted jobs
+export function subscribePostedJobs(onChange, opts = {}) {
+  try {
+    let constraints = [
+      where('status', '==', JOB_STATUS.POSTED),
+      orderBy('postedAt', 'desc'),
+      limit(opts.limitTo || 50)
+    ];
+    
+    if (opts.recruiterId) {
+      constraints.unshift(where('recruiterId', '==', opts.recruiterId));
+    }
+    
+    const q = query(collection(db, JOBS_COLL), ...constraints);
+    
+    return onSnapshot(q, async (snapshot) => {
+      const jobs = [];
+      for (const docSnap of snapshot.docs) {
+        const jobData = { id: docSnap.id, ...docSnap.data() };
+        jobs.push(jobData);
+      }
+      onChange(jobs);
+    });
+  } catch (error) {
+    console.error('Error subscribing to posted jobs:', error);
+    return () => {};
+  }
+}
+
+// NEW: Get only unposted jobs
+export function subscribeUnpostedJobs(onChange, opts = {}) {
+  try {
+    let constraints = [
+      where('status', 'in', [JOB_STATUS.DRAFT, JOB_STATUS.ACTIVE]),
+      orderBy('createdAt', 'desc'),
+      limit(opts.limitTo || 50)
+    ];
+    
+    if (opts.recruiterId) {
+      constraints.unshift(where('recruiterId', '==', opts.recruiterId));
+    }
+    
+    const q = query(collection(db, JOBS_COLL), ...constraints);
+    
+    return onSnapshot(q, async (snapshot) => {
+      const jobs = [];
+      for (const docSnap of snapshot.docs) {
+        const jobData = { id: docSnap.id, ...docSnap.data() };
+        jobs.push(jobData);
+      }
+      onChange(jobs);
+    });
+  } catch (error) {
+    console.error('Error subscribing to unposted jobs:', error);
+    return () => {};
+  }
+}

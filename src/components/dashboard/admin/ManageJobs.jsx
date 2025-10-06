@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { deleteJob, subscribeJobs, postJob } from '../../../services/jobs';
-import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle } from 'lucide-react';
+import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle, Clock, PlayCircle, CheckSquare, XCircle, AlertTriangle } from 'lucide-react';
 
 const SCHOOLS = ['All Schools', 'SOT', 'SOM', 'SOH'];
 const BATCHES = ['All Batches', '23-27', '24-28', '25-29'];
@@ -13,6 +13,7 @@ export default function ManageJobs() {
   const [showBatches, setShowBatches] = useState({});
   const [selectedSchools, setSelectedSchools] = useState({});
   const [selectedBatches, setSelectedBatches] = useState({});
+  const [activeFilter, setActiveFilter] = useState('unposted');
   const schoolDropdownRefs = useRef({});
   const batchDropdownRefs = useRef({});
 
@@ -80,43 +81,176 @@ export default function ManageJobs() {
     return job.status === 'posted' || job.isPosted === true || job.posted === true;
   };
 
+  // Get intelligent job status based on interview date and admin status
+  const getJobStatus = (job) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check for admin-set status first
+    if (job.adminStatus) {
+      switch (job.adminStatus.toLowerCase()) {
+        case 'cancelled':
+        case 'canceled':
+          return { 
+            text: 'Cancelled', 
+            color: 'bg-red-100 text-red-800', 
+            icon: <XCircle className="w-3 h-3" /> 
+          };
+        case 'blocked':
+          return { 
+            text: 'Blocked', 
+            color: 'bg-red-100 text-red-800', 
+            icon: <XCircle className="w-3 h-3" /> 
+          };
+        case 'postponed':
+          return { 
+            text: 'Postponed', 
+            color: 'bg-yellow-100 text-yellow-800', 
+            icon: <AlertTriangle className="w-3 h-3" /> 
+          };
+        case 'rescheduled':
+          return { 
+            text: 'Rescheduled', 
+            color: 'bg-blue-100 text-blue-800', 
+            icon: <Clock className="w-3 h-3" /> 
+          };
+        case 'completed':
+        case 'finished':
+          return { 
+            text: 'Completed', 
+            color: 'bg-green-100 text-green-800', 
+            icon: <CheckSquare className="w-3 h-3" /> 
+          };
+        case 'in_progress':
+        case 'ongoing':
+          return { 
+            text: 'In Progress', 
+            color: 'bg-purple-100 text-purple-800', 
+            icon: <PlayCircle className="w-3 h-3" /> 
+          };
+        case 'results_declared':
+          return { 
+            text: 'Results Out', 
+            color: 'bg-indigo-100 text-indigo-800', 
+            icon: <CheckSquare className="w-3 h-3" /> 
+          };
+      }
+    }
+
+    // If no interview date, return posted status
+    if (!job.driveDate) {
+      return { 
+        text: 'Posted', 
+        color: 'bg-green-100 text-green-800', 
+        icon: <CheckCircle className="w-3 h-3" /> 
+      };
+    }
+
+    // Get interview date
+    let interviewDate;
+    if (job.driveDate.toDate) {
+      interviewDate = job.driveDate.toDate();
+    } else {
+      interviewDate = new Date(job.driveDate);
+    }
+    interviewDate.setHours(0, 0, 0, 0);
+
+    const timeDiff = interviewDate.getTime() - today.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    // Status based on interview date
+    if (daysDiff > 7) {
+      return { 
+        text: 'Upcoming', 
+        color: 'bg-blue-100 text-blue-800', 
+        icon: <Clock className="w-3 h-3" /> 
+      };
+    } else if (daysDiff > 3) {
+      return { 
+        text: 'This Week', 
+        color: 'bg-orange-100 text-orange-800', 
+        icon: <Calendar className="w-3 h-3" /> 
+      };
+    } else if (daysDiff > 0) {
+      return { 
+        text: `${daysDiff} Day${daysDiff > 1 ? 's' : ''} Left`, 
+        color: 'bg-red-100 text-red-800', 
+        icon: <AlertTriangle className="w-3 h-3" /> 
+      };
+    } else if (daysDiff === 0) {
+      return { 
+        text: 'Today', 
+        color: 'bg-purple-100 text-purple-800', 
+        icon: <PlayCircle className="w-3 h-3" /> 
+      };
+    } else if (daysDiff >= -3) {
+      // Interview happened 1-3 days ago
+      return { 
+        text: 'Recently Held', 
+        color: 'bg-yellow-100 text-yellow-800', 
+        icon: <Clock className="w-3 h-3" /> 
+      };
+    } else if (daysDiff >= -7) {
+      // Interview happened 4-7 days ago
+      return { 
+        text: 'Awaiting Results', 
+        color: 'bg-indigo-100 text-indigo-800', 
+        icon: <Clock className="w-3 h-3" /> 
+      };
+    } else {
+      // Interview happened more than 7 days ago
+      return { 
+        text: 'Interview Done', 
+        color: 'bg-gray-100 text-gray-800', 
+        icon: <CheckSquare className="w-3 h-3" /> 
+      };
+    }
+  };
+
   // Database-driven sorting and categorization
   const getSortedJobs = () => {
-    // Filter based on database status
-    const unpostedJobs = jobs.filter(job => !isJobPosted(job));
-    const postedJobs = jobs.filter(job => isJobPosted(job));
+    // Filter based on active filter
+    let filteredJobs;
+    if (activeFilter === 'unposted') {
+      filteredJobs = jobs.filter(job => !isJobPosted(job));
+    } else {
+      filteredJobs = jobs.filter(job => isJobPosted(job));
+    }
     
-    console.log('🗂️ Categorization - Unposted:', unpostedJobs.length, 'Posted:', postedJobs.length);
+    console.log('🗂️ Filtered Jobs:', activeFilter, filteredJobs.length);
     
-    // Sort unposted by creation time (newest first)
-    const sortByCreationTime = (a, b) => {
-      const getTimestamp = (job) => {
-        if (job.createdAt?.toDate) return job.createdAt.toDate();
-        if (job.timestamp?.toDate) return job.timestamp.toDate();
-        return new Date(job.createdAt || job.timestamp || 0);
-      };
-      return getTimestamp(b) - getTimestamp(a);
-    };
-    
-    // Sort posted by posted time (latest posted first)
-    const sortByPostedTime = (a, b) => {
-      const getPostedTimestamp = (job) => {
-        if (job.postedAt?.toDate) return job.postedAt.toDate();
-        return new Date(job.postedAt || 0);
-      };
-      const postedTimeA = getPostedTimestamp(a);
-      const postedTimeB = getPostedTimestamp(b);
-      
-      if (postedTimeA && postedTimeB) {
-        return postedTimeB - postedTimeA; // Latest posted first
-      }
-      return sortByCreationTime(a, b); // Fallback
-    };
-    
-    const sortedUnposted = unpostedJobs.sort(sortByCreationTime);
-    const sortedPosted = postedJobs.sort(sortByPostedTime);
-    
-    return [...sortedUnposted, ...sortedPosted];
+    if (activeFilter === 'unposted') {
+      // Sort unposted by creation time (newest first)
+      return filteredJobs.sort((a, b) => {
+        const getTimestamp = (job) => {
+          if (job.createdAt?.toDate) return job.createdAt.toDate();
+          if (job.timestamp?.toDate) return job.timestamp.toDate();
+          return new Date(job.createdAt || job.timestamp || 0);
+        };
+        return getTimestamp(b) - getTimestamp(a);
+      });
+    } else {
+      // Sort posted by posted time (latest posted first)
+      return filteredJobs.sort((a, b) => {
+        const getPostedTimestamp = (job) => {
+          if (job.postedAt?.toDate) return job.postedAt.toDate();
+          return new Date(job.postedAt || 0);
+        };
+        const postedTimeA = getPostedTimestamp(a);
+        const postedTimeB = getPostedTimestamp(b);
+        
+        if (postedTimeA && postedTimeB) {
+          return postedTimeB - postedTimeA; // Latest posted first
+        }
+        // Fallback to creation time
+        const getTimestamp = (job) => {
+          if (job.createdAt?.toDate) return job.createdAt.toDate();
+          if (job.timestamp?.toDate) return job.timestamp.toDate();
+          return new Date(job.createdAt || job.timestamp || 0);
+        };
+        return getTimestamp(b) - getTimestamp(a);
+      });
+    }
   };
 
   // Check if job can be posted
@@ -152,14 +286,11 @@ export default function ManageJobs() {
       const postData = {
         selectedSchools: selectedSchools[jobId] || [],
         selectedBatches: selectedBatches[jobId] || [],
-        postedBy: 'admin', // You can get this from auth context
+        postedBy: 'admin',
       };
       
       console.log('🚀 Posting job to database:', jobId, postData);
-      
-      // Update database using your existing service
       await postJob(jobId, postData);
-      
       console.log('✅ Job posted successfully:', jobId);
       
     } catch (err) {
@@ -327,21 +458,41 @@ export default function ManageJobs() {
           <p className="text-sm text-slate-600 mt-1">
             Select target schools and batches, then post jobs to students
           </p>
-          <div className="flex gap-4 mt-2 text-xs">
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
-              📝 {unpostedCount} Unposted
-            </span>
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
-              ✅ {postedCount} Posted
-            </span>
-          </div>
+        </div>
+      </div>
+
+      {/* Filter Buttons - Centered above jobs container */}
+      <div className="flex justify-center mb-6">
+        <div className="bg-white rounded-lg p-1 shadow-sm border border-slate-200 inline-flex gap-2">
+          <button
+            onClick={() => setActiveFilter('unposted')}
+            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
+              activeFilter === 'unposted' 
+                ? 'bg-blue-500 text-white shadow-md' 
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            In Review ({unpostedCount})
+          </button>
+          <button
+            onClick={() => setActiveFilter('posted')}
+            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
+              activeFilter === 'posted' 
+                ? 'bg-green-500 text-white shadow-md' 
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            Posted ({postedCount})
+          </button>
         </div>
       </div>
 
       {/* Jobs list */}
       <div className="bg-white border border-slate-200 rounded-lg">
         <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="font-semibold">Jobs ({jobs.length})</h3>
+          <h3 className="font-semibold">
+            {activeFilter === 'unposted' ? 'Unposted Jobs' : 'Posted Jobs'} ({getSortedJobs().length})
+          </h3>
           {loading && (
             <div className="inline-flex items-center gap-2 text-sm text-slate-500">
               <Loader className="w-4 h-4 animate-spin" /> Loading jobs...
@@ -350,213 +501,201 @@ export default function ManageJobs() {
         </div>
         
         <div className="divide-y py-4">
-          {jobs.length === 0 && !loading && (
+          {getSortedJobs().length === 0 && !loading && (
             <div className="p-6 text-center">
-              <div className="text-slate-500 text-sm">No jobs available yet.</div>
-              <div className="text-xs text-slate-400 mt-1">Jobs will appear here once they are created.</div>
+              <div className="text-slate-500 text-sm">
+                No {activeFilter} jobs available yet.
+              </div>
+              <div className="text-xs text-slate-400 mt-1">
+                {activeFilter === 'unposted' 
+                  ? 'New jobs will appear here once they are created.' 
+                  : 'Posted jobs will appear here once you post them.'
+                }
+              </div>
             </div>
           )}
           
           {getSortedJobs().map((job, index) => {
-            const sortedJobs = getSortedJobs();
-            const isFirstPostedJob = index > 0 && 
-                                   !isJobPosted(sortedJobs[index - 1]) && 
-                                   isJobPosted(job);
+            const jobStatus = isJobPosted(job) ? getJobStatus(job) : null;
             
             return (
-              <React.Fragment key={job.id}>
-                {/* Section divider before first posted job */}
-                {isFirstPostedJob && (
-                  <div className="mx-4 my-6">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
+              <div key={job.id} className={`relative border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mb-4 mx-4 ${
+                isJobPosted(job) ? 'bg-green-50' : 'bg-blue-50'
+              }`}>
+                <div className="p-4">
+                  {/* First Row: Company, Interview Date, School, Batch, Actions */}
+                  <div className="flex items-center justify-between gap-6">
+                    {/* Company - STATUS BADGE BACK HERE */}
+                    <div className="flex-4 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 -mt-2">
+                        <Building2 className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">Company</span>
+                        {/* STATUS BADGE NEXT TO COMPANY SECTION */}
+                        {jobStatus && (
+                          <span className={`px-2 py-1 text-xs rounded-md border border-gray-600 flex items-center gap-2 ${jobStatus.color}`}>
+                            {jobStatus.icon}
+                            {jobStatus.text}
+                          </span>
+                        )}
                       </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-gray-50 px-4 py-1 text-sm font-medium text-gray-500 rounded-full">
-                          Posted Jobs
-                        </span>
+                      <div className="font-semibold text-slate-900 text-xl truncate ml-[5%]">
+                        {job.company?.name || job.companyName || job.company || 'N/A'}
                       </div>
+                    </div>
+                    
+                    {/* Interview Date */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 -mt-2">
+                        <Calendar className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">Interview</span>
+                      </div>
+                      <div className="text-slate-900 text-sm">
+                        {job.driveDate ? (
+                          job.driveDate.toDate ? 
+                          job.driveDate.toDate().toLocaleDateString('en-GB') :
+                          new Date(job.driveDate).toLocaleDateString('en-GB')
+                        ) : 'TBD'}
+                      </div>
+                    </div>
+                    
+                    {/* School */}
+                    <div className="flex-2 min-w-0">
+                      <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
+                        <GraduationCap className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">School</span>
+                      </div>
+                      <div className="relative" ref={el => schoolDropdownRefs.current[job.id] = el}>
+                        <button
+                          type="button"
+                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-left flex items-center justify-between ${
+                            selectedSchools[job.id]?.length ? 'bg-green-100' : 'bg-blue-100'
+                          }`}
+                          onClick={() => toggleSchoolDropdown(job.id)}
+                          disabled={isJobPosted(job)}
+                        >
+                          <span className="truncate">
+                            {selectedSchools[job.id]?.length ? selectedSchools[job.id].join(', ') : 'Select Schools'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                        </button>
+                        {showSchools[job.id] && !isJobPosted(job) && (
+                          <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                            {SCHOOLS.map((school) => (
+                              <label key={school} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSchools[job.id]?.includes(school) || false}
+                                  onChange={() => toggleSchool(job.id, school)}
+                                />
+                                <span>{school}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Batch */}
+                    <div className="flex-2 min-w-0">
+                      <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
+                        <Users className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">Batch</span>
+                      </div>
+                      <div className="relative" ref={el => batchDropdownRefs.current[job.id] = el}>
+                        <button
+                          type="button"
+                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-left flex items-center justify-between ${
+                            selectedBatches[job.id]?.length ? 'bg-green-100' : 'bg-blue-100'
+                          }`}
+                          onClick={() => toggleBatchDropdown(job.id)}
+                          disabled={isJobPosted(job)}
+                        >
+                          <span className="truncate">
+                            {selectedBatches[job.id]?.length ? selectedBatches[job.id].join(', ') : 'Select Batches'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                        </button>
+                        {showBatches[job.id] && !isJobPosted(job) && (
+                          <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                            {BATCHES.map((batch) => (
+                              <label key={batch} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedBatches[job.id]?.includes(batch) || false}
+                                  onChange={() => toggleBatch(job.id, batch)}
+                                />
+                                <span>{batch}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Post Action */}
+                    <div className="flex items-center ml-3 mt-4">
+                      <button
+                        onClick={() => handlePostJob(job.id)}
+                        disabled={!canPostJob(job) || postingJobs.has(job.id)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 justify-center min-w-[120px] ${
+                          isJobPosted(job)
+                            ? 'bg-green-500 text-white cursor-not-allowed'
+                            : postingJobs.has(job.id)
+                            ? 'bg-blue-100 text-blue-500 cursor-not-allowed'
+                            : canPostJob(job)
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                            : 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {isJobPosted(job) ? (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-xs">{getPostedJobDisplay(job.id)}</span>
+                          </>
+                        ) : postingJobs.has(job.id) ? (
+                          <>
+                            <Loader className="w-4 h-4 animate-spin" />
+                            <span>Posting...</span>
+                          </>
+                        ) : canPostJob(job) ? (
+                          'Post Job'
+                        ) : (
+                          'Post Job'
+                        )}
+                      </button>
                     </div>
                   </div>
-                )}
-                
-                <div className={`relative border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 mb-4 mx-4 ${
-                  isJobPosted(job) ? 'bg-green-50' : 'bg-blue-50'
-                }`}>
-                  <div className="p-4">
-                    {/* First Row: Company, Interview Date, School, Batch, Actions */}
-                    <div className="flex items-center justify-between gap-6">
-                      {/* Company */}
-                      <div className="flex-4 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 -mt-2">
-                          <Building2 className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Company</span>
-                          {isJobPosted(job) && (
-                            <span className="px-2 py-0.5 bg-green-200 text-green-800 text-xs rounded-full">
-                              POSTED
-                            </span>
-                          )}
-                        </div>
-                        <div className="font-semibold text-slate-900 text-xl truncate ml-[5%]">
-                          {job.company?.name || job.companyName || job.company || 'N/A'}
-                        </div>
-                      </div>
-                      
-                      {/* Interview Date */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 -mt-2">
-                          <Calendar className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Interview</span>
-                        </div>
-                        <div className="text-slate-900 text-sm">
-                          {job.driveDate ? (
-                            job.driveDate.toDate ? 
-                            job.driveDate.toDate().toLocaleDateString('en-GB') :
-                            new Date(job.driveDate).toLocaleDateString('en-GB')
-                          ) : 'TBD'}
-                        </div>
-                      </div>
-                      
-                      {/* School */}
-                      <div className="flex-2 min-w-0">
-                        <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
-                          <GraduationCap className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">School</span>
-                        </div>
-                        <div className="relative" ref={el => schoolDropdownRefs.current[job.id] = el}>
-                          <button
-                            type="button"
-                            className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-left flex items-center justify-between ${
-                              selectedSchools[job.id]?.length ? 'bg-green-100' : 'bg-blue-100'
-                            }`}
-                            onClick={() => toggleSchoolDropdown(job.id)}
-                            disabled={isJobPosted(job)}
-                          >
-                            <span className="truncate">
-                              {selectedSchools[job.id]?.length ? selectedSchools[job.id].join(', ') : 'Select Schools'}
-                            </span>
-                            <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                          </button>
-                          {showSchools[job.id] && !isJobPosted(job) && (
-                            <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                              {SCHOOLS.map((school) => (
-                                <label key={school} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedSchools[job.id]?.includes(school) || false}
-                                    onChange={() => toggleSchool(job.id, school)}
-                                  />
-                                  <span>{school}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Batch */}
-                      <div className="flex-2 min-w-0">
-                        <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
-                          <Users className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Batch</span>
-                        </div>
-                        <div className="relative" ref={el => batchDropdownRefs.current[job.id] = el}>
-                          <button
-                            type="button"
-                            className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-left flex items-center justify-between ${
-                              selectedBatches[job.id]?.length ? 'bg-green-100' : 'bg-blue-100'
-                            }`}
-                            onClick={() => toggleBatchDropdown(job.id)}
-                            disabled={isJobPosted(job)}
-                          >
-                            <span className="truncate">
-                              {selectedBatches[job.id]?.length ? selectedBatches[job.id].join(', ') : 'Select Batches'}
-                            </span>
-                            <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                          </button>
-                          {showBatches[job.id] && !isJobPosted(job) && (
-                            <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                              {BATCHES.map((batch) => (
-                                <label key={batch} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedBatches[job.id]?.includes(batch) || false}
-                                    onChange={() => toggleBatch(job.id, batch)}
-                                  />
-                                  <span>{batch}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Post Action */}
-                      <div className="flex items-center ml-3 mt-4">
-                        <button
-                          onClick={() => handlePostJob(job.id)}
-                          disabled={!canPostJob(job) || postingJobs.has(job.id)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 justify-center min-w-[120px] ${
-                            isJobPosted(job)
-                              ? 'bg-green-500 text-white cursor-not-allowed'
-                              : postingJobs.has(job.id)
-                              ? 'bg-blue-100 text-blue-500 cursor-not-allowed'
-                              : canPostJob(job)
-                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                              : 'bg-blue-200 text-blue-400 cursor-not-allowed'
-                          }`}
-                        >
-                          {isJobPosted(job) ? (
-                            <>
-                              <CheckCircle className="w-4 h-4" />
-                              <span className="text-xs">{getPostedJobDisplay(job.id)}</span>
-                            </>
-                          ) : postingJobs.has(job.id) ? (
-                            <>
-                              <Loader className="w-4 h-4 animate-spin" />
-                              <span>Posting...</span>
-                            </>
-                          ) : canPostJob(job) ? (
-                            'Post Job'
-                          ) : (
-                            'Post Job'
-                          )}
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Second Row: Role and Actions */}
-                    <div className="mt-2 pt-2 border-t border-slate-300">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Role:</span>
-                          <span className="font-semibold text-slate-900">{job.jobTitle || 'N/A'}</span>
-                        </div>
-                        
-                        {/* Share and Delete Actions */}
-                        <div className="flex items-center gap-2 mr-2">
-                          <button 
-                            onClick={() => handleShare(job)}
-                            className="p-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors shadow-sm"
-                            title="Share job"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(job.id)}
-                            className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
-                            title="Delete job"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                  {/* Second Row: Role and Actions - STATUS BADGE REMOVED FROM HERE */}
+                  <div className="mt-2 pt-2 border-t border-slate-300">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">Role:</span>
+                        <span className="font-semibold text-slate-900">{job.jobTitle || 'N/A'}</span>
+                      </div>
+                      
+                      {/* Share and Delete Actions - No status badge here now */}
+                      <div className="flex items-center gap-2 mr-2">
+                        <button 
+                          onClick={() => handleShare(job)}
+                          className="p-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors shadow-sm"
+                          title="Share job"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(job.id)}
+                          className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
+                          title="Delete job"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </React.Fragment>
+              </div>
             );
           })}
         </div>

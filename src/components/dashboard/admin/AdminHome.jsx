@@ -1,30 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PieChart } from 'react-minimal-pie-chart';
 import { ChevronDown, Filter, TrendingUp, Users, Briefcase, MessageSquare, Bell, BarChart3, Target, DollarSign, X } from 'lucide-react';
+import { Chart as ChartJS, CategoryScale, LinearScale, RadialLinearScale, BarElement, LineElement, PointElement, ArcElement, Filler, Title, Tooltip, Legend } from 'chart.js';
+import { Radar, PolarArea, Bar, Doughnut } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, RadialLinearScale, BarElement, LineElement, PointElement, ArcElement, Filler, Title, Tooltip, Legend);
 
 export default function AdminHome() {
-  const [filters, setFilters] = useState({
-    center: [],
-    school: [],
-    quarter: []
-  });
-
+  const [filters, setFilters] = useState({ center: [], school: [], quarter: [] });
   const [showCenterDropdown, setShowCenterDropdown] = useState(false);
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showQuarterDropdown, setShowQuarterDropdown] = useState(false);
-  
+  const [selectedSchool, setSelectedSchool] = useState('SOT');
+
   const centerDropdownRef = useRef(null);
   const schoolDropdownRef = useRef(null);
   const quarterDropdownRef = useRef(null);
 
-  // Dummy data that would typically come from Firestore
+  // Chart.js color palette
+  const chartColors = {
+    blue: 'rgb(59, 130, 246)',
+    purple: 'rgb(147, 51, 234)',
+    green: 'rgb(34, 197, 94)',
+    red: 'rgb(239, 68, 68)',
+    blueLight: 'rgba(59, 130, 246, 0.1)',
+    purpleLight: 'rgba(147, 51, 234, 0.1)',
+    greenLight: 'rgba(34, 197, 94, 0.1)',
+    redLight: 'rgba(239, 68, 68, 0.1)'
+  };
+
+  // Dummy data
   const [dashboardData, setDashboardData] = useState({
     jobPostings: 120,
     studentQueries: 45,
     notifications: 25,
     applications: 300,
     overallStats: {
-      totalCenters: 4,
+      totalCenters: 6,
       totalBatches: 12,
       activeStudents: 1245,
       placementRate: 78,
@@ -32,561 +45,411 @@ export default function AdminHome() {
       completionRate: 92,
       engagementRate: 67,
       satisfactionScore: '4.5/5'
-    },
-    placementOverview: {
-      totalStudentsPlaced: 850,
-      placementRatio: '78%',
-      firstAttemptPlacementRatio: '65%',
-      studentsShortlisted: 950,
-      studentsJoined: 820,
-      studentsInProcess: 130,
-      studentsRejected: 45
-    },
-    jobApplicationStats: {
-      totalApplications: 2450,
-      applicationToInterviewRatio: '1:4',
-      shortlistedToOfferRatio: '3:2',
-      studentsWithNoApplications: 75
-    },
-    salaryOverview: {
-      avgSalaryPlaced: '8.5 LPA',
-      avgSalaryOffered: '9.2 LPA',
-      highestPackage: '22 LPA',
-      medianSalaryByIndustry: {
-        'Technology': '10.5 LPA',
-        'Management': '8.2 LPA',
-        'Humanities': '6.8 LPA',
-        'Research': '9.1 LPA'
-      }
     }
   });
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (centerDropdownRef.current && !centerDropdownRef.current.contains(event.target)) {
-        setShowCenterDropdown(false);
-      }
-      if (schoolDropdownRef.current && !schoolDropdownRef.current.contains(event.target)) {
-        setShowSchoolDropdown(false);
-      }
-      if (quarterDropdownRef.current && !quarterDropdownRef.current.contains(event.target)) {
-        setShowQuarterDropdown(false);
-      }
+      if (centerDropdownRef.current && !centerDropdownRef.current.contains(event.target)) setShowCenterDropdown(false);
+      if (schoolDropdownRef.current && !schoolDropdownRef.current.contains(event.target)) setShowSchoolDropdown(false);
+      if (quarterDropdownRef.current && !quarterDropdownRef.current.contains(event.target)) setShowQuarterDropdown(false);
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Realistic filter options for a college placement process
   const filterOptions = {
-    centers: ['Bangalore', 'Lucknow', 'Pune', 'Delhi'],
-    schools: ['SOT (School of Technology)', 'SOH (School of Humanities)', 'SOM (School of Management)'],
+    centers: ['Bangalore', 'Noida', 'Lucknow', 'Pune', 'Patna', 'Indore'],
+    schools: ['SOT (School of Technology)', 'SOM (School of Management)', 'SOH (School of Health)'],
     quarters: ['Q1 (Pre-Placement)', 'Q2 (Placement Drive)', 'Q3 (Internship)', 'Q4 (Final Placements)']
   };
 
-  // Function to simulate fetching data based on filters
-  const fetchFilteredData = () => {
-    // This would be replaced with actual Firestore query
-    console.log("Fetching data for filters:", filters);
-    
-    // Simulate different data based on filters
-    let newData = { ...dashboardData };
-    
-    if (filters.center.length > 0) {
-      // Simulate center-specific data
-      newData.jobPostings = Math.floor(Math.random() * 50) + 80;
-      newData.studentQueries = Math.floor(Math.random() * 20) + 30;
-      newData.applications = Math.floor(Math.random() * 100) + 250;
-    }
-    
-    if (filters.school.length > 0) {
-      // Simulate school-specific data
-      newData.jobPostings = Math.floor(Math.random() * 40) + 90;
-      newData.applications = Math.floor(Math.random() * 150) + 200;
-    }
-    
-    if (filters.quarter.length > 0) {
-      // Simulate quarter-specific data
-      if (filters.quarter.some(q => q.includes('Q1'))) {
-        newData.jobPostings = 60;
-        newData.applications = 150;
-      } else if (filters.quarter.some(q => q.includes('Q2'))) {
-        newData.jobPostings = 100;
-        newData.applications = 280;
-      } else if (filters.quarter.some(q => q.includes('Q3'))) {
-        newData.jobPostings = 80;
-        newData.applications = 220;
-      } else if (filters.quarter.some(q => q.includes('Q4'))) {
-        newData.jobPostings = 140;
-        newData.applications = 350;
-      }
-    }
-    
-    setDashboardData(newData);
-  };
-
-  // Apply filters and fetch new data
-  useEffect(() => {
-    fetchFilteredData();
-  }, [filters]);
-
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => {
-      const currentFilters = [...prev[filterType]];
-      const index = currentFilters.indexOf(value);
-      
-      if (index > -1) {
-        currentFilters.splice(index, 1);
-      } else {
-        currentFilters.push(value);
-      }
-      
-      return {
-        ...prev,
-        [filterType]: currentFilters
-      };
+      const current = [...prev[filterType]];
+      const idx = current.indexOf(value);
+      if (idx > -1) current.splice(idx, 1); else current.push(value);
+      return { ...prev, [filterType]: current };
     });
   };
 
-  const removeFilter = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: prev[filterType].filter(item => item !== value)
-    }));
-  };
+  const removeFilter = (filterType, value) => setFilters(prev => ({ ...prev, [filterType]: prev[filterType].filter(i => i !== value) }));
+  const clearAllFilters = () => setFilters({ center: [], school: [], quarter: [] });
 
-  const clearAllFilters = () => {
-    setFilters({
-      center: [],
-      school: [],
-      quarter: []
-    });
-  };
-
+  // Stats with consistent Chart.js colors
   const stats = [
-    {
-      title: 'Job Postings',
-      value: dashboardData.jobPostings,
-      borderColor: 'border-blue-500',
-      icon: <Briefcase className="w-5 h-5 text-blue-500" />,
-      chartData: [
-        { title: 'Active', value: Math.round(dashboardData.jobPostings * 0.7), color: '#3b82f6' },
-        { title: 'Closed', value: Math.round(dashboardData.jobPostings * 0.3), color: '#60a5fa' },
-      ],
+    { 
+      title: 'Job Postings', 
+      value: dashboardData.jobPostings, 
+      borderColor: 'border-blue-200', 
+      icon: <Briefcase className="w-5 h-5" style={{ color: chartColors.blue }} />, 
+      chartData: [ 
+        { title: 'Active', value: Math.round(dashboardData.jobPostings * 0.7), color: chartColors.blue },
+        { title: 'Closed', value: Math.round(dashboardData.jobPostings * 0.3), color: '#dbeafe' } 
+      ] 
     },
-    {
-      title: 'Student Queries',
-      value: dashboardData.studentQueries,
-      borderColor: 'border-green-500',
-      icon: <MessageSquare className="w-5 h-5 text-green-500" />,
-      chartData: [
-        { title: 'Resolved', value: Math.round(dashboardData.studentQueries * 0.7), color: '#10b981' },
-        { title: 'Pending', value: Math.round(dashboardData.studentQueries * 0.3), color: '#34d399' },
-      ],
+    { 
+      title: 'Student Queries', 
+      value: dashboardData.studentQueries, 
+      borderColor: 'border-green-200', 
+      icon: <MessageSquare className="w-5 h-5" style={{ color: chartColors.green }} />, 
+      chartData: [ 
+        { title: 'Resolved', value: Math.round(dashboardData.studentQueries * 0.7), color: chartColors.green },
+        { title: 'Pending', value: Math.round(dashboardData.studentQueries * 0.3), color: '#dcfce7' } 
+      ] 
     },
-    {
-      title: 'Notifications',
-      value: dashboardData.notifications,
-      borderColor: 'border-yellow-500',
-      icon: <Bell className="w-5 h-5 text-yellow-500" />,
-      chartData: [
-        { title: 'Sent', value: Math.round(dashboardData.notifications * 0.8), color: '#f59e0b' },
-        { title: 'Draft', value: Math.round(dashboardData.notifications * 0.2), color: '#fbbf24' },
-      ],
+    { 
+      title: 'Notifications', 
+      value: dashboardData.notifications, 
+      borderColor: 'border-purple-200', 
+      icon: <Bell className="w-5 h-5" style={{ color: chartColors.purple }} />, 
+      chartData: [ 
+        { title: 'Sent', value: Math.round(dashboardData.notifications * 0.8), color: chartColors.purple },
+        { title: 'Draft', value: Math.round(dashboardData.notifications * 0.2), color: '#f3e8ff' } 
+      ] 
     },
-    {
-      title: 'Applications',
-      value: dashboardData.applications,
-      borderColor: 'border-purple-500',
-      icon: <TrendingUp className="w-5 h-5 text-purple-500" />,
-      chartData: [
-        { title: 'Accepted', value: Math.round(dashboardData.applications * 0.6), color: '#8b5cf6' },
-        { title: 'Rejected', value: Math.round(dashboardData.applications * 0.4), color: '#a78bfa' },
-      ],
-    },
+    { 
+      title: 'Applications', 
+      value: dashboardData.applications, 
+      borderColor: 'border-red-200', 
+      icon: <TrendingUp className="w-5 h-5" style={{ color: chartColors.red }} />, 
+      chartData: [ 
+        { title: 'Accepted', value: Math.round(dashboardData.applications * 0.6), color: chartColors.red },
+        { title: 'Rejected', value: Math.round(dashboardData.applications * 0.4), color: '#fecaca' } 
+      ] 
+    }
   ];
 
-  // Gradient colors for the section headers
-  const sectionGradients = [
-    'bg-gradient-to-r from-blue-500/20 to-indigo-500/20',
-    'bg-gradient-to-r from-green-500/20 to-teal-500/20',
-    'bg-gradient-to-r from-purple-500/20 to-pink-500/20',
-    'bg-gradient-to-r from-amber-500/20 to-orange-500/20',
-  ];
+  // School data with performance and application metrics
+  const schoolData = {
+    SOT: {
+      performance: {
+        labels: ['Placement Rate', 'Avg Salary', 'Technical Skills', 'Project Completion', 'Internship Rate'],
+        values: [88, 85, 92, 90, 87]
+      },
+      applications: {
+        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
+        values: [3847, 892, 567, 85, 88]
+      }
+    },
+    SOM: {
+      performance: {
+        labels: ['Placement Rate', 'Avg Salary', 'Leadership', 'Case Studies', 'Corporate Projects'],
+        values: [85, 92, 88, 90, 84]
+      },
+      applications: {
+        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
+        values: [2934, 745, 489, 82, 86]
+      }
+    },
+    SOH: {
+      performance: {
+        labels: ['Placement Rate', 'Avg Salary', 'Clinical Skills', 'Research', 'Patient Care'],
+        values: [82, 78, 90, 85, 88]
+      },
+      applications: {
+        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
+        values: [1856, 523, 342, 80, 83]
+      }
+    }
+  };
 
-  // Gradient colors for the widgets
-  const gradientClasses = [
-    'from-blue-500/10 to-indigo-500/10',
-    'from-green-500/10 to-teal-500/10',
-    'from-purple-500/10 to-pink-500/10',
-    'from-amber-500/10 to-orange-500/10',
-    'from-cyan-500/10 to-blue-500/10',
-    'from-emerald-500/10 to-green-500/10',
-    'from-violet-500/10 to-purple-500/10',
-    'from-rose-500/10 to-pink-500/10'
-  ];
+  // Build unified radar chart data with consistent colors
+  const buildSchoolRadarData = (schoolKey) => {
+    const school = schoolData[schoolKey];
+    const labels = school.performance.labels;
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Performance Metrics',
+          data: school.performance.values,
+          backgroundColor: chartColors.blueLight,
+          borderColor: chartColors.blue,
+          borderWidth: 2,
+          pointBackgroundColor: chartColors.blue,
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: chartColors.blue
+        },
+        {
+          label: 'Application Metrics',
+          data: school.applications.values.map((val, index) => {
+            const maxVal = index === 0 ? 4000 : index === 1 ? 1000 : index === 2 ? 600 : 100;
+            return Math.round((val / maxVal) * 100);
+          }),
+          backgroundColor: chartColors.greenLight,
+          borderColor: chartColors.green,
+          borderWidth: 2,
+          pointBackgroundColor: chartColors.green,
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: chartColors.green
+        }
+      ]
+    };
+  };
+
+  const schoolRadarData = buildSchoolRadarData(selectedSchool);
 
   return (
-    <div className="space-y-6 p-4">
-      {/* Header with Title and Filter Icon */}
+    <div className="space-y-6 p-4 bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen">
+      {/* Header with consistent colors */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-        <div className="flex items-center text-blue-600">
-          <Filter className="w-5 h-5 mr-1" />
-          <span className="text-sm font-medium">Filters Applied: {
-            Object.values(filters).flat().length
-          }</span>
+        <div className="relative">
+          <h1 className="text-3xl font-bold" style={{ background: `linear-gradient(to right, ${chartColors.blue}, ${chartColors.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Admin Dashboard
+          </h1>
+          <div className="absolute -bottom-1 left-0 w-1/2 h-0.5" style={{ background: `linear-gradient(to right, ${chartColors.blue}, transparent)` }}></div>
+        </div>
+        <div className="flex items-center bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm border border-blue-100 hover:shadow-md transition-all duration-300">
+          <div className="relative">
+            <Filter className="w-5 h-5 mr-2" style={{ color: chartColors.blue }} />
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-bounce"></div>
+          </div>
+          <span className="text-sm font-semibold" style={{ background: `linear-gradient(to right, ${chartColors.blue}, ${chartColors.purple})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Filters Applied: {Object.values(filters).flat().length}
+          </span>
         </div>
       </div>
 
-      {/* Filter Section */}
-      <div className="bg-white p-5 rounded-lg shadow-md">
+      {/* Filter Section with consistent colors */}
+      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <Filter className="w-5 h-5 mr-2 text-blue-500" />
+          <Filter className="w-5 h-5 mr-2" style={{ color: chartColors.blue }} />
           Filter Dashboard
         </h2>
-        
-        {/* Active Filters */}
+
         {(filters.center.length > 0 || filters.school.length > 0 || filters.quarter.length > 0) && (
           <div className="mb-4 flex flex-wrap gap-2">
-            {filters.center.map(center => (
-              <span key={center} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Center: {center}
-                <button onClick={() => removeFilter('center', center)} className="ml-1 hover:text-blue-900">
+            {filters.center.map(c => (
+              <span key={c} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.blueLight, borderColor: chartColors.blue, color: chartColors.blue }}>
+                Center: {c}
+                <button onClick={() => removeFilter('center', c)} className="ml-1 hover:opacity-70">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
-            {filters.school.map(school => (
-              <span key={school} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                School: {school}
-                <button onClick={() => removeFilter('school', school)} className="ml-1 hover:text-green-900">
+            {filters.school.map(s => (
+              <span key={s} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.greenLight, borderColor: chartColors.green, color: chartColors.green }}>
+                School: {s}
+                <button onClick={() => removeFilter('school', s)} className="ml-1 hover:opacity-70">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
-            {filters.quarter.map(quarter => (
-              <span key={quarter} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                Quarter: {quarter}
-                <button onClick={() => removeFilter('quarter', quarter)} className="ml-1 hover:text-purple-900">
+            {filters.quarter.map(q => (
+              <span key={q} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.purpleLight, borderColor: chartColors.purple, color: chartColors.purple }}>
+                Quarter: {q}
+                <button onClick={() => removeFilter('quarter', q)} className="ml-1 hover:opacity-70">
                   <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
-            <button 
-              onClick={clearAllFilters}
-              className="text-xs text-gray-500 hover:text-gray-700 underline"
-            >
-              Clear all
-            </button>
+            <button onClick={clearAllFilters} className="text-xs text-gray-500 hover:text-gray-700 underline">Clear all</button>
           </div>
         )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Center Dropdown */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-black font-medium">Center:</label>
-            <div className="relative" ref={centerDropdownRef}>
-              <button
-                type="button"
-                className={`w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between ${filters.center.length > 0 ? 'bg-blue-50' : 'bg-gray-50'}`}
-                onClick={() => setShowCenterDropdown(prev => !prev)}
-              >
-                <span className="truncate">
-                  {filters.center.length > 0 ? `${filters.center.length} selected` : 'Select Centers'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-              </button>
-              {showCenterDropdown && (
-                <div className="absolute z-10 overflow-y-auto max-h-60 w-full bg-white border-2 border-slate-300 rounded-md shadow-md mt-1">
-                  {filterOptions.centers.map((center, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-blue-50 cursor-pointer text-left"
-                      onClick={() => handleFilterChange('center', center)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.center.includes(center)}
-                        onChange={() => {}}
-                        className="rounded text-blue-500 focus:ring-blue-500"
-                      />
-                      <span>{center}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* School Dropdown */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-black font-medium">School:</label>
-            <div className="relative" ref={schoolDropdownRef}>
-              <button
-                type="button"
-                className={`w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between ${filters.school.length > 0 ? 'bg-green-50' : 'bg-gray-50'}`}
-                onClick={() => setShowSchoolDropdown(prev => !prev)}
-              >
-                <span className="truncate">
-                  {filters.school.length > 0 ? `${filters.school.length} selected` : 'Select Schools'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-              </button>
-              {showSchoolDropdown && (
-                <div className="absolute z-10 overflow-y-auto max-h-60 w-full bg-white border-2 border-slate-300 rounded-md shadow-md mt-1">
-                  {filterOptions.schools.map((school, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-green-50 cursor-pointer text-left"
-                      onClick={() => handleFilterChange('school', school)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.school.includes(school)}
-                        onChange={() => {}}
-                        className="rounded text-green-500 focus:ring-green-500"
-                      />
-                      <span>{school}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {['center', 'school', 'quarter'].map((type, index) => (
+            <div key={type} className="flex flex-col gap-1">
+              <label className="text-sm text-gray-700 font-medium capitalize">{type}:</label>
+              <div className="relative" ref={[centerDropdownRef, schoolDropdownRef, quarterDropdownRef][index]}>
+                <button 
+                  type="button" 
+                  className={`w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors ${
+                    filters[type].length > 0 ? 'border-blue-300 bg-blue-50' : ''
+                  }`}
+                  onClick={() => [setShowCenterDropdown, setShowSchoolDropdown, setShowQuarterDropdown][index](p => !p)}
+                >
+                  <span className="truncate">
+                    {filters[type].length > 0 ? `${filters[type].length} selected` : `Select ${type}s`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                </button>
+                {[showCenterDropdown, showSchoolDropdown, showQuarterDropdown][index] && (
+                  <div className="absolute z-10 overflow-y-auto max-h-60 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                    {filterOptions[`${type}s`].map((option, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 cursor-pointer text-left border-b border-gray-100 last:border-b-0"
+                        onClick={() => handleFilterChange(type, option)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filters[type].includes(option)}
+                          onChange={() => {}}
+                          className="rounded"
+                          style={{ color: chartColors.blue }}
+                        />
+                        <span className="text-gray-700">{option}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Quarter Dropdown */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-black font-medium">Quarter:</label>
-            <div className="relative" ref={quarterDropdownRef}>
-              <button
-                type="button"
-                className={`w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between ${filters.quarter.length > 0 ? 'bg-purple-50' : 'bg-gray-50'}`}
-                onClick={() => setShowQuarterDropdown(prev => !prev)}
-              >
-                <span className="truncate">
-                  {filters.quarter.length > 0 ? `${filters.quarter.length} selected` : 'Select Quarters'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-              </button>
-              {showQuarterDropdown && (
-                <div className="absolute z-10 overflow-y-auto max-h-60 w-full bg-white border-2 border-slate-300 rounded-md shadow-md mt-1">
-                  {filterOptions.quarters.map((quarter, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-purple-50 cursor-pointer text-left"
-                      onClick={() => handleFilterChange('quarter', quarter)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.quarter.includes(quarter)}
-                        onChange={() => {}}
-                        className="rounded text-purple-500 focus:ring-purple-500"
-                      />
-                      <span>{quarter}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards with consistent colors */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className={`relative bg-white p-4 rounded-lg shadow-lg border-t-4 hover:shadow-xl transition-all duration-300 ${stat.borderColor}`}
-          >
+        {stats.map((stat, idx) => (
+          <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm border-l-4 hover:shadow-md transition-all duration-300 ${stat.borderColor}`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 flex items-center">
+                <p className="text-sm text-gray-600 flex items-center">
                   {stat.icon}
                   <span className="ml-2">{stat.title}</span>
                 </p>
-                <h3 className="text-3xl font-bold text-gray-800 mt-2">{stat.value}</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mt-2">{stat.value}</h3>
               </div>
               <div className="w-16 h-16">
-                <PieChart
-                  data={stat.chartData}
-                  lineWidth={20}
-                  radius={40}
+                <PieChart 
+                  data={stat.chartData} 
+                  lineWidth={20} 
+                  radius={40} 
                   label={({ dataEntry }) => `${dataEntry.value}`}
                   labelStyle={{ fontSize: '0px', fill: '#000' }}
                 />
               </div>
             </div>
-            <div className="mt-4 border-t pt-2 text-sm text-gray-600 flex justify-between items-center">
-              <span>View details</span>
-              <a href="#" className="text-blue-500 hover:underline">View More</a>
-            </div>
           </div>
         ))}
       </div>
 
-      {/* Main Dashboard Sections */}
-      <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
-        
-        {/* Left Column - 2/3 width */}
-        <div className="xl:col-span-4 space-y-6">
-          {/* Placement Overview Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className={`p-4 ${sectionGradients[0]} rounded-t-lg`}>
+      {/* School Performance Radar Chart */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
               <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <Target className="w-5 h-5 mr-2 text-blue-500" />
-                Placement Overview
+                <Target className="w-5 h-5 mr-2" style={{ color: chartColors.blue }} />
+                School Performance & Applications
               </h2>
             </div>
-            <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-              {Object.entries(dashboardData.placementOverview).map(([key, value], index) => (
-                <div 
-                  key={key}
-                  className={`p-4 rounded-lg bg-gradient-to-br ${gradientClasses[index % gradientClasses.length]} backdrop-blur-sm border border-gray-200/50`}
+            {/* School selector with consistent Chart.js colors */}
+            <div className="flex gap-2">
+              {['SOT', 'SOM', 'SOH'].map((school) => (
+                <button
+                  key={school}
+                  onClick={() => setSelectedSchool(school)}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative overflow-hidden group ${
+                    selectedSchool === school
+                      ? 'text-white shadow-sm'
+                      : 'text-gray-700 bg-white border border-gray-200 hover:border-gray-300'
+                  }`}
                 >
-                  <h3 className="text-sm font-medium text-gray-600 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </h3>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Salary Overview Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className={`p-4 ${sectionGradients[3]} rounded-t-lg`}>
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <DollarSign className="w-5 h-5 mr-2 text-amber-500" />
-                Salary Overview
-              </h2>
-            </div>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Main salary metrics */}
-              {Object.entries(dashboardData.salaryOverview)
-                .filter(([key]) => key !== 'medianSalaryByIndustry')
-                .map(([key, value], index) => (
-                  <div 
-                    key={key}
-                    className={`p-4 rounded-lg bg-gradient-to-br ${gradientClasses[(index + 4) % gradientClasses.length]} backdrop-blur-sm border border-gray-200/50`}
-                  >
-                    <h3 className="text-sm font-medium text-gray-600 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </h3>
-                    <p className="text-2xl font-bold text-gray-800 mt-1">
-                      {value}
-                    </p>
-                  </div>
-                ))}
-              
-              {/* Industry-wise median salaries */}
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-medium text-gray-700 mb-3">Median Salary by Industry</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(dashboardData.salaryOverview.medianSalaryByIndustry).map(([industry, salary], index) => (
+                  {/* Animated gradient border using Chart.js colors */}
+                  {selectedSchool === school && (
                     <div 
-                      key={industry}
-                      className={`p-3 rounded-lg bg-gradient-to-br ${gradientClasses[(index + 6) % gradientClasses.length]} backdrop-blur-sm border border-gray-200/50`}
+                      className="absolute inset-0 rounded-xl p-[1.5px] animate-pulse"
+                      style={{
+                        background: school === 'SOT' 
+                          ? `linear-gradient(to right, ${chartColors.blue}, ${chartColors.purple})`
+                          : school === 'SOM'
+                          ? `linear-gradient(to right, ${chartColors.purple}, ${chartColors.green})`
+                          : `linear-gradient(to right, ${chartColors.green}, ${chartColors.blue})`
+                      }}
                     >
-                      <h4 className="text-sm font-medium text-gray-600">{industry}</h4>
-                      <p className="text-xl font-bold text-gray-800 mt-1">{salary}</p>
+                      <div 
+                        className="w-full h-full rounded-lg"
+                        style={{
+                          background: school === 'SOT' 
+                            ? chartColors.blue
+                            : school === 'SOM'
+                            ? chartColors.purple
+                            : chartColors.green
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
-              </div>
+                  )}
+                  
+                  <span className="relative z-10">{school}</span>
+                  
+                  {/* Hover effect with Chart.js background colors */}
+                  {selectedSchool !== school && (
+                    <div 
+                      className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 border"
+                      style={{
+                        background: school === 'SOT' 
+                          ? chartColors.blueLight
+                          : school === 'SOM'
+                          ? chartColors.purpleLight
+                          : chartColors.greenLight,
+                        borderColor: school === 'SOT' 
+                          ? chartColors.blue
+                          : school === 'SOM'
+                          ? chartColors.purple
+                          : chartColors.green
+                      }}
+                    />
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-
-        {/* Right Column - 1/3 width */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* Job Application and Participation Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className={`p-4 ${sectionGradients[1]} rounded-t-lg`}>
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2 text-green-500" />
-                Job Applications
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {Object.entries(dashboardData.jobApplicationStats).map(([key, value], index) => (
-                <div 
-                  key={key}
-                  className={`p-4 rounded-lg bg-gradient-to-br ${gradientClasses[(index + 2) % gradientClasses.length]} backdrop-blur-sm border border-gray-200/50`}
-                >
-                  <h3 className="text-sm font-medium text-gray-600 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </h3>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Overall Stats Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className={`p-4 ${sectionGradients[2]} rounded-t-lg`}>
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-purple-500" />
-                Overall Statistics
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Summary</h3>
-                <ul className="space-y-2">
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Total Centers</span>
-                    <span className="font-medium">{dashboardData.overallStats.totalCenters}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Total Batches</span>
-                    <span className="font-medium">{dashboardData.overallStats.totalBatches}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Active Students</span>
-                    <span className="font-medium">{dashboardData.overallStats.activeStudents.toLocaleString()}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Placement Rate</span>
-                    <span className="font-medium text-green-600">{dashboardData.overallStats.placementRate}%</span>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Performance Metrics</h3>
-                <ul className="space-y-2">
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Avg. Response Time</span>
-                    <span className="font-medium">{dashboardData.overallStats.avgResponseTime}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Completion Rate</span>
-                    <span className="font-medium text-green-600">{dashboardData.overallStats.completionRate}%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Engagement Rate</span>
-                    <span className="font-medium">{dashboardData.overallStats.engagementRate}%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">Satisfaction Score</span>
-                    <span className="font-medium text-green-600">{dashboardData.overallStats.satisfactionScore}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+        
+        <div className="p-6">
+          <div className="h-96">
+            <Radar 
+              data={schoolRadarData} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                      display: false
+                    },
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    angleLines: {
+                      color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    pointLabels: {
+                      font: {
+                        size: 11,
+                        weight: '500'
+                      },
+                      color: '#374151'
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 15,
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#374151',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                      label: function(context) {
+                        return `${context.dataset.label}: ${context.raw}%`;
+                      }
+                    }
+                  }
+                }
+              }} 
+            />
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { Calendar, Info, Plus, X, Loader, ChevronsUp, ChevronsDown, ChevronDown, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../services/jobs';
-import * as XLSX from 'xlsx';
+import ExcelUploader from './ExcelUploader'; // Import Excel component
 
 // Utility helpers
 const toISOFromDDMMYYYY = (val) => {
@@ -60,19 +60,14 @@ export default function CreateJob({ onCreated }) {
   const [posting, setPosting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // NEW: Creation method state - controls the three options
+  // Creation method state - controls the three options
   const [creationMethod, setCreationMethod] = useState('manual');
 
-  // NEW: File upload states for JD parsing
+  // File upload states for JD parsing
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [parseResult, setParseResult] = useState(null);
   const fileInputRef = useRef(null);
-
-  // NEW: Excel upload states
-  const [excelData, setExcelData] = useState([]);
-  const [currentJobIndex, setCurrentJobIndex] = useState(0);
-  const excelFileInputRef = useRef(null);
 
   // Dropdown states for all custom dropdowns
   const [showVenues, setShowVenues] = useState(false);
@@ -169,8 +164,6 @@ export default function CreateJob({ onCreated }) {
     driveVenues: [],
   });
 
-  // NEW: FILE UPLOAD HANDLERS
-
   // Handle JD file upload (PDF/DOC parsing)
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -211,7 +204,6 @@ export default function CreateJob({ onCreated }) {
 
       if (simulatedData.success) {
         setParseResult(simulatedData);
-        // Auto-populate form with parsed data and switch to manual
         populateFormFromParsedData(simulatedData.data);
         setCreationMethod('manual');
       } else {
@@ -225,174 +217,10 @@ export default function CreateJob({ onCreated }) {
     }
   };
 
-  // Handle Excel file upload
-  const handleExcelUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const validTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-      'application/vnd.ms-excel.sheet.macroEnabled.12'
-    ];
-
-    if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      setUploadError('Please upload a valid Excel file (.xlsx or .xls).');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size must be less than 10MB.');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadError('');
-    setExcelData([]);
-
-    try {
-      const data = await readExcelFile(file);
-      setExcelData(data);
-      setCurrentJobIndex(0);
-
-      // Auto-populate first job if available and switch to manual
-      if (data.length > 0) {
-        populateFormWithExcelData(data[0]);
-        setCreationMethod('manual');
-      }
-    } catch (err) {
-      setUploadError('Failed to read Excel file. Please make sure it is a valid Excel file.');
-      console.error('Excel upload error:', err);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const readExcelFile = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-
-          // Get the first sheet
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-
-          // Convert to JSON
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-          // Process the data to extract job information
-          const processedData = processExcelData(jsonData);
-          resolve(processedData);
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = (error) => reject(error);
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  const processExcelData = (data) => {
-    if (!data || data.length === 0) return [];
-
-    const headers = data[0].map(header => mapColumnToField(header));
-    const rows = data.slice(1);
-
-    const jobData = rows.map((row, index) => {
-      const job = { id: `excel-${index}`, rowNumber: index + 2 };
-
-      headers.forEach((header, colIndex) => {
-        if (header && row[colIndex] !== undefined && row[colIndex] !== null) {
-          if (header === 'skills') {
-            job[header] = String(row[colIndex]).split(',').map(skill => skill.trim());
-          } else {
-            job[header] = String(row[colIndex]);
-          }
-        }
-      });
-
-      return job;
-    }).filter(job => Object.keys(job).length > 2);
-
-    return jobData;
-  };
-
-  const mapColumnToField = (header) => {
-    const mappings = {
-      'job title': 'jobTitle',
-      'position': 'jobTitle',
-      'company': 'company',
-      'organization': 'company',
-      'location': 'companyLocation',
-      'city': 'companyLocation',
-      'skills': 'skills',
-      'technologies': 'skills',
-      'salary': 'salary',
-      'stipend': 'stipend',
-      'work mode': 'workMode',
-      'mode': 'workMode',
-      'job type': 'jobType',
-      'type': 'jobType',
-      'website': 'website',
-      'linkedin': 'linkedin'
-    };
-
-    const normalizedHeader = header?.toLowerCase().trim();
-    return mappings[normalizedHeader] || normalizedHeader;
-  };
-
-  const populateFormFromParsedData = (data) => {
-    const updates = {};
-
-    if (data.jobTitle) updates.jobTitle = data.jobTitle;
-    if (data.company) updates.company = data.company;
-    if (data.companyLocation) updates.companyLocation = data.companyLocation;
-    if (data.responsibilities) updates.responsibilities = data.responsibilities;
-    if (data.salary) updates.salary = data.salary;
-    if (data.workMode) updates.workMode = data.workMode;
-    if (data.website) updates.website = data.website;
-    if (data.linkedin) updates.linkedin = data.linkedin;
-    if (data.skills) updates.skills = Array.isArray(data.skills) ? data.skills : [];
-
-    update(updates);
-  };
-
-  const populateFormWithExcelData = (jobData) => {
-    const updates = {};
-
-    if (jobData.jobTitle) updates.jobTitle = jobData.jobTitle;
-    if (jobData.company) updates.company = jobData.company;
-    if (jobData.companyLocation) updates.companyLocation = jobData.companyLocation;
-    if (jobData.skills) updates.skills = Array.isArray(jobData.skills) ? jobData.skills : [];
-    if (jobData.salary) updates.salary = jobData.salary;
-    if (jobData.stipend) updates.stipend = jobData.stipend;
-    if (jobData.workMode) updates.workMode = jobData.workMode;
-    if (jobData.jobType) updates.jobType = jobData.jobType;
-    if (jobData.website) updates.website = jobData.website;
-    if (jobData.linkedin) updates.linkedin = jobData.linkedin;
-
-    update(updates);
-  };
-
-  const handleNextExcelJob = () => {
-    if (currentJobIndex < excelData.length - 1) {
-      const nextIndex = currentJobIndex + 1;
-      setCurrentJobIndex(nextIndex);
-      populateFormWithExcelData(excelData[nextIndex]);
-    }
-  };
-
-  const handlePrevExcelJob = () => {
-    if (currentJobIndex > 0) {
-      const prevIndex = currentJobIndex - 1;
-      setCurrentJobIndex(prevIndex);
-      populateFormWithExcelData(excelData[prevIndex]);
-    }
+  // ENHANCED: Complete Excel data callback handlers
+  const handleExcelJobSelected = (jobData) => {
+    populateFormWithExcelData(jobData);
+    setCreationMethod('manual'); // Switch back to manual after loading data
   };
 
   // Drag and drop handlers
@@ -409,14 +237,130 @@ export default function CreateJob({ onCreated }) {
       if (creationMethod === 'uploadJD') {
         fileInputRef.current.files = files;
         handleFileUpload({ target: { files } });
-      } else if (creationMethod === 'uploadExcel') {
-        excelFileInputRef.current.files = files;
-        handleExcelUpload({ target: { files } });
       }
     }
   };
+  
+  const populateFormFromParsedData = (data) => {
+    const updates = {};
 
-  // Section completion checks (keeping all your original logic)
+    if (data.jobTitle) updates.jobTitle = data.jobTitle;
+    if (data.company) updates.company = data.company;
+    if (data.companyLocation) updates.companyLocation = data.companyLocation;
+    if (data.responsibilities) updates.responsibilities = data.responsibilities;
+    if (data.salary) updates.salary = data.salary;
+    if (data.workMode) updates.workMode = data.workMode;
+    if (data.website) updates.website = data.website;
+    if (data.linkedin) updates.linkedin = data.linkedin;
+    if (data.skills) updates.skills = Array.isArray(data.skills) ? data.skills : [];
+
+    update(updates);
+  };
+
+  // ENHANCED: Complete form population function for Excel data
+  const populateFormWithExcelData = (jobData) => {
+    const updates = {};
+    
+    console.log('🔄 Populating form with Excel data:', jobData);
+
+    // === SECTION 1: COMPANY DETAILS ===
+    if (jobData.jobTitle) updates.jobTitle = jobData.jobTitle;
+    if (jobData.company) updates.company = jobData.company;
+    if (jobData.companyLocation) updates.companyLocation = jobData.companyLocation;
+    if (jobData.website) updates.website = jobData.website;
+    if (jobData.linkedin) updates.linkedin = jobData.linkedin;
+    if (jobData.jobType) updates.jobType = jobData.jobType;
+    if (jobData.workMode) updates.workMode = jobData.workMode;
+    if (jobData.salary) updates.salary = jobData.salary;
+    if (jobData.stipend) updates.stipend = jobData.stipend;
+    if (jobData.duration) updates.duration = jobData.duration;
+    if (jobData.openings) updates.openings = jobData.openings;
+    if (jobData.responsibilities) updates.responsibilities = jobData.responsibilities;
+    
+    // === SECTION 2: DRIVE INFORMATION ===
+    if (jobData.driveDate) {
+      // Handle drive date conversion
+      const dateStr = jobData.driveDate;
+      if (dateStr.includes('/')) {
+        updates.driveDateText = dateStr;
+        updates.driveDateISO = toISOFromDDMMYYYY(dateStr);
+      }
+    }
+    
+    if (jobData.driveVenue) {
+      // Handle multiple venues (comma-separated)
+      const venues = jobData.driveVenue.split(',').map(v => v.trim());
+      updates.driveVenues = venues;
+      
+      // Update the driveDraft as well
+      setDriveDraft(prev => ({
+        ...prev,
+        driveVenues: venues,
+        driveDateText: updates.driveDateText || '',
+        driveDateISO: updates.driveDateISO || ''
+      }));
+    }
+
+    // === SECTION 3: SKILLS & ELIGIBILITY ===  
+    if (jobData.qualifications) updates.qualification = jobData.qualifications;
+    if (jobData.specialization) updates.specialization = jobData.specialization;
+    if (jobData.yop) updates.yop = jobData.yop;
+    if (jobData.minCgpa) updates.minCgpa = jobData.minCgpa;
+    if (jobData.skills) updates.skills = Array.isArray(jobData.skills) ? jobData.skills : [];
+    if (jobData.gapAllowed) updates.gapAllowed = jobData.gapAllowed;
+    if (jobData.gapYears) updates.gapYears = jobData.gapYears;
+    if (jobData.backlogs) updates.backlogs = jobData.backlogs;
+
+    // === SECTION 4: INTERVIEW PROCESS ===
+    const rounds = ['', '', ''];
+    if (jobData.round1) rounds[0] = jobData.round1;
+    if (jobData.round2) rounds[1] = jobData.round2;
+    if (jobData.round3) rounds[2] = jobData.round3;
+    
+    // Update base rounds
+    updates.baseRoundDetails = rounds;
+    
+    // Handle 4th round as extra round
+    if (jobData.round4) {
+      updates.extraRounds = [{
+        title: 'IV Round',
+        detail: jobData.round4
+      }];
+    }
+    
+    if (jobData.serviceAgreement) updates.serviceAgreement = jobData.serviceAgreement;
+    if (jobData.blockingPeriod) updates.blockingPeriod = jobData.blockingPeriod;
+
+    // === SECTION 5: ADDITIONAL INFORMATION ===
+    if (jobData.description) {
+      // Use description as responsibilities if no responsibilities provided
+      if (!jobData.responsibilities) {
+        updates.responsibilities = jobData.description;
+      }
+    }
+    
+    if (jobData.requirements) {
+      // Combine with existing responsibilities if any
+      const existing = updates.responsibilities || '';
+      updates.responsibilities = existing ? `${existing}\n\nRequirements:\n${jobData.requirements}` : jobData.requirements;
+    }
+    
+    if (jobData.instructions) updates.instructions = jobData.instructions;
+
+    // === COMPANY SPOC INFORMATION ===
+    if (jobData.contactPerson || jobData.contactEmail || jobData.contactPhone) {
+      updates.spocs = [{
+        fullName: jobData.contactPerson || '',
+        email: jobData.contactEmail || '',
+        phone: jobData.contactPhone || ''
+      }];
+    }
+
+    console.log('✅ Form updates to be applied:', updates);
+    update(updates);
+  };
+
+  // All existing completion checks
   const isCompanyDetailsComplete = useMemo(() => {
     const base = form.company?.trim() && form.jobTitle?.trim() && form.companyLocation?.trim() && form.website?.trim() && form.linkedin?.trim() && form.workMode?.trim() && form.workMode !== '' && form.jobType?.trim() && form.jobType !== '';
     const comp = form.jobType === 'Internship'
@@ -448,10 +392,9 @@ export default function CreateJob({ onCreated }) {
     return isCompanyDetailsComplete && isDriveDetailsComplete && isSkillsEligibilityComplete && isInterviewProcessComplete;
   }, [isCompanyDetailsComplete, isDriveDetailsComplete, isSkillsEligibilityComplete, isInterviewProcessComplete]);
 
-  // Handlers (keeping all your original logic)
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
 
-  // Validation functions (keeping all your original functions)
+  // All validation functions
   function isValidUrl(value) {
     if (!value) return true;
     if (value.startsWith('www.') && value.includes('.')) {
@@ -479,7 +422,7 @@ export default function CreateJob({ onCreated }) {
     return /^[a-zA-Z\s,.-]+$/.test(value);
   }
 
-  // Input change handlers (keeping all your original handlers)
+  // All input handlers
   const onWebsiteChange = (value) => {
     update({ website: value });
     if (!value) {
@@ -621,7 +564,7 @@ export default function CreateJob({ onCreated }) {
     update({ extraRounds: next });
   };
 
-  // SPOC management functions (keeping all your original functions)
+  // SPOC management functions
   const addSpoc = () => {
     update({ spocs: [...form.spocs, { fullName: '', email: '', phone: '' }] });
   };
@@ -638,7 +581,7 @@ export default function CreateJob({ onCreated }) {
     const next = [...form.spocs];
     if (field === 'phone') {
       if (!/^[0-9]*$/.test(value) || value.length > 10) {
-        return; // Prevent invalid input
+        return;
       }
     }
     next[idx] = { ...next[idx], [field]: value };
@@ -681,7 +624,7 @@ export default function CreateJob({ onCreated }) {
 
   const isSectionCollapsed = (sectionId) => collapsedSections.has(sectionId);
 
-  // Form management functions (keeping all your original functions)
+  // Form management functions
   const resetForm = (keep = {}) => {
     setForm((f) => ({
       company: keep.company ?? '',
@@ -716,10 +659,13 @@ export default function CreateJob({ onCreated }) {
       instructions: '',
     }));
 
-    // Reset upload states
+    setDriveDraft({
+      driveDateText: '',
+      driveDateISO: '',
+      driveVenues: [],
+    });
+
     setParseResult(null);
-    setExcelData([]);
-    setCurrentJobIndex(0);
     setUploadError('');
   };
 
@@ -761,6 +707,7 @@ export default function CreateJob({ onCreated }) {
     };
   };
 
+  // Form action handlers
   const handleSave = async () => {
     if (!canPost) return;
     try {
@@ -854,13 +801,13 @@ export default function CreateJob({ onCreated }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Header - ALWAYS VISIBLE */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Job Description</h2>
         <p className="text-sm text-slate-600">Please fill the following details</p>
       </div>
 
-      {/* NEW: THREE CREATION METHOD OPTIONS */}
+      {/* THREE CREATION METHOD OPTIONS - ALWAYS VISIBLE */}
       <div className="flex justify-center mb-8">
         <div className="bg-white rounded-sm p-1 shadow-sm border border-gray-200 inline-flex gap-2">
           <button
@@ -895,7 +842,7 @@ export default function CreateJob({ onCreated }) {
         </div>
       </div>
 
-      {/* NEW: JD UPLOAD FORM */}
+      {/* JD UPLOAD FORM */}
       {creationMethod === 'uploadJD' && (
         <JDUploadForm
           isUploading={isUploading}
@@ -909,64 +856,18 @@ export default function CreateJob({ onCreated }) {
         />
       )}
 
-      {/* NEW: EXCEL UPLOAD FORM */}
+      {/* EXCEL UPLOAD FORM */}
       {creationMethod === 'uploadExcel' && (
-        <ExcelUploadForm
-          isUploading={isUploading}
-          excelData={excelData}
-          uploadError={uploadError}
-          excelFileInputRef={excelFileInputRef}
-          handleExcelUpload={handleExcelUpload}
-          handleDragOver={handleDragOver}
-          handleDrop={handleDrop}
-          currentJobIndex={currentJobIndex}
-          handleNextExcelJob={handleNextExcelJob}
-          handlePrevExcelJob={handlePrevExcelJob}
+        <ExcelUploader
+          onJobSelected={handleExcelJobSelected}
         />
       )}
 
-      {/* MANUAL FORM - Shows when manual is selected OR after upload methods populate data */}
+      {/* MANUAL FORM */}
       {creationMethod === 'manual' && (
         <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-4 space-y-6">
-          {/* Excel Data Navigation - Only show if excel data exists */}
-          {excelData.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-blue-900">Excel Data Mode</h3>
-                  <p className="text-sm text-blue-700">
-                    Editing job {currentJobIndex + 1} of {excelData.length} from Excel file
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={handlePrevExcelJob}
-                    disabled={currentJobIndex === 0}
-                    className={`px-3 py-1 rounded-md text-sm ${currentJobIndex === 0
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      }`}
-                  >
-                    ← Previous
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNextExcelJob}
-                    disabled={currentJobIndex === excelData.length - 1}
-                    className={`px-3 py-1 rounded-md text-sm ${currentJobIndex === excelData.length - 1
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      }`}
-                  >
-                    Next →
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Section 1: Company Details - COMPLETE FROM YOUR ORIGINAL */}
+          
+          {/* Section 1: Company Details */}
           <section className="space-y-4 border-b-[1.5px] border-gray-700 pb-6 mb-6">
             <h3 className="text-lg font-semibold">Company Details</h3>
 
@@ -994,7 +895,7 @@ export default function CreateJob({ onCreated }) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  {/* Job Type Dropdown with Toggle Effect */}
+                  {/* Job Type Dropdown */}
                   <div className="flex flex-col gap-1">
                     <label className="text-sm text-black font-medium">Job Type <span className="text-red-500">*</span>:</label>
                     <div className="relative" ref={jobTypeDropdownRef}>
@@ -1063,7 +964,7 @@ export default function CreateJob({ onCreated }) {
                     <input className={`border border-gray-300 rounded-md px-3 py-2 text-sm ${form.jobTitle?.trim() ? 'bg-green-100' : 'bg-gray-100'}`} placeholder="e.g. Full Stack Developer" value={form.jobTitle} onChange={(e) => update({ jobTitle: e.target.value })} />
                   </div>
 
-                  {/* Work Mode Dropdown with Toggle Effect */}
+                  {/* Work Mode Dropdown */}
                   <div className="flex flex-col gap-1">
                     <label className="text-sm text-black font-medium">Work Mode <span className="text-red-500">*</span>:</label>
                     <div className="relative" ref={workModeDropdownRef}>
@@ -1227,7 +1128,7 @@ export default function CreateJob({ onCreated }) {
             </div>
           </section>
 
-          {/* Section 2: About Drive - COMPLETE FROM YOUR ORIGINAL */}
+          {/* Section 2: About Drive */}
           <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
             <h3 className="text-lg font-semibold">About Drive</h3>
 
@@ -1255,7 +1156,7 @@ export default function CreateJob({ onCreated }) {
                     </div>
                   </div>
 
-                  {/* Drive Venue Dropdown with Toggle Effect */}
+                  {/* Drive Venue Dropdown */}
                   <div className="flex flex-col gap-1">
                     <label className="text-sm text-black font-medium">Drive Venue <span className="text-red-500">*</span>:</label>
                     <div ref={venueDropdownRef} className="relative">
@@ -1298,7 +1199,7 @@ export default function CreateJob({ onCreated }) {
             </div>
           </section>
 
-          {/* Section 3: Skills & Eligibility - COMPLETE FROM YOUR ORIGINAL */}
+          {/* Section 3: Skills & Eligibility */}
           <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
             <h3 className="text-lg font-semibold">Skills & Eligibility</h3>
 
@@ -1429,39 +1330,39 @@ export default function CreateJob({ onCreated }) {
                         </div>
                       )}
                     </div>
+                  </div>
 
-                    {/* Active Backlogs Dropdown with Toggle Effect */}
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
-                      <div className="relative" ref={backlogsDropdownRef}>
-                        <button
-                          type="button"
-                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
-                          onClick={() => setShowBacklogs(prev => !prev)}
-                        >
-                          <span className="truncate">
-                            {form.backlogs || 'Select Backlog Policy'}
-                          </span>
-                          <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                        </button>
-                        {showBacklogs && (
-                          <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                            {['Allowed', 'Not Allowed'].map((policy) => (
-                              <button
-                                key={policy}
-                                type="button"
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
-                                onClick={() => {
-                                  update({ backlogs: policy });
-                                  setShowBacklogs(false);
-                                }}
-                              >
-                                <span>{policy}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                  {/* Active Backlogs Dropdown */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm text-black font-medium">Active Backlogs <span className="text-red-500">*</span>:</label>
+                    <div className="relative" ref={backlogsDropdownRef}>
+                      <button
+                        type="button"
+                        className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-blue-100 text-left flex items-center justify-between ${form.backlogs && form.backlogs !== '' ? 'bg-green-100' : 'bg-gray-100'}`}
+                        onClick={() => setShowBacklogs(prev => !prev)}
+                      >
+                        <span className="truncate">
+                          {form.backlogs || 'Select Backlog Policy'}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      </button>
+                      {showBacklogs && (
+                        <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                          {['Allowed', 'Not Allowed'].map((policy) => (
+                            <button
+                              key={policy}
+                              type="button"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-green-100 cursor-pointer border-b border-slate-200 last:border-b-0 text-left"
+                              onClick={() => {
+                                update({ backlogs: policy });
+                                setShowBacklogs(false);
+                              }}
+                            >
+                              <span>{policy}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1481,7 +1382,7 @@ export default function CreateJob({ onCreated }) {
             </div>
           </section>
 
-          {/* Section 4: Interview Process - COMPLETE FROM YOUR ORIGINAL */}
+          {/* Section 4: Interview Process */}
           <section className="space-y-4 border-b-[1.5px] border-gray-600 pb-6 mb-6">
             <h3 className="text-lg font-semibold">Interview Process</h3>
 
@@ -1655,7 +1556,7 @@ export default function CreateJob({ onCreated }) {
   );
 }
 
-// NEW: JD Upload Component
+// JD Upload Component - UNCHANGED
 const JDUploadForm = ({
   isUploading, parseResult, uploadError, fileInputRef, handleFileUpload,
   handleDragOver, handleDrop, setParseResult
@@ -1666,8 +1567,9 @@ const JDUploadForm = ({
       <div
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
-          }`}
+        className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+          isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+        }`}
       >
         <input
           type="file"
@@ -1728,7 +1630,6 @@ const JDUploadForm = ({
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
           <h3 className="font-medium text-green-900">Parsing Complete!</h3>
           <p className="text-sm text-green-700">
-            We've extracted key information from your job description. The manual entry form has
             We've extracted key information from your job description. The manual entry form has been automatically populated with the parsed data.
           </p>
 
@@ -1747,102 +1648,3 @@ const JDUploadForm = ({
   );
 };
 
-// NEW: Excel Upload Component
-const ExcelUploadForm = ({
-  isUploading, excelData, uploadError, excelFileInputRef, handleExcelUpload,
-  handleDragOver, handleDrop, currentJobIndex, handleNextExcelJob, handlePrevExcelJob
-}) => {
-  return (
-    <div className="space-y-6 bg-white border border-slate-200 rounded-lg p-6">
-      {/* Upload Zone */}
-      <div
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400 bg-gray-50'
-          }`}
-      >
-        <input
-          type="file"
-          ref={excelFileInputRef}
-          onChange={handleExcelUpload}
-          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-          className="hidden"
-          disabled={isUploading}
-        />
-
-        {isUploading ? (
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <Loader className="w-12 h-12 text-blue-600 animate-spin" />
-            <p className="text-gray-700">Reading Excel file...</p>
-          </div>
-        ) : excelData.length > 0 ? (
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <CheckCircle className="w-12 h-12 text-green-600" />
-            <p className="text-lg font-medium text-gray-900">Excel File Processed Successfully!</p>
-            <p className="text-sm text-gray-600">
-              Found {excelData.length} job(s). Data has been populated in manual entry form.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <FileText className="w-12 h-12 text-gray-400" />
-            <div>
-              <p className="text-lg font-medium text-gray-900">Drag & Drop your Excel File</p>
-              <p className="text-sm text-gray-600">or</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => excelFileInputRef.current?.click()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-            >
-              Browse Files
-            </button>
-            <p className="text-xs text-gray-500">Supports XLSX, XLS • Max 10MB</p>
-          </div>
-        )}
-      </div>
-
-      {/* Error Message */}
-      {uploadError && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{uploadError}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Excel Data Success */}
-      {excelData.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 space-y-4">
-          <h3 className="font-medium text-green-900">Excel Processing Complete!</h3>
-          <p className="text-sm text-green-700">
-            Successfully processed {excelData.length} job(s) from your Excel file. The manual entry form has been populated with the first job's data.
-          </p>
-
-          {/* Data Preview Table */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mt-4">
-            <h4 className="font-medium text-gray-900 mb-2">Excel Data Preview:</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Total Jobs:</strong> {excelData.length}</p>
-              <p><strong>Current Job:</strong> {currentJobIndex + 1} of {excelData.length}</p>
-              {excelData[currentJobIndex] && (
-                <div className="mt-2 p-2 bg-gray-50 rounded">
-                  <p><strong>Job Title:</strong> {excelData[currentJobIndex].jobTitle || 'Not specified'}</p>
-                  <p><strong>Company:</strong> {excelData[currentJobIndex].company || 'Not specified'}</p>
-                  <p><strong>Location:</strong> {excelData[currentJobIndex].companyLocation || 'Not specified'}</p>
-                  <p><strong>Skills:</strong> {Array.isArray(excelData[currentJobIndex].skills) ? excelData[currentJobIndex].skills.join(', ') : (excelData[currentJobIndex].skills || 'Not specified')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// export default CreateJob;

@@ -185,9 +185,10 @@ export async function postJob(jobId, postData = {}) {
       postedAt: serverTimestamp(),
       postedBy: postData.postedBy || 'admin',
       
-      // School and batch targeting (NEW for your use case)
+      // School, batch, and center targeting (NEW for your use case)
       targetSchools: postData.selectedSchools || [],
       targetBatches: postData.selectedBatches || [],
+      targetCenters: postData.selectedCenters || [],
       
       // Update tracking
       updatedAt: serverTimestamp()

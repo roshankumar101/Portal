@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { deleteJob, subscribeJobs, postJob } from '../../../services/jobs';
-import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle, Clock, PlayCircle, CheckSquare, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle, Clock, PlayCircle, CheckSquare, XCircle, AlertTriangle, MapPin } from 'lucide-react';
 
 const SCHOOLS = ['All Schools', 'SOT', 'SOM', 'SOH'];
 const BATCHES = ['All Batches', '23-27', '24-28', '25-29'];
+const CENTERS = ['All Centers', 'Bangalore', 'Noida', 'Lucknow', 'Pune', 'Patna', 'Indore'];
 
 export default function ManageJobs() {
   const [jobs, setJobs] = useState([]);
@@ -11,11 +12,14 @@ export default function ManageJobs() {
   const [postingJobs, setPostingJobs] = useState(new Set());
   const [showSchools, setShowSchools] = useState({});
   const [showBatches, setShowBatches] = useState({});
+  const [showCenters, setShowCenters] = useState({});
   const [selectedSchools, setSelectedSchools] = useState({});
   const [selectedBatches, setSelectedBatches] = useState({});
+  const [selectedCenters, setSelectedCenters] = useState({});
   const [activeFilter, setActiveFilter] = useState('unposted');
   const schoolDropdownRefs = useRef({});
   const batchDropdownRefs = useRef({});
+  const centerDropdownRefs = useRef({});
 
   // Real-time jobs subscription using your existing service
   useEffect(() => {
@@ -28,6 +32,7 @@ export default function ManageJobs() {
       // Load existing selections from database for posted jobs
       const schoolSelections = {};
       const batchSelections = {};
+      const centerSelections = {};
       
       jobsList.forEach(job => {
         if (isJobPosted(job) && job.targetSchools) {
@@ -35,6 +40,9 @@ export default function ManageJobs() {
         }
         if (isJobPosted(job) && job.targetBatches) {
           batchSelections[job.id] = job.targetBatches;
+        }
+        if (isJobPosted(job) && job.targetCenters) {
+          centerSelections[job.id] = job.targetCenters;
         }
       });
       
@@ -44,6 +52,9 @@ export default function ManageJobs() {
       }
       if (Object.keys(batchSelections).length > 0) {
         setSelectedBatches(prev => ({ ...prev, ...batchSelections }));
+      }
+      if (Object.keys(centerSelections).length > 0) {
+        setSelectedCenters(prev => ({ ...prev, ...centerSelections }));
       }
       
       setLoading(false);
@@ -70,11 +81,18 @@ export default function ManageJobs() {
           setShowBatches(prev => ({ ...prev, [jobId]: false }));
         }
       });
+
+      Object.keys(showCenters).forEach(jobId => {
+        if (showCenters[jobId] && centerDropdownRefs.current[jobId] && 
+            !centerDropdownRefs.current[jobId].contains(event.target)) {
+          setShowCenters(prev => ({ ...prev, [jobId]: false }));
+        }
+      });
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSchools, showBatches]);
+  }, [showSchools, showBatches, showCenters]);
 
   // Check if job is posted (compatible with your database structure)
   const isJobPosted = (job) => {
@@ -258,21 +276,25 @@ export default function ManageJobs() {
     const isAlreadyPosted = isJobPosted(job);
     const hasSchoolSelection = selectedSchools[job.id]?.length > 0;
     const hasBatchSelection = selectedBatches[job.id]?.length > 0;
+    const hasCenterSelection = selectedCenters[job.id]?.length > 0;
     
-    return !isAlreadyPosted && hasSchoolSelection && hasBatchSelection;
+    return !isAlreadyPosted && hasSchoolSelection && hasBatchSelection && hasCenterSelection;
   };
 
   // Get posted job display text
   const getPostedJobDisplay = (jobId) => {
     const schools = selectedSchools[jobId] || [];
     const batches = selectedBatches[jobId] || [];
+    const centers = selectedCenters[jobId] || [];
     
     const schoolText = schools.length === 1 ? schools[0] : 
                      schools.length > 1 ? `${schools.length} Schools` : '';
     const batchText = batches.length === 1 ? batches[0] : 
                      batches.length > 1 ? `${batches.length} Batches` : '';
+    const centerText = centers.length === 1 ? centers[0] : 
+                     centers.length > 1 ? `${centers.length} Centers` : '';
     
-    return `Posted: ${schoolText}, ${batchText}`;
+    return `Posted: ${schoolText}, ${batchText}, ${centerText}`;
   };
 
   // Database-integrated post job handler
@@ -286,6 +308,7 @@ export default function ManageJobs() {
       const postData = {
         selectedSchools: selectedSchools[jobId] || [],
         selectedBatches: selectedBatches[jobId] || [],
+        selectedCenters: selectedCenters[jobId] || [],
         postedBy: 'admin',
       };
       
@@ -445,6 +468,46 @@ export default function ManageJobs() {
     setShowBatches(prev => ({ ...prev, [jobId]: !prev[jobId] }));
   };
 
+  const toggleCenterDropdown = (jobId) => {
+    setShowCenters(prev => ({ ...prev, [jobId]: !prev[jobId] }));
+  };
+
+  const toggleCenter = (jobId, center) => {
+    setSelectedCenters(prev => {
+      const jobCenters = new Set(prev[jobId] || []);
+      const allIndividualCenters = CENTERS.filter(c => c !== 'All Centers');
+      
+      if (center === 'All Centers') {
+        if (jobCenters.has('All Centers')) {
+          jobCenters.delete('All Centers');
+        } else {
+          jobCenters.clear();
+          jobCenters.add('All Centers');
+        }
+      } else {
+        if (jobCenters.has('All Centers')) {
+          jobCenters.delete('All Centers');
+          jobCenters.add(center);
+        } else {
+          if (jobCenters.has(center)) {
+            jobCenters.delete(center);
+          } else {
+            jobCenters.add(center);
+          }
+        }
+        
+        // Auto-convert to "All Centers" if all individual centers selected
+        const selectedIndividualCenters = Array.from(jobCenters).filter(c => c !== 'All Centers');
+        if (selectedIndividualCenters.length === allIndividualCenters.length) {
+          jobCenters.clear();
+          jobCenters.add('All Centers');
+        }
+      }
+      
+      return { ...prev, [jobId]: Array.from(jobCenters) };
+    });
+  };
+
   // Get statistics
   const unpostedCount = jobs.filter(job => !isJobPosted(job)).length;
   const postedCount = jobs.filter(job => isJobPosted(job)).length;
@@ -523,10 +586,10 @@ export default function ManageJobs() {
                 isJobPosted(job) ? 'bg-green-50' : 'bg-blue-50'
               }`}>
                 <div className="p-4">
-                  {/* First Row: Company, Interview Date, School, Batch, Actions */}
-                  <div className="flex items-center justify-between gap-6">
+                  {/* First Row: Company, Interview Date, School, Batch, Center, Actions */}
+                  <div className="flex items-center justify-between gap-4">
                     {/* Company - STATUS BADGE BACK HERE */}
-                    <div className="flex-4 min-w-0">
+                    <div className="flex-3 min-w-0">
                       <div className="flex items-center gap-2 mb-2 -mt-2">
                         <Building2 className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Company</span>
@@ -559,7 +622,7 @@ export default function ManageJobs() {
                     </div>
                     
                     {/* School */}
-                    <div className="flex-2 min-w-0">
+                    <div className="flex-1 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
                         <GraduationCap className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">School</span>
@@ -596,7 +659,7 @@ export default function ManageJobs() {
                     </div>
                     
                     {/* Batch */}
-                    <div className="flex-2 min-w-0">
+                    <div className="flex-1 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
                         <Users className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Batch</span>
@@ -632,51 +695,87 @@ export default function ManageJobs() {
                       </div>
                     </div>
                     
-                    {/* Post Action */}
-                    <div className="flex items-center ml-3 mt-4">
-                      <button
-                        onClick={() => handlePostJob(job.id)}
-                        disabled={!canPostJob(job) || postingJobs.has(job.id)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 justify-center min-w-[120px] ${
-                          isJobPosted(job)
-                            ? 'bg-green-500 text-white cursor-not-allowed'
-                            : postingJobs.has(job.id)
-                            ? 'bg-blue-100 text-blue-500 cursor-not-allowed'
-                            : canPostJob(job)
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                            : 'bg-blue-200 text-blue-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {isJobPosted(job) ? (
-                          <>
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-xs">{getPostedJobDisplay(job.id)}</span>
-                          </>
-                        ) : postingJobs.has(job.id) ? (
-                          <>
-                            <Loader className="w-4 h-4 animate-spin" />
-                            <span>Posting...</span>
-                          </>
-                        ) : canPostJob(job) ? (
-                          'Post Job'
-                        ) : (
-                          'Post Job'
+                    {/* Center */}
+                    <div className="flex-2 min-w-0">
+                      <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
+                        <MapPin className="w-4 h-4 text-slate-500" />
+                        <span className="text-sm font-medium text-slate-600">Center</span>
+                      </div>
+                      <div className="relative" ref={el => centerDropdownRefs.current[job.id] = el}>
+                        <button
+                          type="button"
+                          className={`w-full border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-left flex items-center justify-between ${
+                            selectedCenters[job.id]?.length ? 'bg-green-100' : 'bg-blue-100'
+                          }`}
+                          onClick={() => toggleCenterDropdown(job.id)}
+                          disabled={isJobPosted(job)}
+                        >
+                          <span className="truncate">
+                            {selectedCenters[job.id]?.length ? selectedCenters[job.id].join(', ') : 'Select Centers'}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                        </button>
+                        {showCenters[job.id] && !isJobPosted(job) && (
+                          <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
+                            {CENTERS.map((center) => (
+                              <label key={center} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCenters[job.id]?.includes(center) || false}
+                                  onChange={() => toggleCenter(job.id, center)}
+                                />
+                                <span>{center}</span>
+                              </label>
+                            ))}
+                          </div>
                         )}
-                      </button>
+                      </div>
                     </div>
                   </div>
 
                   {/* Second Row: Role and Actions - STATUS BADGE REMOVED FROM HERE */}
                   <div className="mt-2 pt-2 border-t border-slate-300">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Briefcase className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Role:</span>
-                        <span className="font-semibold text-slate-900">{job.jobTitle || 'N/A'}</span>
+                        <span className="font-semibold text-slate-900 truncate">{job.jobTitle || 'N/A'}</span>
                       </div>
                       
-                      {/* Share and Delete Actions - No status badge here now */}
-                      <div className="flex items-center gap-2 mr-2">
+                      {/* Post, Share and Delete Actions */}
+                      <div className="flex items-center gap-2 ml-4">
+                        {/* Post Action */}
+                        <button
+                          onClick={() => handlePostJob(job.id)}
+                          disabled={!canPostJob(job) || postingJobs.has(job.id)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 justify-center min-w-[120px] ${
+                            isJobPosted(job)
+                              ? 'bg-green-500 text-white cursor-not-allowed'
+                              : postingJobs.has(job.id)
+                              ? 'bg-blue-100 text-blue-500 cursor-not-allowed'
+                              : canPostJob(job)
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                              : 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {isJobPosted(job) ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="text-xs">{getPostedJobDisplay(job.id)}</span>
+                            </>
+                          ) : postingJobs.has(job.id) ? (
+                            <>
+                              <Loader className="w-4 h-4 animate-spin" />
+                              <span>Posting...</span>
+                            </>
+                          ) : canPostJob(job) ? (
+                            'Post Job'
+                          ) : (
+                            'Post Job'
+                          )}
+                        </button>
+                        
+                        {/* Share Action */}
                         <button 
                           onClick={() => handleShare(job)}
                           className="p-2.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors shadow-sm"
@@ -684,6 +783,8 @@ export default function ManageJobs() {
                         >
                           <Share2 className="w-4 h-4" />
                         </button>
+                        
+                        {/* Delete Action */}
                         <button
                           onClick={() => handleDelete(job.id)}
                           className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm"

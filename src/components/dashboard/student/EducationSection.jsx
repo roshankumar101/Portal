@@ -47,9 +47,23 @@ const EducationSection = () => {
       querySnapshot.forEach((doc) => {
         const docData = doc.data();
         console.log('Education doc:', doc.id, docData);
-        console.log('Institute value:', docData.institute, 'Type:', typeof docData.institute);
-        console.log('Institute trimmed:', docData.institute?.trim?.());
-        educationData.push({ id: doc.id, ...docData });
+        
+        // Normalize the institute field to handle both 'institute' and 'instituteName'
+        const normalizedData = {
+          ...docData,
+          institute: docData.institute || docData.instituteName || '',
+          // Ensure other fields have default values
+          city: docData.city || '',
+          state: docData.state || '',
+          branch: docData.branch || '',
+          yop: docData.yop || docData.endYear || '',
+          scoreType: docData.scoreType || 'CGPA',
+          score: docData.score || docData.percentage || ''
+        };
+        
+        console.log('Institute value:', normalizedData.institute, 'Type:', typeof normalizedData.institute);
+        console.log('Institute trimmed:', normalizedData.institute?.trim?.());
+        educationData.push({ id: doc.id, ...normalizedData });
       });
       console.log('Final education data before filtering:', educationData);
       console.log('Education entries that will be displayed:', educationData.filter(edu => edu.institute && edu.institute.trim()));
@@ -99,13 +113,13 @@ const EducationSection = () => {
   const handleEditClick = (index) => {
     const edu = educationEntries[index];
     setCurrentEdu({
-      institute: edu.institute || '',
+      institute: edu.institute || edu.instituteName || '',
       city: edu.city || '',
       state: edu.state || '',
       branch: edu.branch || '',
-      yop: edu.yop || '',
+      yop: edu.yop || edu.endYear || '',
       scoreType: edu.scoreType || 'CGPA',
-      score: edu.score || ''
+      score: edu.score || edu.percentage || ''
     });
     setEditingIndex(index);
     setShowForm(true);
@@ -116,7 +130,8 @@ const EducationSection = () => {
     console.log('Delete clicked for index:', index, 'Education:', edu);
     console.log('Total entries before delete:', educationEntries.length);
     
-    if (!window.confirm(`Are you sure you want to delete ${edu.institute}?`)) return;
+    const instituteName = edu.institute || edu.instituteName || 'this education record';
+    if (!window.confirm(`Are you sure you want to delete ${instituteName}?`)) return;
     
     try {
       setLoading(true);

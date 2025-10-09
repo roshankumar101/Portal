@@ -589,7 +589,7 @@ export default function ManageJobs() {
                   {/* First Row: Company, Interview Date, School, Batch, Center, Actions */}
                   <div className="flex items-center justify-between gap-4">
                     {/* Company - STATUS BADGE BACK HERE */}
-                    <div className="flex-3 min-w-0">
+                    <div className="flex-4 min-w-0">
                       <div className="flex items-center gap-2 mb-2 -mt-2">
                         <Building2 className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Company</span>
@@ -622,7 +622,7 @@ export default function ManageJobs() {
                     </div>
                     
                     {/* School */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-2 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
                         <GraduationCap className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">School</span>
@@ -659,7 +659,7 @@ export default function ManageJobs() {
                     </div>
                     
                     {/* Batch */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-2 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
                         <Users className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Batch</span>
@@ -696,7 +696,7 @@ export default function ManageJobs() {
                     </div>
                     
                     {/* Center */}
-                    <div className="flex-2 min-w-0">
+                    <div className="flex-3 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
                         <MapPin className="w-4 h-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-600">Center</span>

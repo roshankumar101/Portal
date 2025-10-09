@@ -22,6 +22,7 @@ import StudentDashboard from './pages/dashboard/StudentDashboard'
 import RecruiterDashboard from './pages/dashboard/RecruiterDashboard'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 import Login from './pages/Login'
+import Unsubscribe from './pages/Unsubscribe'
 import { useAuth } from './hooks/useAuth'
 import { AuthProvider } from './context/AuthContext'
 import AuthRedirect from './components/AuthRedirect'
@@ -171,6 +172,7 @@ function AppContent() {
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/dev-team" element={<DevTeam />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/test" element={<DatabaseTest />} />
 
         {/* Protected routes */}

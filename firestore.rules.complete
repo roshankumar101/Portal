@@ -160,9 +160,9 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
       }
       
-      // Students can read posted jobs OR any job (for application details); admins and recruiters can read all
+      // Students can read posted jobs; admins and recruiters can read all
       allow read: if request.auth != null && (
-        isStudent() ||
+        (isStudent() && (resource.data.status == 'posted' || resource.data.isPosted == true)) ||
         isAdmin() || 
         isRecruiter()
       );

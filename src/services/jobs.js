@@ -175,6 +175,7 @@ export async function postJob(jobId, postData = {}) {
   try {
     console.log('🚀 Posting job in database:', jobId, postData);
     
+    // Update job status in database
     await updateDoc(doc(db, JOBS_COLL, jobId), {
       // Status fields for posted jobs
       status: JOB_STATUS.POSTED,
@@ -195,6 +196,35 @@ export async function postJob(jobId, postData = {}) {
     });
     
     console.log('✅ Job posted successfully in database:', jobId);
+    
+    // Get the complete job data for email notifications
+    const jobDoc = await getDoc(doc(db, JOBS_COLL, jobId));
+    if (jobDoc.exists()) {
+      const jobData = { id: jobDoc.id, ...jobDoc.data() };
+      
+      // Import and trigger email notifications (dynamic import to avoid circular dependencies)
+      try {
+        const { sendJobPostingNotifications } = await import('./emailNotifications.js');
+        
+        // Send email notifications in the background (don't await to avoid blocking the UI)
+        sendJobPostingNotifications(
+          jobData,
+          postData.selectedCenters || [],
+          postData.selectedSchools || [],
+          postData.selectedBatches || []
+        ).then(emailResult => {
+          console.log('📧 Email notification result:', emailResult);
+        }).catch(emailError => {
+          console.error('📧 Email notification error:', emailError);
+          // Don't throw error - email failure shouldn't fail job posting
+        });
+        
+      } catch (emailServiceError) {
+        console.warn('⚠️ Email service not available:', emailServiceError);
+        // Continue without email notifications if service is not available
+      }
+    }
+    
     return { success: true, jobId };
     
   } catch (error) {

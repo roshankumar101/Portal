@@ -12,7 +12,7 @@ import {
   getEducationalBackground,
 } from '../../services/students';
 import { getStudentApplications, applyToJob, subscribeStudentApplications } from '../../services/applications';
-import { subscribeJobs } from '../../services/jobs';
+import { subscribeJobs, subscribePostedJobs } from '../../services/jobs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SiCodeforces, SiGeeksforgeeks } from 'react-icons/si';
 import { FaHackerrank, FaYoutube } from 'react-icons/fa';
@@ -189,41 +189,67 @@ export default function StudentDashboard() {
   const loadProfile = useCallback(async (forceRefresh = false) => {
     if (!user?.uid) return;
     
-    // Check if data is already loaded and fresh (within 5 minutes)
+    // Check if data is already loaded and fresh (within 2 minutes for faster updates)
     const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-    if (!forceRefresh && dataLoaded && lastLoadTime && (now - lastLoadTime) < fiveMinutes) {
+    const twoMinutes = 2 * 60 * 1000;
+    if (!forceRefresh && dataLoaded && lastLoadTime && (now - lastLoadTime) < twoMinutes) {
       return; // Use cached data
     }
     
     try {
-      // Only load essential profile data first for faster initial render
+      // Load profile data with minimal processing
       const profileData = await getStudentProfile(user.uid);
       
-      // Update profile data immediately
       if (profileData) {
-        setFullName(profileData.fullName || '');
-        setEmail(profileData.email || '');
-        setPhone(profileData.phone || '');
-        setEnrollmentId(profileData.enrollmentId || '');
-        setCgpa(profileData.cgpa?.toString?.() || '');
-        setBatch(profileData.batch || batch);
-        setCenter(profileData.center || center);
-        setBio(profileData.bio || '');
-        setHeadline(profileData.Headline || '');
-        setCity(profileData.city || '');
-        setStateRegion(profileData.stateRegion || profileData.state || '');
-        setLinkedin(profileData.linkedin || '');
-        setLeetcode(profileData.leetcode || '');
-        setCodeforces(profileData.codeforces || '');
-        setGfg(profileData.gfg || '');
-        setHackerrank(profileData.hackerrank || '');
-        setGithubUrl(profileData.githubUrl || profileData.github || '');
-        setYoutubeUrl(profileData.youtubeUrl || profileData.youtube || '');
-        setSchool(profileData.school || '');
-        setProfilePhoto(profileData.profilePhoto || '');
-        setJobFlexibility(profileData.jobFlexibility || '');
-        // Load resume info if present on profile
+        // Batch update all state at once to prevent multiple re-renders
+        const updates = {
+          fullName: profileData.fullName || '',
+          email: profileData.email || '',
+          phone: profileData.phone || '',
+          enrollmentId: profileData.enrollmentId || '',
+          cgpa: profileData.cgpa?.toString?.() || '',
+          batch: profileData.batch || '2023-2027', // Default batch
+          center: profileData.center || 'Bangalore', // Default center
+          bio: profileData.bio || '',
+          Headline: profileData.Headline || '',
+          city: profileData.city || '',
+          stateRegion: profileData.stateRegion || profileData.state || '',
+          linkedin: profileData.linkedin || '',
+          leetcode: profileData.leetcode || '',
+          codeforces: profileData.codeforces || '',
+          gfg: profileData.gfg || '',
+          hackerrank: profileData.hackerrank || '',
+          githubUrl: profileData.githubUrl || profileData.github || '',
+          youtubeUrl: profileData.youtubeUrl || profileData.youtube || '',
+          school: profileData.school || '',
+          profilePhoto: profileData.profilePhoto || '',
+          jobFlexibility: profileData.jobFlexibility || ''
+        };
+
+        // Apply all updates at once
+        setFullName(updates.fullName);
+        setEmail(updates.email);
+        setPhone(updates.phone);
+        setEnrollmentId(updates.enrollmentId);
+        setCgpa(updates.cgpa);
+        setBatch(updates.batch);
+        setCenter(updates.center);
+        setBio(updates.bio);
+        setHeadline(updates.Headline);
+        setCity(updates.city);
+        setStateRegion(updates.stateRegion);
+        setLinkedin(updates.linkedin);
+        setLeetcode(updates.leetcode);
+        setCodeforces(updates.codeforces);
+        setGfg(updates.gfg);
+        setHackerrank(updates.hackerrank);
+        setGithubUrl(updates.githubUrl);
+        setYoutubeUrl(updates.youtubeUrl);
+        setSchool(updates.school);
+        setProfilePhoto(updates.profilePhoto);
+        setJobFlexibility(updates.jobFlexibility);
+
+        // Load resume info if present
         if (profileData.resumeUrl) {
           setResumeInfo({
             url: profileData.resumeUrl,
@@ -234,41 +260,18 @@ export default function StudentDashboard() {
         }
       }
       
-      // Mark data as loaded immediately for faster UI
+      // Mark data as loaded immediately
       setDataLoaded(true);
       setLastLoadTime(now);
       
-      // Load secondary data immediately in background (no artificial delay)
-      Promise.allSettled([
-        getStudentSkills(user.uid),
-        getStudentApplications(user.uid)
-      ]).then(([skillsResult, applicationsResult]) => {
-        // Handle skills data
-        if (skillsResult.status === 'fulfilled') {
-          setSkillsEntries(skillsResult.value || []);
-        } else {
-          console.warn('Failed to load skills data', skillsResult.reason);
-          setSkillsEntries([]);
-        }
-        
-        // Handle applications data
-        if (applicationsResult.status === 'fulfilled') {
-          setApplications(applicationsResult.value || []);
-        } else {
-          console.warn('Failed to load applications data', applicationsResult.reason);
-          setApplications([]);
-        }
-        
-        setLoadingSkills(false);
-        setLoadingApplications(false);
-      });
-      
     } catch (err) {
       console.warn('Failed to load profile data', err);
-      setLoadingSkills(false);
-      setLoadingApplications(false);
+      // Set reasonable defaults on error
+      setBatch('2023-2027');
+      setCenter('Bangalore');
+      setDataLoaded(true);
     }
-  }, [user?.uid, batch, center, dataLoaded, lastLoadTime]);
+  }, [user?.uid, dataLoaded, lastLoadTime]);
 
 
   const loadSkillsData = useCallback(async () => {
@@ -298,13 +301,48 @@ export default function StudentDashboard() {
 
   const loadJobsData = useCallback(() => {
     setLoadingJobs(true);
-    const unsubscribe = subscribeJobs((jobsData) => {
-      setJobs(jobsData || []);
+    
+    // Use subscribePostedJobs for better performance - only gets posted jobs
+    const unsubscribe = subscribePostedJobs((jobsData) => {
+      // Filter jobs based on student's profile
+      if (jobsData && jobsData.length > 0) {
+        const filteredJobs = jobsData.filter(job => {
+          // Check if job targets match student profile
+          const jobTargetCenters = job.targetCenters || [];
+          const jobTargetSchools = job.targetSchools || [];
+          const jobTargetBatches = job.targetBatches || [];
+          
+          // If no target filters are set, job is available to all students
+          if (jobTargetCenters.length === 0 && jobTargetSchools.length === 0 && jobTargetBatches.length === 0) {
+            return true;
+          }
+          
+          // Check if student matches any of the target criteria
+          const centerMatch = jobTargetCenters.length === 0 || jobTargetCenters.includes(center);
+          const schoolMatch = jobTargetSchools.length === 0 || jobTargetSchools.includes(school);
+          const batchMatch = jobTargetBatches.length === 0 || jobTargetBatches.includes(batch);
+          
+          // Student must match all specified target criteria
+          return centerMatch && schoolMatch && batchMatch;
+        });
+        
+        console.log('🎯 Filtered jobs for student:', {
+          total: jobsData.length,
+          filtered: filteredJobs.length,
+          studentCenter: center,
+          studentSchool: school,
+          studentBatch: batch
+        });
+        
+        setJobs(filteredJobs);
+      } else {
+        setJobs([]);
+      }
       setLoadingJobs(false);
-    }, { status: 'active' });
+    }, { limitTo: 50 }); // Get up to 50 posted jobs
 
     return unsubscribe;
-  }, []);
+  }, [center, school, batch]); // Add dependencies for student profile
 
   const handleApplyToJob = async (job) => {
     if (!user?.uid || !job?.id) {
@@ -354,13 +392,19 @@ export default function StudentDashboard() {
     setSelectedJob(null);
   };
 
-  // Load data when user is available
+  // Load data when user is available - separate profile from skills for faster loading
   useEffect(() => {
     if (user?.uid && !dataLoaded) {
       loadProfile();
+    }
+  }, [user?.uid, dataLoaded, loadProfile]);
+
+  // Load skills separately after profile is loaded
+  useEffect(() => {
+    if (user?.uid && dataLoaded) {
       loadSkillsData();
     }
-  }, [user?.uid, dataLoaded, loadProfile, loadSkillsData]);
+  }, [user?.uid, dataLoaded, loadSkillsData]);
 
   // Always maintain real-time subscriptions for jobs and applications
   useEffect(() => {
@@ -436,6 +480,11 @@ export default function StudentDashboard() {
       missingFields.push({ field: 'center', section: 'academic' });
     }
 
+    if (!batch.trim()) {
+      errors.push('Batch selection is required');
+      missingFields.push({ field: 'batch', section: 'academic' });
+    }
+
     // Optional field validations
     if (cgpa && !validateCGPA(cgpa)) errors.push('CGPA must be between 0 and 10');
     
@@ -498,6 +547,13 @@ export default function StudentDashboard() {
           errors.center = 'Center selection is required';
         } else {
           delete errors.center;
+        }
+        break;
+      case 'batch':
+        if (!value.trim()) {
+          errors.batch = 'Batch selection is required';
+        } else {
+          delete errors.batch;
         }
         break;
       case 'cgpa':
@@ -787,6 +843,7 @@ export default function StudentDashboard() {
       case 'offered': return <CheckCircle size={16} />;
       case 'selected': return <CheckCircle size={16} />;
       case 'rejected': return <XCircle size={16} />;
+      case 'job_removed': return <AlertTriangle size={16} />;
       default: return <Clock size={16} />;
     }
   };
@@ -798,6 +855,7 @@ export default function StudentDashboard() {
       case 'interviewed': return 'bg-purple-100 text-purple-800';
       case 'offered': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
+      case 'job_removed': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -809,6 +867,7 @@ export default function StudentDashboard() {
       case 'interviewed': return 'from-purple-50 to-purple-100';
       case 'offered': return 'from-green-50 to-green-100';
       case 'rejected': return 'from-red-50 to-red-100';
+      case 'job_removed': return 'from-orange-50 to-orange-100';
       default: return 'from-gray-50 to-gray-100';
     }
   };
@@ -1148,7 +1207,9 @@ export default function StudentDashboard() {
                         </div>
                         <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
                           {getStatusIcon(application.status)}
-                          {application.status
+                          {application.status === 'job_removed'
+                            ? 'Job Removed'
+                            : application.status
                             ? application.status.charAt(0).toUpperCase() + application.status.slice(1)
                             : 'Unknown'}
                         </span>
@@ -1386,7 +1447,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">CGPA</label>
                     <input
@@ -1404,6 +1465,26 @@ export default function StudentDashboard() {
                     />
                     {validationErrors.cgpa && (
                       <p className="text-red-500 text-sm mt-1">{validationErrors.cgpa}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Batch <span className="text-red-500">*</span></label>
+                    <select
+                      id="batch"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={batch}
+                      onChange={(e) => {
+                        setBatch(e.target.value);
+                        validateField('batch', e.target.value);
+                      }}
+                    >
+                      <option value="">Select Batch</option>
+                      <option value="2022-2026">2025-2029</option>
+                      <option value="2024-2028">2024-2028</option>
+                      <option value="2023-2027">2023-2027</option>
+                    </select>
+                    {validationErrors.batch && (
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.batch}</p>
                     )}
                   </div>
                   <div>

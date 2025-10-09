@@ -65,6 +65,15 @@ export const getStudentApplications = async (studentId) => {
                   console.warn('Error fetching company document:', companyErr);
                 }
               }
+            } else {
+              // Job document doesn't exist - create fallback data silently
+              console.info(`Job document not found for ID: ${appData.jobId} - using fallback data`);
+              jobData = {
+                jobTitle: 'Job No Longer Available',
+                description: 'This job posting is no longer available or has been removed.',
+                status: 'removed',
+                company: 'Unknown Company'
+              };
             }
           } catch (jobErr) {
             console.warn('Error fetching job document:', jobErr);
@@ -331,7 +340,14 @@ export const subscribeStudentApplications = (studentId, onChange) => {
                   }
                 }
               } else {
-                console.warn('Job document not found for ID:', appData.jobId);
+                // Job document doesn't exist - create fallback data silently
+                console.info(`Job document not found for ID: ${appData.jobId} - using fallback data`);
+                jobData = {
+                  jobTitle: 'Job No Longer Available',
+                  description: 'This job posting is no longer available or has been removed.',
+                  status: 'removed',
+                  company: 'Unknown Company'
+                };
               }
             } catch (jobErr) {
               console.warn('Error fetching job document:', jobErr);

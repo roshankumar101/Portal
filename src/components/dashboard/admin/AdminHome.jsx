@@ -1,22 +1,158 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PieChart } from 'react-minimal-pie-chart';
-import { ChevronDown, Filter, TrendingUp, Users, Briefcase, MessageSquare, Bell, BarChart3, Target, DollarSign, X } from 'lucide-react';
+import { ChevronDown, Filter, TrendingUp, Users, Briefcase, MessageSquare, Bell, BarChart3, Target, DollarSign, X, Loader2 } from 'lucide-react';
+import { FaChevronDown, FaTimes } from 'react-icons/fa';
 import { Chart as ChartJS, CategoryScale, LinearScale, RadialLinearScale, BarElement, LineElement, PointElement, ArcElement, Filler, Title, Tooltip, Legend } from 'chart.js';
-import { Radar, PolarArea, Bar, Doughnut } from 'react-chartjs-2';
-
+import { Radar, PolarArea, Bar, Doughnut, Line } from 'react-chartjs-2';
+import { adminDashboardService } from '../../../services/adminDashboard';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebase';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, RadialLinearScale, BarElement, LineElement, PointElement, ArcElement, Filler, Title, Tooltip, Legend);
 
+const CustomDropdown = ({ 
+  label, 
+  options, 
+  selectedValues, 
+  onSelectionChange, 
+  multiple = false,
+  placeholder = "Select options"
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleOptionClick = (option) => {
+    if (multiple) {
+      const newSelected = selectedValues.includes(option.id)
+        ? selectedValues.filter(id => id !== option.id)
+        : [...selectedValues, option.id];
+      onSelectionChange(newSelected);
+    } else {
+      onSelectionChange([option.id]);
+      setIsOpen(false);
+    }
+  };
+
+  const removeOption = (optionId, e) => {
+    e.stopPropagation();
+    const newSelected = selectedValues.filter(id => id !== optionId);
+    onSelectionChange(newSelected);
+  };
+
+  const getDisplayText = () => {
+    if (selectedValues.length === 0) return placeholder;
+    if (!multiple) {
+      const selected = options.find(opt => opt.id === selectedValues[0]);
+      return selected ? selected.name : placeholder;
+    }
+    if (selectedValues.length === 1) {
+      const selected = options.find(opt => opt.id === selectedValues[0]);
+      return selected ? selected.name : placeholder;
+    }
+    return `${selectedValues.length} selected`;
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm text-gray-700 font-medium">{label}:</label>
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          className={`w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between transition-all duration-200 ${
+            selectedValues.length > 0 
+              ? 'bg-gradient-to-r from-green-50 to-green-100 border-green-300' 
+              : 'bg-gray-50 border-gray-300'
+          } hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200`}
+          onClick={() => setIsOpen(prev => !prev)}
+        >
+          <span className="truncate flex-1">
+            {getDisplayText()}
+          </span>
+          <div className="flex items-center gap-1">
+            {multiple && selectedValues.length > 0 && (
+              <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {selectedValues.length}
+              </span>
+            )}
+            <FaChevronDown className={`w-3 h-3 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+        
+        {isOpen && (
+          <div className="absolute z-20 w-full bg-white border-2 border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+            {options.map((option) => {
+              const isSelected = selectedValues.includes(option.id);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-left transition-colors duration-150 ${
+                    isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                  }`}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  <span>{option.name}</span>
+                  {isSelected && (
+                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      
+      {multiple && selectedValues.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {selectedValues.map(value => {
+            const option = options.find(opt => opt.id === value);
+            return option ? (
+              <span 
+                key={value}
+                className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
+              >
+                {option.name}
+                <button
+                  type="button"
+                  onClick={(e) => removeOption(value, e)}
+                  className="hover:text-blue-900 focus:outline-none"
+                >
+                  <FaTimes className="w-3 h-3" />
+                </button>
+              </span>
+            ) : null;
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function AdminHome() {
-  const [filters, setFilters] = useState({ center: [], school: [], quarter: [] });
-  const [showCenterDropdown, setShowCenterDropdown] = useState(false);
+  const [filters, setFilters] = useState({ campus: [], school: [], batch: [], admin: [] });
+  const [showCampusDropdown, setShowCampusDropdown] = useState(false);
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
-  const [showQuarterDropdown, setShowQuarterDropdown] = useState(false);
+  const [showBatchDropdown, setShowBatchDropdown] = useState(false);
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState('SOT');
 
-  const centerDropdownRef = useRef(null);
+  const campusDropdownRef = useRef(null);
   const schoolDropdownRef = useRef(null);
-  const quarterDropdownRef = useRef(null);
+  const batchDropdownRef = useRef(null);
+  const adminDropdownRef = useRef(null);
 
   // Chart.js color palette
   const chartColors = {
@@ -30,127 +166,231 @@ export default function AdminHome() {
     redLight: 'rgba(239, 68, 68, 0.1)'
   };
 
-  // Dummy data
-  const [dashboardData, setDashboardData] = useState({
-    jobPostings: 120,
-    studentQueries: 45,
-    notifications: 25,
-    applications: 300,
-    overallStats: {
-      totalCenters: 6,
-      totalBatches: 12,
-      activeStudents: 1245,
-      placementRate: 78,
-      avgResponseTime: '2.4 hrs',
-      completionRate: 92,
-      engagementRate: 67,
-      satisfactionScore: '4.5/5'
-    }
+  // Real-time dashboard data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterOptions, setFilterOptions] = useState({
+    campuses: [],
+    schools: [],
+    batches: [],
+    admins: []
   });
+  const [loadingFilters, setLoadingFilters] = useState(true);
 
+  // Load predefined filter options (no database fetching to avoid duplicates)
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        setLoadingFilters(true);
+        
+        // Fetch only admin users from database (needed for admin filter)
+        const usersQuery = query(collection(db, 'users'), where('role', '==', 'admin'));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        const admins = [];
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          admins.push({
+            id: doc.id,
+            name: data.displayName || data.name || data.email || 'Admin User'
+          });
+        });
+        
+        // Use only predefined options for schools, batches, centers
+        setFilterOptions({
+          campuses: [
+            { id: 'BANGALORE', name: 'Bangalore' },
+            { id: 'NOIDA', name: 'Noida' },
+            { id: 'LUCKNOW', name: 'Lucknow' },
+            { id: 'PUNE', name: 'Pune' },
+            { id: 'PATNA', name: 'Patna' },
+            { id: 'INDORE', name: 'Indore' }
+          ],
+          schools: [
+            { id: 'SOT', name: 'School of Technology' },
+            { id: 'SOM', name: 'School of Management' },
+            { id: 'SOH', name: 'School of Healthcare' }
+          ],
+          batches: [
+            { id: '23-27', name: '2023-2027' },
+            { id: '24-28', name: '2024-2028' },
+            { id: '25-29', name: '2025-2029' },
+            { id: '26-30', name: '2026-2030' }
+          ],
+          admins: [
+            { id: 'all', name: 'All Admins' },
+            ...admins
+          ]
+        });
+        
+        console.log('✅ AdminHome filter options loaded (predefined only)');
+      } catch (error) {
+        console.error('❌ Error loading AdminHome filter options:', error);
+        
+        // Fallback to hardcoded options
+        setFilterOptions({
+          campuses: [
+            { id: 'BANGALORE', name: 'Bangalore' },
+            { id: 'NOIDA', name: 'Noida' },
+            { id: 'LUCKNOW', name: 'Lucknow' },
+            { id: 'PUNE', name: 'Pune' },
+            { id: 'PATNA', name: 'Patna' },
+            { id: 'INDORE', name: 'Indore' }
+          ],
+          schools: [
+            { id: 'SOT', name: 'School of Technology' },
+            { id: 'SOM', name: 'School of Management' },
+            { id: 'SOH', name: 'School of Healthcare' }
+          ],
+          batches: [
+            { id: '23-27', name: '2023-2027' },
+            { id: '24-28', name: '2024-2028' },
+            { id: '25-29', name: '2025-2029' },
+            { id: '26-30', name: '2026-2030' }
+          ],
+          admins: [
+            { id: 'all', name: 'All Admins' }
+          ]
+        });
+      } finally {
+        setLoadingFilters(false);
+      }
+    };
+
+    loadFilterOptions();
+  }, []);
+
+  // Map AdminHome filters to service expectations
+  const mapFiltersForService = (uiFilters) => {
+    return {
+      center: uiFilters.campus || [], // campus -> center
+      school: uiFilters.school || [],
+      quarter: uiFilters.batch?.map(batch => {
+        // Map batch years to quarters
+        switch(batch) {
+          case '25-29': return 'Q1 (Pre-Placement)';
+          case '24-28': return 'Q2 (Placement Drive)';
+          case '23-27': return 'Q3 (Internship)';
+          default: return 'Q4 (Final Placements)';
+        }
+      }) || []
+    };
+  };
+
+  // Handle dropdown clicks outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (centerDropdownRef.current && !centerDropdownRef.current.contains(event.target)) setShowCenterDropdown(false);
+      if (campusDropdownRef.current && !campusDropdownRef.current.contains(event.target)) setShowCampusDropdown(false);
       if (schoolDropdownRef.current && !schoolDropdownRef.current.contains(event.target)) setShowSchoolDropdown(false);
-      if (quarterDropdownRef.current && !quarterDropdownRef.current.contains(event.target)) setShowQuarterDropdown(false);
+      if (batchDropdownRef.current && !batchDropdownRef.current.contains(event.target)) setShowBatchDropdown(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filterOptions = {
-    centers: ['Bangalore', 'Noida', 'Lucknow', 'Pune', 'Patna', 'Indore'],
-    schools: ['SOT (School of Technology)', 'SOM (School of Management)', 'SOH (School of Health)'],
-    quarters: ['Q1 (Pre-Placement)', 'Q2 (Placement Drive)', 'Q3 (Internship)', 'Q4 (Final Placements)']
-  };
-
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => {
-      const current = [...prev[filterType]];
-      const idx = current.indexOf(value);
-      if (idx > -1) current.splice(idx, 1); else current.push(value);
-      return { ...prev, [filterType]: current };
+  // Subscribe to real-time dashboard data
+  useEffect(() => {
+    setIsLoading(true);
+    const mappedFilters = mapFiltersForService(filters);
+    console.log('🔄 Setting up dashboard data subscription with filters:', {
+      uiFilters: filters,
+      serviceFilters: mappedFilters
     });
+    
+    const unsubscribe = adminDashboardService.subscribeToDashboardData(
+      (data) => {
+        console.log('📊 Dashboard data received:', {
+          stats: data.stats,
+          chartDataKeys: Object.keys(data.chartData),
+          filters: mappedFilters
+        });
+        setDashboardData(data);
+        setIsLoading(false);
+      },
+      mappedFilters // Pass mapped filters to service
+    );
+
+    return () => {
+      console.log('🧹 Cleaning up dashboard subscription');
+      unsubscribe();
+    };
+  }, [filters]); // Re-subscribe when filters change
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      adminDashboardService.cleanup();
+    };
+  }, []);
+
+  // Handle filter changes (AdminPanel style)
+  const handleFilterChange = (filterType, values) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: values
+    }));
   };
 
   const removeFilter = (filterType, value) => setFilters(prev => ({ ...prev, [filterType]: prev[filterType].filter(i => i !== value) }));
-  const clearAllFilters = () => setFilters({ center: [], school: [], quarter: [] });
+  const clearAllFilters = () => setFilters({ campus: [], school: [], batch: [] });
 
-  // Stats with consistent Chart.js colors
-  const stats = [
+  // Stats with real-time data and consistent Chart.js colors
+  const stats = dashboardData ? [
     { 
       title: 'Job Postings', 
-      value: dashboardData.jobPostings, 
+      value: dashboardData.stats.totalJobsPosted, 
       borderColor: 'border-blue-200', 
       icon: <Briefcase className="w-5 h-5" style={{ color: chartColors.blue }} />, 
       chartData: [ 
-        { title: 'Active', value: Math.round(dashboardData.jobPostings * 0.7), color: chartColors.blue },
-        { title: 'Closed', value: Math.round(dashboardData.jobPostings * 0.3), color: '#dbeafe' } 
+        { title: 'Posted', value: dashboardData.stats.totalJobsPosted, color: chartColors.blue },
+        { title: 'Total', value: Math.max(dashboardData.stats.totalJobsPosted, 1), color: '#dbeafe' } 
       ] 
     },
     { 
-      title: 'Student Queries', 
-      value: dashboardData.studentQueries, 
+      title: 'Active Students', 
+      value: dashboardData.stats.activeStudents, 
       borderColor: 'border-green-200', 
-      icon: <MessageSquare className="w-5 h-5" style={{ color: chartColors.green }} />, 
+      icon: <Users className="w-5 h-5" style={{ color: chartColors.green }} />, 
       chartData: [ 
-        { title: 'Resolved', value: Math.round(dashboardData.studentQueries * 0.7), color: chartColors.green },
-        { title: 'Pending', value: Math.round(dashboardData.studentQueries * 0.3), color: '#dcfce7' } 
+        { title: 'Active', value: dashboardData.stats.activeStudents, color: chartColors.green },
+        { title: 'Total', value: Math.max(dashboardData.stats.activeStudents, 1), color: '#dcfce7' } 
       ] 
     },
     { 
-      title: 'Notifications', 
-      value: dashboardData.notifications, 
+      title: 'Pending Queries', 
+      value: dashboardData.stats.pendingQueries, 
       borderColor: 'border-purple-200', 
-      icon: <Bell className="w-5 h-5" style={{ color: chartColors.purple }} />, 
+      icon: <MessageSquare className="w-5 h-5" style={{ color: chartColors.purple }} />, 
       chartData: [ 
-        { title: 'Sent', value: Math.round(dashboardData.notifications * 0.8), color: chartColors.purple },
-        { title: 'Draft', value: Math.round(dashboardData.notifications * 0.2), color: '#f3e8ff' } 
+        { title: 'Pending', value: dashboardData.stats.pendingQueries, color: chartColors.purple },
+        { title: 'Total', value: Math.max(dashboardData.stats.pendingQueries, 1), color: '#f3e8ff' } 
       ] 
     },
     { 
       title: 'Applications', 
-      value: dashboardData.applications, 
+      value: dashboardData.stats.totalApplications, 
       borderColor: 'border-red-200', 
       icon: <TrendingUp className="w-5 h-5" style={{ color: chartColors.red }} />, 
       chartData: [ 
-        { title: 'Accepted', value: Math.round(dashboardData.applications * 0.6), color: chartColors.red },
-        { title: 'Rejected', value: Math.round(dashboardData.applications * 0.4), color: '#fecaca' } 
+        { title: 'Placed', value: dashboardData.stats.placedStudents, color: chartColors.red },
+        { title: 'Applied', value: Math.max(dashboardData.stats.totalApplications - dashboardData.stats.placedStudents, 0), color: '#fecaca' } 
       ] 
     }
-  ];
+  ] : [];
 
-  // School data with performance and application metrics
-  const schoolData = {
+  // School data with real-time performance and application metrics
+  const schoolData = dashboardData?.chartData?.schoolPerformance || {
     SOT: {
-      performance: {
-        labels: ['Placement Rate', 'Avg Salary', 'Technical Skills', 'Project Completion', 'Internship Rate'],
-        values: [88, 85, 92, 90, 87]
-      },
-      applications: {
-        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
-        values: [3847, 892, 567, 85, 88]
-      }
+      performance: { labels: [], values: [] },
+      applications: { labels: [], values: [] }
     },
     SOM: {
-      performance: {
-        labels: ['Placement Rate', 'Avg Salary', 'Leadership', 'Case Studies', 'Corporate Projects'],
-        values: [85, 92, 88, 90, 84]
-      },
-      applications: {
-        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
-        values: [2934, 745, 489, 82, 86]
-      }
+      performance: { labels: [], values: [] },
+      applications: { labels: [], values: [] }
     },
     SOH: {
-      performance: {
-        labels: ['Placement Rate', 'Avg Salary', 'Clinical Skills', 'Research', 'Patient Care'],
-        values: [82, 78, 90, 85, 88]
-      },
-      applications: {
-        labels: ['Applications', 'Interviews', 'Offers', 'Acceptance Rate', 'Response Time'],
-        values: [1856, 523, 342, 80, 83]
-      }
+      performance: { labels: [], values: [] },
+      applications: { labels: [], values: [] }
     }
   };
 
@@ -212,6 +452,7 @@ export default function AdminHome() {
             Filters Applied: {Object.values(filters).flat().length}
           </span>
         </div>
+        
       </div>
 
       {/* Filter Section with consistent colors */}
@@ -221,70 +462,96 @@ export default function AdminHome() {
           Filter Dashboard
         </h2>
 
-        {(filters.center.length > 0 || filters.school.length > 0 || filters.quarter.length > 0) && (
+        {(filters.campus.length > 0 || filters.school.length > 0 || filters.batch.length > 0 || filters.admin.length > 0) && (
           <div className="mb-4 flex flex-wrap gap-2">
-            {filters.center.map(c => (
-              <span key={c} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.blueLight, borderColor: chartColors.blue, color: chartColors.blue }}>
-                Center: {c}
-                <button onClick={() => removeFilter('center', c)} className="ml-1 hover:opacity-70">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-            {filters.school.map(s => (
-              <span key={s} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.greenLight, borderColor: chartColors.green, color: chartColors.green }}>
-                School: {s}
-                <button onClick={() => removeFilter('school', s)} className="ml-1 hover:opacity-70">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-            {filters.quarter.map(q => (
-              <span key={q} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.purpleLight, borderColor: chartColors.purple, color: chartColors.purple }}>
-                Quarter: {q}
-                <button onClick={() => removeFilter('quarter', q)} className="ml-1 hover:opacity-70">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
+            {filters.campus.map(c => {
+              const campusOption = filterOptions.campuses.find(option => option.id === c);
+              return (
+                <span key={c} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.blueLight, borderColor: chartColors.blue, color: chartColors.blue }}>
+                  Campus: {campusOption?.name || c}
+                  <button onClick={() => removeFilter('campus', c)} className="ml-1 hover:opacity-70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            {filters.school.map(s => {
+              const schoolOption = filterOptions.schools.find(option => option.id === s);
+              return (
+                <span key={s} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.greenLight, borderColor: chartColors.green, color: chartColors.green }}>
+                  School: {schoolOption?.name || s}
+                  <button onClick={() => removeFilter('school', s)} className="ml-1 hover:opacity-70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            {filters.batch.map(b => {
+              const batchOption = filterOptions.batches.find(option => option.id === b);
+              return (
+                <span key={b} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.purpleLight, borderColor: chartColors.purple, color: chartColors.purple }}>
+                  Batch: {batchOption?.name || b}
+                  <button onClick={() => removeFilter('batch', b)} className="ml-1 hover:opacity-70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            {filters.admin.map(a => {
+              const adminOption = filterOptions.admins.find(option => option.id === a);
+              return (
+                <span key={a} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: chartColors.redLight, borderColor: chartColors.red, color: chartColors.red }}>
+                  Admin: {adminOption?.name || a}
+                  <button onClick={() => removeFilter('admin', a)} className="ml-1 hover:opacity-70">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
             <button onClick={clearAllFilters} className="text-xs text-gray-500 hover:text-gray-700 underline">Clear all</button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {['center', 'school', 'quarter'].map((type, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {['campus', 'school', 'batch', 'admin'].map((type, index) => (
             <div key={type} className="flex flex-col gap-1">
               <label className="text-sm text-gray-700 font-medium capitalize">{type}:</label>
-              <div className="relative" ref={[centerDropdownRef, schoolDropdownRef, quarterDropdownRef][index]}>
+              <div className="relative" ref={[campusDropdownRef, schoolDropdownRef, batchDropdownRef, adminDropdownRef][index]}>
                 <button 
                   type="button" 
                   className={`w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors ${
                     filters[type].length > 0 ? 'border-blue-300 bg-blue-50' : ''
                   }`}
-                  onClick={() => [setShowCenterDropdown, setShowSchoolDropdown, setShowQuarterDropdown][index](p => !p)}
+                  onClick={() => [setShowCampusDropdown, setShowSchoolDropdown, setShowBatchDropdown, setShowAdminDropdown][index](p => !p)}
                 >
                   <span className="truncate">
                     {filters[type].length > 0 ? `${filters[type].length} selected` : `Select ${type}s`}
                   </span>
                   <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 </button>
-                {[showCenterDropdown, showSchoolDropdown, showQuarterDropdown][index] && (
+                {[showCampusDropdown, showSchoolDropdown, showBatchDropdown, showAdminDropdown][index] && (
                   <div className="absolute z-10 overflow-y-auto max-h-60 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
-                    {filterOptions[`${type}s`].map((option, i) => (
+                    {(type === 'campus' ? filterOptions.campuses : type === 'school' ? filterOptions.schools : type === 'batch' ? filterOptions.batches : filterOptions.admins).map((option, i) => (
                       <button
                         key={i}
                         type="button"
                         className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 cursor-pointer text-left border-b border-gray-100 last:border-b-0"
-                        onClick={() => handleFilterChange(type, option)}
+                        onClick={() => {
+                          const currentValues = filters[type] || [];
+                          const newValues = currentValues.includes(option.id)
+                            ? currentValues.filter(id => id !== option.id)
+                            : [...currentValues, option.id];
+                          handleFilterChange(type, newValues);
+                        }}
                       >
                         <input
                           type="checkbox"
-                          checked={filters[type].includes(option)}
+                          checked={filters[type].includes(option.id)}
                           onChange={() => {}}
                           className="rounded"
                           style={{ color: chartColors.blue }}
                         />
-                        <span className="text-gray-700">{option}</span>
+                        <span className="text-gray-700">{option.name}</span>
                       </button>
                     ))}
                   </div>
@@ -297,29 +564,307 @@ export default function AdminHome() {
 
       {/* Stats Cards with consistent colors */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm border-l-4 hover:shadow-md transition-all duration-300 ${stat.borderColor}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 flex items-center">
-                  {stat.icon}
-                  <span className="ml-2">{stat.title}</span>
-                </p>
-                <h3 className="text-2xl font-bold text-gray-800 mt-2">{stat.value}</h3>
+        {isLoading ? (
+          // Loading skeleton
+          Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-gray-200 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
+                </div>
+                <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
               </div>
-              <div className="w-16 h-16">
-                <PieChart 
-                  data={stat.chartData} 
-                  lineWidth={20} 
-                  radius={40} 
-                  label={({ dataEntry }) => `${dataEntry.value}`}
-                  labelStyle={{ fontSize: '0px', fill: '#000' }}
-                />
+            </div>
+          ))
+        ) : (
+          stats.map((stat, idx) => (
+            <div key={idx} className={`bg-white p-4 rounded-xl shadow-sm border-l-4 hover:shadow-md transition-all duration-300 ${stat.borderColor}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 flex items-center">
+                    {stat.icon}
+                    <span className="ml-2">{stat.title}</span>
+                  </p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-2">{stat.value}</h3>
+                </div>
+                <div className="w-16 h-16">
+                  <PieChart 
+                    data={stat.chartData} 
+                    lineWidth={20} 
+                    radius={40} 
+                    label={({ dataEntry }) => `${dataEntry.value}`}
+                    labelStyle={{ fontSize: '0px', fill: '#000' }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Overall Insights and Metrics */}
+      {!isLoading && dashboardData && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+              <BarChart3 className="w-5 h-5 mr-2" style={{ color: chartColors.blue }} />
+              Key Insights & Metrics
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: chartColors.blueLight }}>
+                  <Users className="w-6 h-6" style={{ color: chartColors.blue }} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">{dashboardData.stats.activeRecruiters}</h3>
+                <p className="text-sm text-gray-600">Active Recruiters</p>
+                <p className="text-xs text-gray-500 mt-1">Verified companies</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: chartColors.greenLight }}>
+                  <Target className="w-6 h-6" style={{ color: chartColors.green }} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">
+                  {dashboardData.stats.totalApplications > 0 
+                    ? Math.round((dashboardData.stats.placedStudents / dashboardData.stats.totalApplications) * 100)
+                    : 0}%
+                </h3>
+                <p className="text-sm text-gray-600">Placement Rate</p>
+                <p className="text-xs text-gray-500 mt-1">Success ratio</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: chartColors.purpleLight }}>
+                  <MessageSquare className="w-6 h-6" style={{ color: chartColors.purple }} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">
+                  {dashboardData.stats.pendingQueries === 0 ? '✅' : dashboardData.stats.pendingQueries}
+                </h3>
+                <p className="text-sm text-gray-600">Support Queue</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {dashboardData.stats.pendingQueries === 0 ? 'All caught up!' : 'Queries pending'}
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3" style={{ backgroundColor: chartColors.redLight }}>
+                  <TrendingUp className="w-6 h-6" style={{ color: chartColors.red }} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">
+                  {dashboardData.stats.activeStudents > 0 
+                    ? Math.round((dashboardData.stats.totalApplications / dashboardData.stats.activeStudents) * 10) / 10
+                    : 0}
+                </h3>
+                <p className="text-sm text-gray-600">Avg Applications</p>
+                <p className="text-xs text-gray-500 mt-1">Per student</p>
+              </div>
+            </div>
+            
+            {/* Additional Summary Info */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="flex items-center text-blue-700 mb-2">
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    <span className="font-semibold">Job Market</span>
+                  </div>
+                  <p className="text-blue-600">
+                    {dashboardData.stats.totalJobsPosted} active positions from {dashboardData.stats.activeRecruiters} companies
+                  </p>
+                </div>
+                
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="flex items-center text-green-700 mb-2">
+                    <Users className="w-4 h-4 mr-2" />
+                    <span className="font-semibold">Student Activity</span>
+                  </div>
+                  <p className="text-green-600">
+                    {dashboardData.stats.activeStudents} active students, {dashboardData.stats.totalApplications} applications
+                  </p>
+                </div>
+                
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <div className="flex items-center text-purple-700 mb-2">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    <span className="font-semibold">Support Status</span>
+                  </div>
+                  <p className="text-purple-600">
+                    {dashboardData.stats.pendingQueries === 0 
+                      ? 'All queries resolved ✨' 
+                      : `${dashboardData.stats.pendingQueries} queries need attention`}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Placement Trends and Analytics Charts */}
+      {!isLoading && dashboardData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Placement Trend Chart */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2" style={{ color: chartColors.blue }} />
+                Placement Trends (Last 6 Months)
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="h-80">
+                {dashboardData.chartData.placementTrend && dashboardData.chartData.placementTrend.labels ? (
+                  <Line 
+                    data={dashboardData.chartData.placementTrend}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                          labels: {
+                            usePointStyle: true,
+                            padding: 15
+                          }
+                        },
+                        tooltip: {
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          titleColor: '#1f2937',
+                          bodyColor: '#374151',
+                          borderColor: '#e5e7eb',
+                          borderWidth: 1
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            color: '#6b7280'
+                          },
+                          grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                          }
+                        },
+                        x: {
+                          ticks: {
+                            color: '#6b7280'
+                          },
+                          grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                          }
+                        }
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No placement data available</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Query Volume and Recruiter Activity */}
+          <div className="space-y-6">
+            {/* Query Volume Pie Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <MessageSquare className="w-4 h-4 mr-2" style={{ color: chartColors.purple }} />
+                  Query Volume by Type
+                </h2>
+              </div>
+              <div className="p-4">
+                <div className="h-48">
+                  {dashboardData.chartData.queryVolume && dashboardData.chartData.queryVolume.length > 0 ? (
+                    <PieChart 
+                      data={dashboardData.chartData.queryVolume}
+                      lineWidth={60}
+                      radius={40}
+                      label={({ dataEntry }) => dataEntry.title}
+                      labelStyle={{
+                        fontSize: '8px',
+                        fill: '#fff',
+                        fontWeight: 'bold'
+                      }}
+                      labelPosition={70}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No query data</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Top Recruiters Bar Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <Users className="w-4 h-4 mr-2" style={{ color: chartColors.green }} />
+                  Top Active Recruiters
+                </h2>
+              </div>
+              <div className="p-4">
+                <div className="h-48">
+                  {dashboardData.chartData.recruiterActivity && dashboardData.chartData.recruiterActivity.labels ? (
+                    <Bar 
+                      data={dashboardData.chartData.recruiterActivity}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            ticks: {
+                              color: '#6b7280',
+                              stepSize: 1
+                            },
+                            grid: {
+                              color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                          },
+                          x: {
+                            ticks: {
+                              color: '#6b7280'
+                            },
+                            grid: {
+                              display: false
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="text-center">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No recruiter data</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* School Performance Radar Chart */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -396,60 +941,77 @@ export default function AdminHome() {
         
         <div className="p-6">
           <div className="h-96">
-            <Radar 
-              data={schoolRadarData} 
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  r: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                      display: false
-                    },
-                    grid: {
-                      color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    angleLines: {
-                      color: 'rgba(0, 0, 0, 0.1)'
-                    },
-                    pointLabels: {
-                      font: {
-                        size: 11,
-                        weight: '500'
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
+                  <p className="text-gray-500 text-lg">Loading school performance data...</p>
+                </div>
+              </div>
+            ) : schoolData[selectedSchool] && schoolData[selectedSchool].performance.labels.length > 0 ? (
+              <Radar 
+                data={schoolRadarData} 
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    r: {
+                      beginAtZero: true,
+                      max: 100,
+                      ticks: {
+                        display: false
                       },
-                      color: '#374151'
-                    }
-                  }
-                },
-                plugins: {
-                  legend: {
-                    position: 'top',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 15,
-                      font: {
-                        size: 12
+                      grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                      },
+                      angleLines: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                      },
+                      pointLabels: {
+                        font: {
+                          size: 11,
+                          weight: '500'
+                        },
+                        color: '#374151'
                       }
                     }
                   },
-                  tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#1f2937',
-                    bodyColor: '#374151',
-                    borderColor: '#e5e7eb',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                      label: function(context) {
-                        return `${context.dataset.label}: ${context.raw}%`;
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                      labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                          size: 12
+                        }
+                      }
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      titleColor: '#1f2937',
+                      bodyColor: '#374151',
+                      borderColor: '#e5e7eb',
+                      borderWidth: 1,
+                      padding: 12,
+                      callbacks: {
+                        label: function(context) {
+                          return `${context.dataset.label}: ${context.raw}%`;
+                        }
                       }
                     }
                   }
-                }
-              }} 
-            />
+                }} 
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <Target className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No school performance data available</p>
+                  <p className="text-sm mt-1">Data will appear once students and applications are available</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

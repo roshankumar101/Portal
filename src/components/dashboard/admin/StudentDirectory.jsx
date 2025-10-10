@@ -3,15 +3,55 @@ import { ImEye } from 'react-icons/im';
 import { MdBlock  } from 'react-icons/md';
 import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUserEdit, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import { Loader } from 'lucide-react';
-import { getAllStudents, updateStudentStatus, updateStudentProfile } from '../../../services/students';
+import { getAllStudents, updateStudentStatus, updateStudentProfile, getEducationalBackground, getStudentSkills, updateEducationalBackground } from '../../../services/students';
+import { useAuth } from '../../../hooks/useAuth';
+import { onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, where } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 // Student Details Modal
 const StudentDetailsModal = ({ isOpen, onClose, student }) => {
+  const [detailedStudent, setDetailedStudent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Fetch detailed student data when modal opens
+  useEffect(() => {
+    if (isOpen && student?.id) {
+      fetchDetailedStudentData();
+    }
+  }, [isOpen, student?.id]);
+  
+  const fetchDetailedStudentData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [educationData, skillsData] = await Promise.all([
+        getEducationalBackground(student.id),
+        getStudentSkills(student.id)
+      ]);
+      
+      setDetailedStudent({
+        ...student,
+        education: educationData.sort((a, b) => new Date(b.endYear || '9999') - new Date(a.endYear || '9999')),
+        skills: skillsData.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      });
+      
+    } catch (err) {
+      console.error('Error fetching detailed student data:', err);
+      setError('Failed to load student details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen || !student) return null;
+
+  const studentData = detailedStudent || student;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-bold text-gray-800">Student Details</h2>
@@ -25,6 +65,25 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
 
         {/* Content */}
         <div className="p-6">
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+              <span className="text-gray-600">Loading student details...</span>
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <p className="text-red-600">{error}</p>
+              <button
+                onClick={fetchDetailedStudentData}
+                className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information */}
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -35,27 +94,27 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Full Name</label>
-                  <p className="text-gray-800">{student.fullName || 'N/A'}</p>
+                  <p className="text-gray-800">{studentData.fullName || 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
                   <p className="text-gray-800 flex items-center">
                     <FaEnvelope className="mr-2 text-gray-400" size={14} />
-                    {student.email || 'N/A'}
+                    {studentData.email || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>
                   <p className="text-gray-800 flex items-center">
                     <FaPhone className="mr-2 text-gray-400" size={14} />
-                    {student.phone || 'N/A'}
+                    {studentData.phone || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Enrollment ID</label>
                   <p className="text-gray-800 flex items-center">
                     <FaIdCard className="mr-2 text-gray-400" size={14} />
-                    {student.enrollmentId || 'N/A'}
+                    {studentData.enrollmentId || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -70,24 +129,24 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">School</label>
-                  <p className="text-gray-800">{student.school || 'N/A'}</p>
+                  <p className="text-gray-800">{studentData.school || 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Center</label>
                   <p className="text-gray-800 flex items-center">
                     <FaMapMarkerAlt className="mr-2 text-gray-400" size={14} />
-                    {student.center || 'N/A'}
+                    {studentData.center || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">CGPA</label>
-                  <p className="text-gray-800">{student.cgpa || 'N/A'}</p>
+                  <p className="text-gray-800">{studentData.cgpa || 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Batch</label>
                   <p className="text-gray-800 flex items-center">
                     <FaCalendarAlt className="mr-2 text-gray-400" size={14} />
-                    {student.batch || 'N/A'}
+                    {studentData.batch || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -101,21 +160,31 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                   <label className="text-sm font-medium text-gray-500">Status</label>
                   <p className="text-gray-800">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      student.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      student.status === 'Blocked' ? 'bg-red-100 text-red-800' :
+                      studentData.status === 'Active' ? 'bg-green-100 text-green-800' :
+                      studentData.status === 'Blocked' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {student.status || 'Active'}
+                      {studentData.status || 'Active'}
                     </span>
                   </p>
+                  {studentData.blockDetails && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <p className="text-xs text-red-600">
+                        <strong>Blocked:</strong> {studentData.blockDetails.reason}
+                      </p>
+                      {studentData.blockDetails.notes && (
+                        <p className="text-xs text-red-600 mt-1">{studentData.blockDetails.notes}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Bio</label>
-                  <p className="text-gray-800">{student.bio || 'No bio available'}</p>
+                  <p className="text-gray-800">{studentData.bio || 'No bio available'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Tagline</label>
-                  <p className="text-gray-800">{student.tagline || 'No tagline available'}</p>
+                  <p className="text-gray-800">{studentData.tagline || 'No tagline available'}</p>
                 </div>
               </div>
             </div>
@@ -137,10 +206,78 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                   <div className="text-sm text-gray-500">Interviewed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{student.stats?.offers || 0}</div>
+                  <div className="text-2xl font-bold text-green-600">{studentData.stats?.offers || 0}</div>
                   <div className="text-sm text-gray-500">Offers</div>
                 </div>
               </div>
+            </div>
+            
+            {/* Educational Background */}
+            <div className="bg-gray-50 p-4 rounded-lg md:col-span-2">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <FaGraduationCap className="mr-2 text-purple-600" />
+                Educational Background
+              </h3>
+              {studentData.education && studentData.education.length > 0 ? (
+                <div className="space-y-3">
+                  {studentData.education.map((edu, index) => (
+                    <div key={index} className="border-l-4 border-purple-500 pl-4 py-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold text-gray-800">{edu.degree || 'N/A'}</p>
+                          <p className="text-gray-600">{edu.institution || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">
+                            {edu.fieldOfStudy && `${edu.fieldOfStudy} • `}
+                            {edu.startYear || 'N/A'} - {edu.endYear || 'Present'}
+                          </p>
+                        </div>
+                        {edu.gpa && (
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-700">GPA: {edu.gpa}</p>
+                          </div>
+                        )}
+                      </div>
+                      {edu.description && (
+                        <p className="text-sm text-gray-600 mt-2">{edu.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No educational background information available</p>
+              )}
+            </div>
+            
+            {/* Skills */}
+            <div className="bg-gray-50 p-4 rounded-lg md:col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Skills & Expertise</h3>
+              {studentData.skills && studentData.skills.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {studentData.skills.map((skill, index) => (
+                    <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
+                      <span className="font-medium text-gray-800">{skill.skillName}</span>
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-600 mr-2">Rating:</span>
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span 
+                              key={star} 
+                              className={`text-sm ${
+                                star <= (skill.rating || 0) ? 'text-yellow-500' : 'text-gray-300'
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                          <span className="ml-1 text-xs text-gray-600">({skill.rating || 0}/5)</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No skills information available</p>
+              )}
             </div>
           </div>
         </div>
@@ -516,9 +653,11 @@ const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
 };
 
 export default function StudentDirectory() {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [unsubscribe, setUnsubscribe] = useState(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({
     center: '',
@@ -533,25 +672,136 @@ export default function StudentDirectory() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [operationLoading, setOperationLoading] = useState(false);
   const studentsPerPage = 10;
 
-  // Fetch students data on component mount
+  // Set up real-time students subscription
   useEffect(() => {
-    fetchStudents();
+    setupStudentSubscription();
+    
+    // Cleanup subscription on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
-  const fetchStudents = async () => {
+  const setupStudentSubscription = () => {
     try {
       setLoading(true);
       setError(null);
-      const studentsData = await getAllStudents();
-      setStudents(studentsData);
+      
+      // Create real-time subscription to students collection
+      // Note: For full filtering, we use client-side filtering due to Firestore compound query limitations
+      // This provides the best balance of performance and functionality
+      const studentsQuery = query(
+        collection(db, 'students'),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const unsubscribeFn = onSnapshot(
+        studentsQuery,
+        async (snapshot) => {
+          console.log('📡 Real-time update - Students received:', snapshot.docs.length);
+          
+          const studentsData = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const studentData = doc.data();
+              
+              // Fetch additional data for each student
+              try {
+                const [educationData, skillsData] = await Promise.all([
+                  getEducationalBackground(doc.id).catch(() => []),
+                  getStudentSkills(doc.id).catch(() => [])
+                ]);
+                
+                // Get highest education level
+                const highestEducation = educationData
+                  .filter(ed => ed.degree)
+                  .sort((a, b) => {
+                    const order = { 'Masters': 3, 'Bachelors': 2, 'Diploma': 1 };
+                    return (order[b.degree] || 0) - (order[a.degree] || 0);
+                  })[0];
+                
+                // Get top 3 skills
+                const topSkills = skillsData
+                  .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                  .slice(0, 3)
+                  .map(skill => skill.skillName);
+                  
+                return {
+                  id: doc.id,
+                  uid: studentData.uid,
+                  fullName: studentData.fullName || studentData.name || 'N/A',
+                  email: studentData.email || 'N/A',
+                  center: studentData.center || 'N/A',
+                  school: studentData.school || 'N/A',
+                  cgpa: studentData.cgpa || 'N/A',
+                  phone: studentData.phone || 'N/A',
+                  batch: studentData.batch || 'N/A',
+                  enrollmentId: studentData.enrollmentId || studentData.studentId || 'N/A',
+                  status: studentData.status || 'Active',
+                  bio: studentData.bio || '',
+                  tagline: studentData.tagline || '',
+                  createdAt: studentData.createdAt,
+                  updatedAt: studentData.updatedAt,
+                  blockDetails: studentData.blockDetails || null,
+                  stats: studentData.stats || { applied: 0, shortlisted: 0, interviewed: 0, offers: 0 },
+                  // Additional computed fields
+                  highestEducation: highestEducation?.degree || 'N/A',
+                  institution: highestEducation?.institution || 'N/A',
+                  topSkills: topSkills
+                };
+              } catch (err) {
+                console.warn('Error fetching additional data for student:', doc.id, err);
+                return {
+                  id: doc.id,
+                  uid: studentData.uid,
+                  fullName: studentData.fullName || studentData.name || 'N/A',
+                  email: studentData.email || 'N/A',
+                  center: studentData.center || 'N/A',
+                  school: studentData.school || 'N/A',
+                  cgpa: studentData.cgpa || 'N/A',
+                  phone: studentData.phone || 'N/A',
+                  batch: studentData.batch || 'N/A',
+                  enrollmentId: studentData.enrollmentId || studentData.studentId || 'N/A',
+                  status: studentData.status || 'Active',
+                  bio: studentData.bio || '',
+                  tagline: studentData.tagline || '',
+                  createdAt: studentData.createdAt,
+                  updatedAt: studentData.updatedAt,
+                  blockDetails: studentData.blockDetails || null,
+                  stats: studentData.stats || { applied: 0, shortlisted: 0, interviewed: 0, offers: 0 },
+                  highestEducation: 'N/A',
+                  institution: 'N/A',
+                  topSkills: []
+                };
+              }
+            })
+          );
+          
+          setStudents(studentsData);
+          setLoading(false);
+        },
+        (error) => {
+          console.error('❌ Error in students subscription:', error);
+          setError('Failed to load students data');
+          setLoading(false);
+        }
+      );
+      
+      setUnsubscribe(() => unsubscribeFn);
+      
     } catch (err) {
-      console.error('Error fetching students:', err);
+      console.error('Error setting up students subscription:', err);
       setError('Failed to load students data');
-    } finally {
       setLoading(false);
     }
+  };
+  
+  const refreshStudents = () => {
+    setupStudentSubscription();
   };
 
   const filteredStudents = students.filter((student) => {
@@ -634,40 +884,123 @@ export default function StudentDirectory() {
   };
 
   const handleEditSave = async (studentId, updatedData) => {
+    if (!canModifyStudents()) {
+      alert('Only administrators can edit student information.');
+      throw new Error('Permission denied');
+    }
+    
     try {
+      setOperationLoading(true);
+      // Update student profile
       await updateStudentProfile(studentId, updatedData);
       
-      // Update local state
-      setStudents(prev => prev.map(student => 
-        student.id === studentId 
-          ? { ...student, ...updatedData }
-          : student
-      ));
+      // If educational background fields are being updated, handle them separately
+      if (updatedData.school || updatedData.cgpa || updatedData.center) {
+        try {
+          // Get existing education records
+          const existingEducation = await getEducationalBackground(studentId);
+          
+          // Update or create current education record
+          if (existingEducation.length > 0) {
+            // Update the most recent education record
+            const latestEducation = existingEducation[0];
+            await updateEducationalBackground(latestEducation.id, {
+              institution: updatedData.school || latestEducation.institution,
+              gpa: updatedData.cgpa || latestEducation.gpa,
+              updatedAt: new Date()
+            });
+          }
+        } catch (educationError) {
+          console.warn('Failed to update educational background:', educationError);
+          // Don't fail the main update if education update fails
+        }
+      }
       
       console.log('Student updated successfully');
+      alert('Student information updated successfully!');
+      
     } catch (error) {
       console.error('Error updating student:', error);
       setError('Failed to update student');
+      alert('Failed to update student: ' + (error.message || 'Unknown error'));
       throw error;
+    } finally {
+      setOperationLoading(false);
     }
   };
 
+  // Permission check for admin-only actions
+  const canModifyStudents = () => {
+    return user && (user.role === 'admin' || user.userType === 'admin');
+  };
+
   const handleBlockConfirm = async (blockDetails) => {
+    if (!canModifyStudents()) {
+      alert('Only administrators can block/unblock students.');
+      return;
+    }
+    
+    if (operationLoading) {
+      return; // Prevent multiple operations
+    }
+    
     try {
+      setOperationLoading(true);
       const newStatus = selectedStudent.status === 'Blocked' ? 'Active' : 'Blocked';
-      await updateStudentStatus(selectedStudent.id, newStatus, blockDetails);
+      const isBlocking = newStatus === 'Blocked';
       
-      // Update local state
-      setStudents(prev => prev.map(student => 
-        student.id === selectedStudent.id 
-          ? { ...student, status: newStatus, blockDetails }
-          : student
-      ));
+      // Enhanced block details with admin info
+      const enhancedBlockDetails = isBlocking ? {
+        ...blockDetails,
+        blockedBy: user.uid,
+        blockedByName: user.displayName || user.email || 'Admin',
+        blockedAt: new Date()
+      } : null;
       
-      console.log('Student status updated successfully');
+      // Update student status
+      await updateStudentStatus(selectedStudent.id, newStatus, enhancedBlockDetails);
+      
+      // Create notification entry for audit trail
+      try {
+        const notificationData = {
+          type: isBlocking ? 'student_blocked' : 'student_unblocked',
+          title: `Student ${isBlocking ? 'Blocked' : 'Unblocked'}`,
+          message: `${selectedStudent.fullName} (${selectedStudent.enrollmentId}) has been ${isBlocking ? 'blocked' : 'unblocked'} by ${user.displayName || user.email}`,
+          studentId: selectedStudent.id,
+          studentName: selectedStudent.fullName,
+          studentEnrollmentId: selectedStudent.enrollmentId,
+          adminId: user.uid,
+          adminName: user.displayName || user.email || 'Admin',
+          priority: 'high',
+          metadata: {
+            reason: isBlocking ? blockDetails.reason : 'Unblocked',
+            notes: isBlocking ? blockDetails.notes : 'Student account unblocked',
+            studentEmail: selectedStudent.email,
+            studentCenter: selectedStudent.center,
+            studentSchool: selectedStudent.school
+          },
+          createdAt: serverTimestamp(),
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toTimeString().split(' ')[0]
+        };
+        
+        await addDoc(collection(db, 'notifications'), notificationData);
+        console.log('Notification created for student status change');
+        
+      } catch (notificationError) {
+        console.warn('Failed to create notification:', notificationError);
+        // Don't fail the operation if notification fails
+      }
+      
+      console.log(`Student ${isBlocking ? 'blocked' : 'unblocked'} successfully`);
+      alert(`Student has been ${isBlocking ? 'blocked' : 'unblocked'} successfully.`);
+      
     } catch (error) {
       console.error('Error updating student status:', error);
       setError('Failed to update student status');
+      alert('Failed to update student status: ' + (error.message || 'Unknown error'));
+    } finally {
+      setOperationLoading(false);
     }
   };
 
@@ -697,7 +1030,7 @@ export default function StudentDirectory() {
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <button
-              onClick={fetchStudents}
+              onClick={refreshStudents}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Retry
@@ -715,7 +1048,7 @@ export default function StudentDirectory() {
           <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Student Directory</h1>
           <div className="flex items-center gap-4">
             <button
-              onClick={fetchStudents}
+              onClick={refreshStudents}
               className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
             >
               Refresh
@@ -884,23 +1217,40 @@ export default function StudentDirectory() {
                         <div className="relative group">
                           <button 
                             onClick={() => handleEditStudent(student)}
-                            className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                            disabled={!canModifyStudents() || operationLoading}
+                            className={`p-2 rounded-lg transition-colors ${
+                              operationLoading
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : canModifyStudents() 
+                                ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
                           >
-                            <FaUserEdit className="text-xl" />
+                            {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-xl" />}
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            Edit Student
+                            {canModifyStudents() ? 'Edit Student' : 'Admin access required'}
                           </span>
                         </div>
                         <div className="relative group">
                           <button
                             onClick={() => handleBlockClick(student)}
-                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                            disabled={!canModifyStudents() || operationLoading}
+                            className={`p-2 rounded-lg transition-colors ${
+                              operationLoading
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : canModifyStudents() 
+                                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
                           >
-                            <MdBlock  className="text-xl" />
+                            {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-xl" />}
                           </button>
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            {student.status === 'Blocked' ? 'Unblock' : 'Block'} Student
+                            {canModifyStudents() 
+                              ? `${student.status === 'Blocked' ? 'Unblock' : 'Block'} Student`
+                              : 'Admin access required'
+                            }
                           </span>
                         </div>
                       </div>

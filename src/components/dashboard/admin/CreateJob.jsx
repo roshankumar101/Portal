@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { Calendar, Info, Plus, X, Loader, ChevronsUp, ChevronsDown, ChevronDown, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { saveJobDraft, addAnotherPositionDraft, postJob } from '../../../services/jobs';
+import { saveJobDraft, addAnotherPositionDraft, postJob, submitJobForReview } from '../../../services/jobs';
 import ExcelUploader from './ExcelUploader'; // Import Excel component
 
 // Utility helpers
@@ -174,8 +174,8 @@ export default function CreateJob({ onCreated }) {
       setUploadError('Please upload a PDF or Word document.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be less than 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size must be less than 10MB.');
       return;
     }
 
@@ -184,43 +184,55 @@ export default function CreateJob({ onCreated }) {
     setParseResult(null);
 
     try {
-      // Simulate API call for parsing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const simulatedData = {
-        success: true,
-        data: {
-          jobTitle: 'Full Stack Developer',
-          company: 'Tech Innovations Inc.',
-          responsibilities: 'Develop and maintain web applications using React and Node.js. Collaborate with cross-functional teams to deliver high-quality software solutions.',
-          skills: ['JavaScript', 'React', 'Node.js', 'HTML5', 'CSS3'],
-          salary: '12,00,000',
-          workMode: 'Hybrid',
-          companyLocation: 'Bangalore, Karnataka',
-          website: 'www.techinnovations.com',
-          linkedin: 'https://linkedin.com/company/tech-innovations'
-        },
-        confidence: 0.85,
-      };
+      console.log('📄 Starting real JD parsing for:', file.name);
+      
+      // Import and use the real JD parser service
+      const { parseJobDescription } = await import('../../../services/jdParser');
+      const parseResult = await parseJobDescription(file);
+      
+      console.log('📊 JD parsing result:', parseResult);
 
-      if (simulatedData.success) {
-        setParseResult(simulatedData);
-        populateFormFromParsedData(simulatedData.data);
+      if (parseResult.success && parseResult.data) {
+        setParseResult(parseResult);
+        populateFormFromParsedData(parseResult.data);
         setCreationMethod('manual');
+        console.log('✅ JD parsing completed successfully');
       } else {
-        setUploadError('Failed to parse the document. Please try manual entry.');
+        setUploadError(parseResult.error || 'Failed to parse the document. Please try manual entry.');
+        console.error('❌ JD parsing failed:', parseResult.error);
       }
     } catch (err) {
-      setUploadError('An error occurred during upload. Please try again.');
-      console.error('Upload error:', err);
+      const errorMessage = err.message || 'An error occurred during parsing. Please try again.';
+      setUploadError(errorMessage);
+      console.error('❌ JD parsing error:', err);
     } finally {
       setIsUploading(false);
     }
   };
 
-  // ENHANCED: Complete Excel data callback handlers
+  // Enhanced Excel data callback handlers
   const handleExcelJobSelected = (jobData) => {
     populateFormWithExcelData(jobData);
     setCreationMethod('manual'); // Switch back to manual after loading data
+  };
+
+  // Handle Excel bulk processing
+  const handleExcelBulkUpload = async (results) => {
+    console.log('📊 Excel processing results:', results);
+    
+    const { totalJobs, successfulJobs, failedJobs } = results;
+    
+    if (successfulJobs.length > 0) {
+      const successMessage = `✅ Successfully created ${successfulJobs.length} job${successfulJobs.length > 1 ? 's' : ''} from Excel file!`;
+      const failureMessage = failedJobs.length > 0 ? `\n⚠️ ${failedJobs.length} job${failedJobs.length > 1 ? 's' : ''} failed to process.` : '';
+      
+      alert(successMessage + failureMessage);
+      
+      // Trigger any parent callbacks
+      if (onCreated) onCreated();
+    } else {
+      alert(`❌ No jobs were successfully created from the Excel file. Please check the format and try again.`);
+    }
   };
 
   // Drag and drop handlers
@@ -704,17 +716,24 @@ export default function CreateJob({ onCreated }) {
       ],
       instructions: form.instructions,
       adminId: user?.uid || null,
+      recruiterId: user?.uid || null, // Admin acts as recruiter
+      postedBy: user?.uid || null,
     };
   };
 
   // Form action handlers
   const handleSave = async () => {
-    if (!canPost) return;
+    // Basic validation for drafts - only require company and job title
+    if (!form.company?.trim() || !form.jobTitle?.trim()) {
+      alert('Please fill in at least Company and Job Title before saving as draft.');
+      return;
+    }
+    
     try {
       setIsSaving(true);
       const payload = buildJobPayload();
       await saveJobDraft(payload);
-      alert('Saved as draft');
+      alert('Saved as draft successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to save draft: ' + (err?.message || 'Unknown error'));
@@ -724,7 +743,12 @@ export default function CreateJob({ onCreated }) {
   };
 
   const handleAddAnotherPosition = async () => {
-    if (!canPost) return;
+    // Basic validation for saving position - only require company and job title
+    if (!form.company?.trim() || !form.jobTitle?.trim()) {
+      alert('Please fill in at least Company and Job Title before saving this position.');
+      return;
+    }
+    
     try {
       setIsSaving(true);
       const payload = buildJobPayload();
@@ -782,18 +806,32 @@ export default function CreateJob({ onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!canPost) return;
+    
+    if (!canPost) {
+      // Provide specific validation feedback
+      let missingFields = [];
+      if (!isCompanyDetailsComplete) missingFields.push('Company Details');
+      if (!isDriveDetailsComplete) missingFields.push('Drive Details');
+      if (!isSkillsEligibilityComplete) missingFields.push('Skills & Eligibility');
+      if (!isInterviewProcessComplete) missingFields.push('Interview Process');
+      
+      alert(`Please complete the following sections before submitting:\n\n• ${missingFields.join('\n• ')}`);
+      return;
+    }
+    
     try {
       setPosting(true);
       const payload = buildJobPayload();
-      const { jobId } = await saveJobDraft(payload);
-      await postJob(jobId);
+      
+      // Submit job for review - it will appear in ManageJobs "In Review" section
+      const { jobId } = await submitJobForReview(payload);
+      
       if (onCreated) onCreated();
-      alert('Job posted successfully');
+      alert('Job submitted successfully! It has been sent for review and will appear in the "In Review" section of Manage Jobs.');
       resetForm();
     } catch (err) {
       console.error(err);
-      alert('Failed to post job: ' + (err?.message || 'Unknown error'));
+      alert('Failed to submit job: ' + (err?.message || 'Unknown error'));
     } finally {
       setPosting(false);
     }
@@ -860,6 +898,8 @@ export default function CreateJob({ onCreated }) {
       {creationMethod === 'uploadExcel' && (
         <ExcelUploader
           onJobSelected={handleExcelJobSelected}
+          onBulkProcessed={handleExcelBulkUpload}
+          adminId={user?.uid}
         />
       )}
 
@@ -1521,13 +1561,13 @@ export default function CreateJob({ onCreated }) {
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm text-white ${!canPost || posting ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
                 {posting ? <Loader className="w-4 h-4 animate-spin" /> : null}
-                Save Job
+                Submit for Review
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!canPost || isSaving}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${!canPost || isSaving ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'}`}
+                disabled={isSaving || (!form.company?.trim() || !form.jobTitle?.trim())}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${isSaving || (!form.company?.trim() || !form.jobTitle?.trim()) ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'}`}
               >
                 {isSaving ? <Loader className="w-4 h-4 animate-spin" /> : null}
                 Save (Draft)
@@ -1535,8 +1575,8 @@ export default function CreateJob({ onCreated }) {
               <button
                 type="button"
                 onClick={handleAddAnotherPosition}
-                disabled={!canPost || isSaving}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${!canPost || isSaving ? 'bg-emerald-200 text-emerald-500 border-emerald-300 cursor-not-allowed' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'}`}
+                disabled={isSaving || (!form.company?.trim() || !form.jobTitle?.trim())}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm border ${isSaving || (!form.company?.trim() || !form.jobTitle?.trim()) ? 'bg-emerald-200 text-emerald-500 border-emerald-300 cursor-not-allowed' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'}`}
               >
                 {isSaving ? <Loader className="w-4 h-4 animate-spin" /> : null}
                 + Add Another Position

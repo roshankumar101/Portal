@@ -2,10 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { deleteJob, subscribeJobs, postJob } from '../../../services/jobs';
 import { Loader, Trash2, Share2, Building2, Calendar, GraduationCap, Users, Briefcase, ChevronDown, CheckCircle, Clock, PlayCircle, CheckSquare, XCircle, AlertTriangle, MapPin } from 'lucide-react';
 
-const SCHOOLS = ['All Schools', 'SOT', 'SOM', 'SOH'];
-const BATCHES = ['All Batches', '23-27', '24-28', '25-29'];
-const CENTERS = ['All Centers', 'Bangalore', 'Noida', 'Lucknow', 'Pune', 'Patna', 'Indore'];
-
 export default function ManageJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,9 +13,78 @@ export default function ManageJobs() {
   const [selectedBatches, setSelectedBatches] = useState({});
   const [selectedCenters, setSelectedCenters] = useState({});
   const [activeFilter, setActiveFilter] = useState('unposted');
+  
+  // Filter options state
+  const [schoolOptions, setSchoolOptions] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [centerOptions, setCenterOptions] = useState([]);
+  const [loadingFilters, setLoadingFilters] = useState(true);
+  
   const schoolDropdownRefs = useRef({});
   const batchDropdownRefs = useRef({});
   const centerDropdownRefs = useRef({});
+
+  // Load predefined filter options (no database fetching to avoid duplicates)
+  useEffect(() => {
+    const loadFilterOptions = () => {
+      try {
+        setLoadingFilters(true);
+        
+        // Use only predefined options (no database fetching)
+        const schoolOptionsArray = [
+          { id: 'ALL', display: 'All', storage: 'ALL' },
+          { id: 'SOT', display: 'SOT', storage: 'SOT' },
+          { id: 'SOM', display: 'SOM', storage: 'SOM' },
+          { id: 'SOH', display: 'SOH', storage: 'SOH' }
+        ];
+        
+        const batchOptionsArray = [
+          { id: 'ALL', display: 'All', storage: 'ALL' },
+          { id: '23-27', display: '23-27', storage: '23-27' },
+          { id: '24-28', display: '24-28', storage: '24-28' },
+          { id: '25-29', display: '25-29', storage: '25-29' },
+          { id: '26-30', display: '26-30', storage: '26-30' }
+        ];
+        
+        const centerOptionsArray = [
+          { id: 'ALL', display: 'All Centers', storage: 'ALL' },
+          { id: 'BANGALORE', display: 'Bangalore', storage: 'BANGALORE' },
+          { id: 'NOIDA', display: 'Noida', storage: 'NOIDA' },
+          { id: 'LUCKNOW', display: 'Lucknow', storage: 'LUCKNOW' },
+          { id: 'PUNE', display: 'Pune', storage: 'PUNE' },
+          { id: 'PATNA', display: 'Patna', storage: 'PATNA' },
+          { id: 'INDORE', display: 'Indore', storage: 'INDORE' }
+        ];
+        
+        setSchoolOptions(schoolOptionsArray);
+        setBatchOptions(batchOptionsArray);
+        setCenterOptions(centerOptionsArray);
+        
+        console.log('✅ ManageJobs filter options loaded (predefined only)');
+        
+      } finally {
+        setLoadingFilters(false);
+      }
+    };
+    
+    loadFilterOptions();
+  }, []);
+
+  // Helper functions for display name conversion
+  const getSchoolDisplay = (storageCode) => {
+    const option = schoolOptions.find(s => s.storage === storageCode);
+    return option ? option.display : storageCode;
+  };
+
+  const getBatchDisplay = (storageCode) => {
+    const option = batchOptions.find(b => b.storage === storageCode);
+    return option ? option.display : storageCode;
+  };
+
+  const getCenterDisplay = (storageCode) => {
+    const option = centerOptions.find(c => c.storage === storageCode);
+    return option ? option.display : storageCode;
+  };
 
   // Real-time jobs subscription using your existing service
   useEffect(() => {
@@ -287,11 +352,12 @@ export default function ManageJobs() {
     const batches = selectedBatches[jobId] || [];
     const centers = selectedCenters[jobId] || [];
     
-    const schoolText = schools.length === 1 ? schools[0] : 
+    // Convert storage codes to display names
+    const schoolText = schools.length === 1 ? getSchoolDisplay(schools[0]) : 
                      schools.length > 1 ? `${schools.length} Schools` : '';
-    const batchText = batches.length === 1 ? batches[0] : 
+    const batchText = batches.length === 1 ? getBatchDisplay(batches[0]) : 
                      batches.length > 1 ? `${batches.length} Batches` : '';
-    const centerText = centers.length === 1 ? centers[0] : 
+    const centerText = centers.length === 1 ? getCenterDisplay(centers[0]) : 
                      centers.length > 1 ? `${centers.length} Centers` : '';
     
     return `Posted: ${schoolText}, ${batchText}, ${centerText}`;
@@ -391,18 +457,18 @@ export default function ManageJobs() {
   const toggleSchool = (jobId, school) => {
     setSelectedSchools(prev => {
       const jobSchools = new Set(prev[jobId] || []);
-      const allIndividualSchools = SCHOOLS.filter(s => s !== 'All Schools');
+      const allIndividualSchools = schoolOptions.filter(s => s.id !== 'ALL').map(s => s.storage);
       
-      if (school === 'All Schools') {
-        if (jobSchools.has('All Schools')) {
-          jobSchools.delete('All Schools');
+      if (school === 'ALL') {
+        if (jobSchools.has('ALL')) {
+          jobSchools.delete('ALL');
         } else {
           jobSchools.clear();
-          jobSchools.add('All Schools');
+          jobSchools.add('ALL');
         }
       } else {
-        if (jobSchools.has('All Schools')) {
-          jobSchools.delete('All Schools');
+        if (jobSchools.has('ALL')) {
+          jobSchools.delete('ALL');
           jobSchools.add(school);
         } else {
           if (jobSchools.has(school)) {
@@ -412,11 +478,11 @@ export default function ManageJobs() {
           }
         }
         
-        // Auto-convert to "All Schools" if all individual schools selected
-        const selectedIndividualSchools = Array.from(jobSchools).filter(s => s !== 'All Schools');
+        // Auto-convert to "ALL" if all individual schools selected
+        const selectedIndividualSchools = Array.from(jobSchools).filter(s => s !== 'ALL');
         if (selectedIndividualSchools.length === allIndividualSchools.length) {
           jobSchools.clear();
-          jobSchools.add('All Schools');
+          jobSchools.add('ALL');
         }
       }
       
@@ -427,18 +493,18 @@ export default function ManageJobs() {
   const toggleBatch = (jobId, batch) => {
     setSelectedBatches(prev => {
       const jobBatches = new Set(prev[jobId] || []);
-      const allIndividualBatches = BATCHES.filter(b => b !== 'All Batches');
+      const allIndividualBatches = batchOptions.filter(b => b.id !== 'ALL').map(b => b.storage);
       
-      if (batch === 'All Batches') {
-        if (jobBatches.has('All Batches')) {
-          jobBatches.delete('All Batches');
+      if (batch === 'ALL') {
+        if (jobBatches.has('ALL')) {
+          jobBatches.delete('ALL');
         } else {
           jobBatches.clear();
-          jobBatches.add('All Batches');
+          jobBatches.add('ALL');
         }
       } else {
-        if (jobBatches.has('All Batches')) {
-          jobBatches.delete('All Batches');
+        if (jobBatches.has('ALL')) {
+          jobBatches.delete('ALL');
           jobBatches.add(batch);
         } else {
           if (jobBatches.has(batch)) {
@@ -448,11 +514,11 @@ export default function ManageJobs() {
           }
         }
         
-        // Auto-convert to "All Batches" if all individual batches selected
-        const selectedIndividualBatches = Array.from(jobBatches).filter(b => b !== 'All Batches');
+        // Auto-convert to "ALL" if all individual batches selected
+        const selectedIndividualBatches = Array.from(jobBatches).filter(b => b !== 'ALL');
         if (selectedIndividualBatches.length === allIndividualBatches.length) {
           jobBatches.clear();
-          jobBatches.add('All Batches');
+          jobBatches.add('ALL');
         }
       }
       
@@ -475,18 +541,18 @@ export default function ManageJobs() {
   const toggleCenter = (jobId, center) => {
     setSelectedCenters(prev => {
       const jobCenters = new Set(prev[jobId] || []);
-      const allIndividualCenters = CENTERS.filter(c => c !== 'All Centers');
+      const allIndividualCenters = centerOptions.filter(c => c.id !== 'ALL').map(c => c.storage);
       
-      if (center === 'All Centers') {
-        if (jobCenters.has('All Centers')) {
-          jobCenters.delete('All Centers');
+      if (center === 'ALL') {
+        if (jobCenters.has('ALL')) {
+          jobCenters.delete('ALL');
         } else {
           jobCenters.clear();
-          jobCenters.add('All Centers');
+          jobCenters.add('ALL');
         }
       } else {
-        if (jobCenters.has('All Centers')) {
-          jobCenters.delete('All Centers');
+        if (jobCenters.has('ALL')) {
+          jobCenters.delete('ALL');
           jobCenters.add(center);
         } else {
           if (jobCenters.has(center)) {
@@ -496,11 +562,11 @@ export default function ManageJobs() {
           }
         }
         
-        // Auto-convert to "All Centers" if all individual centers selected
-        const selectedIndividualCenters = Array.from(jobCenters).filter(c => c !== 'All Centers');
+        // Auto-convert to "ALL" if all individual centers selected
+        const selectedIndividualCenters = Array.from(jobCenters).filter(c => c !== 'ALL');
         if (selectedIndividualCenters.length === allIndividualCenters.length) {
           jobCenters.clear();
-          jobCenters.add('All Centers');
+          jobCenters.add('ALL');
         }
       }
       
@@ -637,27 +703,26 @@ export default function ManageJobs() {
                           disabled={isJobPosted(job)}
                         >
                           <span className="truncate">
-                            {selectedSchools[job.id]?.length ? selectedSchools[job.id].join(', ') : 'Select Schools'}
+                            {selectedSchools[job.id]?.length ? selectedSchools[job.id].map(code => getSchoolDisplay(code)).join(', ') : 'Select Schools'}
                           </span>
                           <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         </button>
                         {showSchools[job.id] && !isJobPosted(job) && (
                           <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                            {SCHOOLS.map((school) => (
-                              <label key={school} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                            {schoolOptions.map((school) => (
+                              <label key={school.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
                                 <input
                                   type="checkbox"
-                                  checked={selectedSchools[job.id]?.includes(school) || false}
-                                  onChange={() => toggleSchool(job.id, school)}
+                                  checked={selectedSchools[job.id]?.includes(school.storage) || false}
+                                  onChange={() => toggleSchool(job.id, school.storage)}
                                 />
-                                <span>{school}</span>
+                                <span>{school.display}</span>
                               </label>
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
-                    
                     {/* Batch */}
                     <div className="flex-2 min-w-0">
                       <div className="flex justify-center -translate-x-2 items-center gap-2 mb-1">
@@ -674,20 +739,20 @@ export default function ManageJobs() {
                           disabled={isJobPosted(job)}
                         >
                           <span className="truncate">
-                            {selectedBatches[job.id]?.length ? selectedBatches[job.id].join(', ') : 'Select Batches'}
+                            {selectedBatches[job.id]?.length ? selectedBatches[job.id].map(code => getBatchDisplay(code)).join(', ') : 'Select Batches'}
                           </span>
                           <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         </button>
                         {showBatches[job.id] && !isJobPosted(job) && (
                           <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                            {BATCHES.map((batch) => (
-                              <label key={batch} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                            {batchOptions.map((batch) => (
+                              <label key={batch.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
                                 <input
                                   type="checkbox"
-                                  checked={selectedBatches[job.id]?.includes(batch) || false}
-                                  onChange={() => toggleBatch(job.id, batch)}
+                                  checked={selectedBatches[job.id]?.includes(batch.storage) || false}
+                                  onChange={() => toggleBatch(job.id, batch.storage)}
                                 />
-                                <span>{batch}</span>
+                                <span>{batch.display}</span>
                               </label>
                             ))}
                           </div>
@@ -711,20 +776,20 @@ export default function ManageJobs() {
                           disabled={isJobPosted(job)}
                         >
                           <span className="truncate">
-                            {selectedCenters[job.id]?.length ? selectedCenters[job.id].join(', ') : 'Select Centers'}
+                            {selectedCenters[job.id]?.length ? selectedCenters[job.id].map(code => getCenterDisplay(code)).join(', ') : 'Select Centers'}
                           </span>
                           <ChevronDown className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         </button>
                         {showCenters[job.id] && !isJobPosted(job) && (
                           <div className="absolute z-10 overflow-hidden w-full bg-white border-2 border-slate-300 rounded-md shadow-lg">
-                            {CENTERS.map((center) => (
-                              <label key={center} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
+                            {centerOptions.map((center) => (
+                              <label key={center.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 cursor-pointer border-b border-slate-200 last:border-b-0">
                                 <input
                                   type="checkbox"
-                                  checked={selectedCenters[job.id]?.includes(center) || false}
-                                  onChange={() => toggleCenter(job.id, center)}
+                                  checked={selectedCenters[job.id]?.includes(center.storage) || false}
+                                  onChange={() => toggleCenter(job.id, center.storage)}
                                 />
-                                <span>{center}</span>
+                                <span>{center.display}</span>
                               </label>
                             ))}
                           </div>

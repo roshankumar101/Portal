@@ -9,9 +9,16 @@ import {
   writeBatch,
   orderBy,
   getDoc,
-  onSnapshot
+  onSnapshot,
+  limit,
+  startAfter,
+  and,
+  or,
+  serverTimestamp,
+  addDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { createNotification } from './notifications';
 
 // Get all applications for a student
 export const getStudentApplications = async (studentId) => {

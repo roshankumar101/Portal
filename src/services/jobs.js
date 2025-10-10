@@ -127,6 +127,7 @@ export async function listApplicationsForStudent(studentId) {
 // Job status constants
 export const JOB_STATUS = {
   DRAFT: 'draft',
+  IN_REVIEW: 'in_review', // NEW: For jobs submitted for review
   ACTIVE: 'active',
   POSTED: 'posted', // NEW: Added for your use case
   ARCHIVED: 'archived'
@@ -144,6 +145,23 @@ export async function saveJobDraft(jobData) {
     return { jobId: ref.id, ...payload };
   } catch (error) {
     console.error('Error saving job draft:', error);
+    throw error;
+  }
+}
+
+export async function submitJobForReview(jobData) {
+  try {
+    const payload = {
+      ...jobData,
+      status: JOB_STATUS.IN_REVIEW,
+      submittedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    const ref = await addDoc(collection(db, JOBS_COLL), payload);
+    return { jobId: ref.id, ...payload };
+  } catch (error) {
+    console.error('Error submitting job for review:', error);
     throw error;
   }
 }
@@ -460,7 +478,7 @@ export function subscribePostedJobs(onChange, opts = {}) {
 export function subscribeUnpostedJobs(onChange, opts = {}) {
   try {
     let constraints = [
-      where('status', 'in', [JOB_STATUS.DRAFT, JOB_STATUS.ACTIVE]),
+      where('status', 'in', [JOB_STATUS.DRAFT, JOB_STATUS.IN_REVIEW, JOB_STATUS.ACTIVE]),
       orderBy('createdAt', 'desc'),
       limit(opts.limitTo || 50)
     ];
@@ -468,7 +486,7 @@ export function subscribeUnpostedJobs(onChange, opts = {}) {
     if (opts.recruiterId) {
       constraints.unshift(where('recruiterId', '==', opts.recruiterId));
     }
-    
+
     const q = query(collection(db, JOBS_COLL), ...constraints);
     
     return onSnapshot(q, async (snapshot) => {

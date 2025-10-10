@@ -21,8 +21,11 @@ import {
   FaFileExcel, FaChartBar, FaChartLine, FaChartPie,
   FaSync, FaDownload, FaCog, FaSearch, FaUsers,
   FaIdCard, FaShare, FaCheckCircle, FaClock, FaEnvelope,
-  FaChevronDown, FaTimes
+  FaChevronDown, FaTimes, FaBriefcase
 } from 'react-icons/fa';
+import { getAdminPanelData, exportReportCSV, downloadDataCSV, subscribeToAdminPanelData } from '../../../services/adminPanelService';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 // Register Chart.js components
 ChartJS.register(
@@ -180,246 +183,213 @@ const AdminPanel = () => {
   const [chartData, setChartData] = useState({});
   const [statsData, setStatsData] = useState({});
   const [adminPerformanceData, setAdminPerformanceData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [filterOptions, setFilterOptions] = useState({
+    campuses: [],
+    schools: [],
+    batches: [],
+    admins: []
+  });
+  const [loadingFilters, setLoadingFilters] = useState(true);
+  
+  // Debounce timer for filter changes
+  const debounceTimer = useRef(null);
 
-  // Enhanced mock data with admin-campus mapping
-  const campuses = [
-    { id: 'all', name: 'All Campuses' },
-    { id: 'bangalore', name: 'Bangalore' },
-    { id: 'lucknow', name: 'Lucknow' },
-    { id: 'pune', name: 'Pune' },
-    { id: 'noida', name: 'Noida' }
-  ];
-
-  const schools = [
-    { id: 'all', name: 'All Schools' },
-    { id: 'SOT', name: 'School of Technology' },
-    { id: 'SOM', name: 'School of Management' },
-    { id: 'SOH', name: 'School of Humanities' }
-  ];
-
-  const batches = [
-    { id: 'all', name: 'All Batches' },
-    { id: '23-27', name: '2023-2027' },
-    { id: '24-28', name: '2024-2028' },
-    { id: '25-29', name: '2025-2029' }
-  ];
-
-  // Enhanced admins data with campus association
-  const admins = [
-    { id: 'all', name: 'All Admins', campus: 'all' },
-    { id: 'admin_blr1', name: 'Admin Bangalore 1', campus: 'bangalore' },
-    { id: 'admin_blr2', name: 'Admin Bangalore 2', campus: 'bangalore' },
-    { id: 'admin_pune1', name: 'Admin Pune 1', campus: 'pune' },
-    { id: 'admin_pune2', name: 'Admin Pune 2', campus: 'pune' },
-    { id: 'admin_luck1', name: 'Admin Lucknow 1', campus: 'lucknow' },
-    { id: 'admin_luck2', name: 'Admin Lucknow 2', campus: 'lucknow' },
-    { id: 'admin_noida1', name: 'Admin Noida 1', campus: 'noida' },
-    { id: 'admin_noida2', name: 'Admin Noida 2', campus: 'noida' }
-  ];
-
-  // Generate AG Charts options for admin performance
-  const generateAgChartOptions = (currentFilters) => {
-    const filteredAdmins = getFilteredAdmins(currentFilters);
-    const adminNames = filteredAdmins.map(admin => admin.name);
-
-    return {
-      title: { text: "Admin Performance Metrics" },
-      subtitle: { text: "Across Selected Campuses" },
-      data: filteredAdmins.map(admin => ({
-        admin: admin.name,
-        companiesBrought: Math.floor(Math.random() * 50) + 10,
-        clientsClosed: Math.floor(Math.random() * 40) + 5,
-        profileShared: Math.floor(Math.random() * 200) + 50,
-        placementClosed: Math.floor(Math.random() * 30) + 5,
-        inProcess: Math.floor(Math.random() * 25) + 5
-      })),
-      series: [
-        {
-          type: "bar",
-          direction: "horizontal",
-          xKey: "admin",
-          yKey: "companiesBrought",
-          yName: "Companies Brought",
-          stacked: true,
-        },
-        {
-          type: "bar",
-          direction: "horizontal",
-          xKey: "admin",
-          yKey: "clientsClosed",
-          yName: "Clients Closed",
-          stacked: true,
-        },
-        {
-          type: "bar",
-          direction: "horizontal",
-          xKey: "admin",
-          yKey: "profileShared",
-          yName: "Profiles Shared",
-          stacked: true,
-        },
-        {
-          type: "bar",
-          direction: "horizontal",
-          xKey: "admin",
-          yKey: "placementClosed",
-          yName: "Placements Closed",
-          stacked: true,
-        },
-        {
-          type: "bar",
-          direction: "horizontal",
-          xKey: "admin",
-          yKey: "inProcess",
-          yName: "In Process",
-          stacked: true,
-        },
-      ],
-    };
-  };
-
-  // Get filtered admins based on current filters
-  const getFilteredAdmins = (currentFilters) => {
-    let filtered = admins.filter(admin => admin.id !== 'all');
-    
-    if (currentFilters.campus.length > 0 && !currentFilters.campus.includes('all')) {
-      filtered = filtered.filter(admin => currentFilters.campus.includes(admin.campus));
-    }
-    
-    if (currentFilters.admin.length > 0 && !currentFilters.admin.includes('all')) {
-      filtered = filtered.filter(admin => currentFilters.admin.includes(admin.id));
-    }
-    
-    return filtered;
-  };
-
-  // Generate mock data based on filters
-  const generateMockData = (currentFilters) => {
-    const isFiltered = currentFilters.campus.length > 0 && !currentFilters.campus.includes('all') ||
-                      currentFilters.school.length > 0 && !currentFilters.school.includes('all') ||
-                      currentFilters.batch.length > 0 && !currentFilters.batch.includes('all') ||
-                      currentFilters.admin.length > 0 && !currentFilters.admin.includes('all');
-
-    const filterMultiplier = isFiltered ? 0.1 : 1;
-
-    // Placement Status Data
-    const placementStatusData = {
-      labels: ['Placed', 'Offer Received', 'Interview Stage', 'Profile Shared', 'Not Started'],
-      datasets: [
-        {
-          label: 'Students',
-          data: [1245, 890, 670, 1560, 2300].map(val => Math.round(val * filterMultiplier)),
-          backgroundColor: [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 99, 132, 0.6)'
+  // Load predefined filter options (no database fetching to avoid duplicates)
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        setLoadingFilters(true);
+        
+        // Fetch only admin users from database (needed for admin filter)
+        const usersQuery = query(collection(db, 'users'), where('role', '==', 'admin'));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        const admins = [];
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          admins.push({
+            id: doc.id,
+            name: data.displayName || data.name || data.email || 'Admin User'
+          });
+        });
+        
+        // Use only predefined options for schools, batches, centers
+        setFilterOptions({
+          campuses: [
+            { id: 'BANGALORE', name: 'Bangalore' },
+            { id: 'NOIDA', name: 'Noida' },
+            { id: 'LUCKNOW', name: 'Lucknow' },
+            { id: 'PUNE', name: 'Pune' },
+            { id: 'PATNA', name: 'Patna' },
+            { id: 'INDORE', name: 'Indore' }
           ],
-          borderColor: [
-            'rgba(75, 192, 192, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 99, 132, 1)'
+          schools: [
+            { id: 'SOT', name: 'School of Technology' },
+            { id: 'SOM', name: 'School of Management' },
+            { id: 'SOH', name: 'School of Healthcare' }
           ],
-          borderWidth: 1,
-        },
-      ],
+          batches: [
+            { id: '23-27', name: '2023-2027' },
+            { id: '24-28', name: '2024-2028' },
+            { id: '25-29', name: '2025-2029' },
+            { id: '26-30', name: '2026-2030' }
+          ],
+          admins: [
+            { id: 'all', name: 'All Admins' },
+            ...admins
+          ]
+        });
+        
+        console.log('✅ AdminPanel filter options loaded (predefined only)');
+      } catch (error) {
+        console.error('❌ Error loading AdminPanel filter options:', error);
+        
+        // Fallback to hardcoded options
+        setFilterOptions({
+          campuses: [
+            { id: 'BANGALORE', name: 'Bangalore' },
+            { id: 'NOIDA', name: 'Noida' },
+            { id: 'LUCKNOW', name: 'Lucknow' },
+            { id: 'PUNE', name: 'Pune' },
+            { id: 'PATNA', name: 'Patna' },
+            { id: 'INDORE', name: 'Indore' }
+          ],
+          schools: [
+            { id: 'SOT', name: 'School of Technology' },
+            { id: 'SOM', name: 'School of Management' },
+            { id: 'SOH', name: 'School of Healthcare' }
+          ],
+          batches: [
+            { id: '23-27', name: '2023-2027' },
+            { id: '24-28', name: '2024-2028' },
+            { id: '25-29', name: '2025-2029' },
+            { id: '26-30', name: '2026-2030' }
+          ],
+          admins: [
+            { id: 'all', name: 'All Admins' }
+          ]
+        });
+      } finally {
+        setLoadingFilters(false);
+      }
     };
 
-    // Monthly Placements Trend
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const baseMonthlyData = [85, 92, 105, 120, 135, 150, 165, 180, 195, 210, 225, 245];
-    const monthlyData = baseMonthlyData.map(val => Math.round(val * filterMultiplier));
+    loadFilterOptions();
+  }, []);
 
-    const monthlyTrendData = {
-      labels: months,
-      datasets: [
-        {
-          label: 'Placements',
-          data: monthlyData,
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.1)',
-          tension: 0.4,
-          fill: true,
-        },
-      ],
+  // Set up real-time data subscription
+  useEffect(() => {
+    console.log('🔄 Setting up real-time AdminPanel data subscription with filters:', filters);
+    
+    setLoading(true);
+    setError(null);
+    
+    const unsubscribe = subscribeToAdminPanelData(
+      (data) => {
+        console.log('📊 Real-time AdminPanel data received:', data);
+        
+        // Update stats
+        setStatsData(data.statsData);
+        
+        // Update charts
+        setChartData({
+          placementStatus: data.chartData.placementStatus,
+          monthlyTrend: data.chartData.monthlyTrend
+        });
+        
+        // Update admin performance (convert to AG Charts format)
+        const agChartData = {
+          title: { text: "Admin Performance Metrics" },
+          subtitle: { text: "Jobs Posted by Admin (Last 90 Days)" },
+          data: data.chartData.adminPerformance.map(item => ({
+            admin: item.admin,
+            jobsPosted: item.jobsPosted,
+            applications: item.applications || 0,
+            placements: item.placements || 0,
+            successRate: item.successRate || 0
+          })),
+          series: [{
+            type: "bar",
+            direction: "horizontal",
+            xKey: "admin",
+            yKey: "jobsPosted",
+            yName: "Jobs Posted"
+          }]
+        };
+        
+        setAdminPerformanceData(agChartData);
+        setLoading(false);
+      },
+      filters, // Pass current filters
+      90 // 90-day window
+    );
+    
+    // Cleanup subscription on unmount or filter change
+    return () => {
+      console.log('🧹 Cleaning up AdminPanel subscription');
+      unsubscribe();
     };
-
-    return {
-      placementStatus: placementStatusData,
-      monthlyTrend: monthlyTrendData,
-    };
-  };
-
-  // Generate stats based on filters
-  const generateStatsData = (currentFilters) => {
-    const isFiltered = currentFilters.campus.length > 0 && !currentFilters.campus.includes('all') ||
-                      currentFilters.school.length > 0 && !currentFilters.school.includes('all') ||
-                      currentFilters.batch.length > 0 && !currentFilters.batch.includes('all') ||
-                      currentFilters.admin.length > 0 && !currentFilters.admin.includes('all');
-
-    const filterMultiplier = isFiltered ? 0.1 : 1;
-
-    return {
-      totalStudents: Math.round(11500 * filterMultiplier),
-      placedStudents: Math.round(1245 * filterMultiplier),
-      activeCompanies: Math.round(156 * filterMultiplier),
-      placementRate: isFiltered ? 65.2 : 78.5,
-      profileShared: Math.round(1560 * filterMultiplier),
-      interviews: Math.round(670 * filterMultiplier),
-      companiesBrought: Math.round(89 * filterMultiplier),
-      clientsClosed: Math.round(67 * filterMultiplier)
-    };
-  };
+  }, [filters]); // Re-subscribe when filters change
 
   // Handle filter changes
   const handleFilterChange = (filterType, values) => {
-    setFilters(prev => {
-      const newFilters = {
-        ...prev,
-        [filterType]: values
-      };
-
-      // If campus changes and admin was selected, adjust admin filter
-      if (filterType === 'campus' && prev.admin.length > 0 && !prev.admin.includes('all')) {
-        const filteredAdmins = admins.filter(admin => 
-          values.includes('all') || values.includes(admin.campus) || admin.id === 'all'
-        );
-        const validAdminIds = filteredAdmins.map(admin => admin.id);
-        const newAdminFilter = prev.admin.filter(adminId => validAdminIds.includes(adminId));
-        
-        if (newAdminFilter.length === 0 && values.length > 0 && !values.includes('all')) {
-          newFilters.admin = ['all'];
-        } else {
-          newFilters.admin = newAdminFilter;
-        }
-      }
-
-      return newFilters;
-    });
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: values
+    }));
   };
 
-  const applyFilters = () => {
-    // Filters are applied automatically through state changes
-    console.log('Applied filters:', filters);
+  // Export handlers
+  const handleExportReport = async () => {
+    try {
+      await exportReportCSV(filters, 90);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed: ' + error.message);
+    }
+  };
+
+  const handleDownloadData = async () => {
+    try {
+      await downloadDataCSV(filters, 'applications', 90);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed: ' + error.message);
+    }
   };
 
   const resetFilters = () => {
     setFilters({
-      campus: ['all'],
-      school: ['all'],
-      batch: ['all'],
-      admin: ['all']
+      campus: [],
+      school: [],
+      batch: [],
+      admin: []
     });
   };
 
+  // Debounced effect for filter changes
   useEffect(() => {
-    setChartData(generateMockData(filters));
-    setStatsData(generateStatsData(filters));
-    setAdminPerformanceData(generateAgChartOptions(filters));
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    // Set new timer
+    debounceTimer.current = setTimeout(() => {
+      loadAdminPanelData(filters);
+    }, 300);
+    
+    // Cleanup
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
   }, [filters]);
+
+  
 
   // Chart options
   const barOptions = {
@@ -467,139 +437,255 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-
-
-      {/* Filters Section */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold text-gray-800">Data Filters</h2>
-          <div className="flex space-x-3">
-            <button 
-              onClick={resetFilters}
-              className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center transition-all duration-200 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+              <FaChartBar className="text-blue-600" />
+              Admin Analytics Dashboard
+            </h1>
+            <p className="text-slate-600 mt-1">Real-time placement analytics and performance metrics</p>
+          </div>
+          
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <button
+              onClick={handleExportReport}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
             >
-              <FaSync className="mr-2" /> Reset Filters
+              <FaFileExcel className="w-4 h-4" />
+              Export Report
             </button>
-            <button 
-              onClick={applyFilters}
-              className="px-6 py-2.5 text-white rounded-lg flex items-center transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl"
+            
+            <button
+              onClick={handleDownloadData}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
             >
-              <FaFilter className="mr-2" /> Apply Filters
+              <FaDownload className="w-4 h-4" />
+              Download Data
+            </button>
+            
+            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-200 shadow-md hover:shadow-lg">
+              <FaCog className="w-4 h-4" />
+              Settings
             </button>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <CustomDropdown
-            label="Campus"
-            options={campuses}
-            selectedValues={filters.campus}
-            onSelectionChange={(values) => handleFilterChange('campus', values)}
-            multiple={true}
-            placeholder="Select Campuses"
-          />
-          
-          <CustomDropdown
-            label="School"
-            options={schools}
-            selectedValues={filters.school}
-            onSelectionChange={(values) => handleFilterChange('school', values)}
-            multiple={true}
-            placeholder="Select Schools"
-          />
-          
-          <CustomDropdown
-            label="Batch"
-            options={batches}
-            selectedValues={filters.batch}
-            onSelectionChange={(values) => handleFilterChange('batch', values)}
-            multiple={true}
-            placeholder="Select Batches"
-          />
-          
-          <CustomDropdown
-            label="Admin"
-            options={admins}
-            selectedValues={filters.admin}
-            onSelectionChange={(values) => handleFilterChange('admin', values)}
-            multiple={true}
-            placeholder="Select Admins"
-          />
-        </div>
-      </div>
 
-      {/* Enhanced Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
-        {[
-          { key: 'totalStudents', label: 'Total Students', icon: FaUserGraduate, color: 'blue' },
-          { key: 'placedStudents', label: 'Placed Students', icon: FaHandshake, color: 'green' },
-          { key: 'activeCompanies', label: 'Active Companies', icon: FaBuilding, color: 'purple' },
-          { key: 'placementRate', label: 'Placement Rate', icon: FaChartBar, color: 'amber', suffix: '%' },
-          { key: 'profileShared', label: 'Profile Shared', icon: FaShare, color: 'red' },
-          { key: 'interviews', label: 'Interviews', icon: FaClock, color: 'teal' },
-          { key: 'companiesBrought', label: 'Companies Brought', icon: FaUsers, color: 'indigo' },
-          { key: 'clientsClosed', label: 'Clients Closed', icon: FaCheckCircle, color: 'pink' },
-        ].map(({ key, label, icon: Icon, color, suffix = '' }) => (
-          <div key={key} className={`bg-white rounded-xl shadow-sm p-4 border-l-4 border-${color}-500`}>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-xs text-gray-600">{label}</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {statsData[key]?.toLocaleString()}{suffix}
-                </p>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-red-800">
+              <FaBell className="w-4 h-4" />
+              <span className="font-medium">Error loading data:</span>
+            </div>
+            <p className="text-red-700 mt-1">{error}</p>
+          </div>
+        )}
+
+        {/* Filters Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <FaFilter className="text-blue-600 text-xl" />
+            <h2 className="text-xl font-semibold text-slate-800">Filters & Controls</h2>
+            {loading && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <FaSync className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading...</span>
               </div>
-              <Icon className={`text-${color}-500 text-sm`} />
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <CustomDropdown
+              label="Campus"
+              options={filterOptions.campuses}
+              selectedValues={filters.campus}
+              onSelectionChange={(values) => handleFilterChange('campus', values)}
+              multiple={true}
+              placeholder="Select Center"
+            />
+            
+            <CustomDropdown
+              label="School"
+              options={filterOptions.schools}
+              selectedValues={filters.school}
+              onSelectionChange={(values) => handleFilterChange('school', values)}
+              multiple={true}
+              placeholder="Select schools"
+            />
+            
+            <CustomDropdown
+              label="Batch"
+              options={filterOptions.batches}
+              selectedValues={filters.batch}
+              onSelectionChange={(values) => handleFilterChange('batch', values)}
+              multiple={true}
+              placeholder="Select batches"
+            />
+            
+            <CustomDropdown
+              label="Admin"
+              options={filterOptions.admins}
+              selectedValues={filters.admin}
+              onSelectionChange={(values) => handleFilterChange('admin', values)}
+              multiple={true}
+              placeholder="Select admins"
+            />
+          </div>
+          
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors duration-200"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Enhanced Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total Students</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.totalStudents || 0).toLocaleString()}</p>
+              </div>
+              <FaUserGraduate className="text-4xl text-blue-200" />
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* AG Charts Histogram */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Admin Performance Overview</h3>
-        <div className="h-96">
-          {adminPerformanceData && <AgCharts options={adminPerformanceData} />}
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Placement Status Distribution</h3>
-          <div className="h-80">
-            {chartData.placementStatus && (
-              <Bar data={chartData.placementStatus} options={barOptions} />
-            )}
+          
+          <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Placed Students</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.placedStudents || 0).toLocaleString()}</p>
+              </div>
+              <FaCheckCircle className="text-4xl text-green-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Placement Rate</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.placementRate || 0).toFixed(1)}%</p>
+              </div>
+              <FaChartLine className="text-4xl text-purple-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Total Jobs</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.totalJobs || 0).toLocaleString()}</p>
+              </div>
+              <FaBriefcase className="text-4xl text-orange-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-teal-100 text-sm font-medium">Active Recruiters</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.activeRecruiters || 0).toLocaleString()}</p>
+              </div>
+              <FaUserTie className="text-4xl text-teal-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-100 text-sm font-medium">Pending Queries</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.pendingQueries || 0).toLocaleString()}</p>
+              </div>
+              <FaBell className="text-4xl text-red-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-indigo-100 text-sm font-medium">Total Applications</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.totalApplications || 0).toLocaleString()}</p>
+              </div>
+              <FaHandshake className="text-4xl text-indigo-200" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-pink-100 text-sm font-medium">Avg Applications</p>
+                <p className="text-3xl font-bold">{loading ? '...' : (statsData.averageApplications || 0).toFixed(1)}</p>
+              </div>
+              <FaChartPie className="text-4xl text-pink-200" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Placement Trend</h3>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Admin Performance Chart */}
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <FaUsers className="text-blue-600 text-xl" />
+              <h3 className="text-xl font-semibold text-slate-800">Admin Performance</h3>
+            </div>
+            <div className="h-80">
+              {adminPerformanceData.data && adminPerformanceData.data.length > 0 ? (
+                <AgCharts options={adminPerformanceData} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500">
+                  {loading ? 'Loading chart data...' : 'No data available'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Placement Status Chart */}
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <FaChartBar className="text-green-600 text-xl" />
+              <h3 className="text-xl font-semibold text-slate-800">Placement Status Distribution</h3>
+            </div>
+            <div className="h-80">
+              {chartData.placementStatus ? (
+                <Bar data={chartData.placementStatus} options={barOptions} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500">
+                  {loading ? 'Loading chart data...' : 'No data available'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Monthly Trend Chart */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <FaChartLine className="text-purple-600 text-xl" />
+            <h3 className="text-xl font-semibold text-slate-800">Monthly Placement Trend</h3>
+          </div>
           <div className="h-80">
-            {chartData.monthlyTrend && (
+            {chartData.monthlyTrend ? (
               <Line data={chartData.monthlyTrend} options={lineOptions} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-500">
+                {loading ? 'Loading chart data...' : 'No data available'}
+              </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
-          <div className="flex space-x-3">
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 flex items-center transition-all duration-200">
-              <FaDownload className="mr-2" /> Export Report
-            </button>
-            <button className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 flex items-center transition-all duration-200">
-              <FaFileExcel className="mr-2" /> Download Data
-            </button>
-            <button className="px-4 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 flex items-center transition-all duration-200">
-              <FaCog className="mr-2" /> Settings
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

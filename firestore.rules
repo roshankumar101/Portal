@@ -1,274 +1,284 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write their own user document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow any authenticated user to read user documents (for role checking)
-      allow read: if request.auth != null;
-      
-      // Allow admins to read and update any user document
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    
+    // ============================================================================
+    // HELPER FUNCTIONS
+    // ============================================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
     }
-
-    // Students collection - NEW: Student profile management
+    
+    function getUserRole() {
+      return isAuthenticated() ? 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && getUserRole() == 'student';
+    }
+    
+    function isRecruiter() {
+      return isAuthenticated() && getUserRole() == 'recruiter';
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'super_admin';
+    }
+    
+    function isOwner(resourceUserId) {
+      return isAuthenticated() && request.auth.uid == resourceUserId;
+    }
+    
+    // ============================================================================
+    // USERS COLLECTION - Authentication and role management
+    // ============================================================================
+    
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if isOwner(userId);
+      
+      // All authenticated users can read user profiles (for role checking)
+      allow read: if isAuthenticated();
+      
+      // Allow creating user documents during authentication
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins and Super Admins can read and update any user profile
+      allow read, write: if isAdmin() || isSuperAdmin();
+    }
+    
+    // ============================================================================
+    // ADMIN_REQUESTS COLLECTION - Admin approval workflow
+    // ============================================================================
+    
+    match /admin_requests/{requestId} {
+      // Only Super Admin can read all requests
+      allow read: if isSuperAdmin();
+      
+      // Authenticated users can create their own admin request
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.uid;
+      
+      // Only Super Admin can update admin requests (approve/reject)
+      allow update: if isSuperAdmin();
+      
+      // Super Admin can delete admin requests
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ============================================================================
+    // STUDENTS COLLECTION - Complete student profiles
+    // ============================================================================
+    
     match /students/{studentId} {
       // Students can read and write their own profile
-      allow read, write: if request.auth != null && request.auth.uid == studentId;
+      allow read, write: if isAuthenticated() && request.auth.uid == studentId;
       
-      // Admins can read and write all student profiles
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Admins and Super Admins can read and write all student profiles
+      allow read, write: if isAdmin() || isSuperAdmin();
       
-      // Recruiters can read student profiles for job matching
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      // Recruiters can read student profiles (for job matching)
+      allow read: if isRecruiter();
+      
+      // System can read for email notifications
+      allow read: if isAuthenticated();
     }
-
-    // Skills collection - Student skills management
+    
+    // ============================================================================
+    // SKILLS COLLECTION - Student skills management
+    // ============================================================================
+    
     match /skills/{skillId} {
       // Students can manage their own skills
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.studentId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.studentId;
       
-      // Admins can read all skills
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Students can create skills for themselves
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.studentId;
+      
+      // Admins and Super Admins can read all skills
+      allow read: if isAdmin() || isSuperAdmin();
+      
+      // Recruiters can read skills
+      allow read: if isRecruiter();
     }
-
-    // Educational background collection - Student education data
+    
+    // ============================================================================
+    // EDUCATIONAL_BACKGROUND COLLECTION - Student education records
+    // ============================================================================
+    
     match /educational_background/{educationId} {
-      // Students can manage their own educational background
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.studentId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+      // Students can manage their own education records
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resource.data.studentId;
       
-      // Admins can read all educational background data
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Students can create education records for themselves
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.studentId;
+      
+      // Admins and Super Admins can read all education records
+      allow read: if isAdmin() || isSuperAdmin();
+      
+      // Recruiters can read education records
+      allow read: if isRecruiter();
     }
-
-    // Projects collection - Student projects management
-    match /projects/{projectId} {
-      // Students can manage their own projects
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.studentId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+    
+    // ============================================================================
+    // COMPANIES COLLECTION - Company information
+    // ============================================================================
+    
+    match /companies/{companyId} {
+      // All authenticated users can read company information
+      allow read: if isAuthenticated();
       
-      // Admins can read all projects
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Admins and Super Admins can create, update, and delete companies
+      allow create, update, delete: if isAdmin() || isSuperAdmin();
       
-      // Recruiters can read projects for job matching
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      // Recruiters can update companies (if needed)
+      allow create, update: if isRecruiter();
     }
-
-    // Achievements collection - Student achievements management
-    match /achievements/{achievementId} {
-      // Students can manage their own achievements
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.studentId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
+    
+    // ============================================================================
+    // JOBS COLLECTION - Job postings with targeting
+    // ============================================================================
+    
+    match /jobs/{jobId} {
+      // All authenticated users can read jobs
+      allow read: if isAuthenticated();
       
-      // Admins can read all achievements
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Admins and Super Admins can create, update, and delete all jobs
+      allow create, update, delete: if isAdmin() || isSuperAdmin();
       
-      // Recruiters can read achievements for job matching
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      // Recruiters can create and update their own jobs
+      allow create: if isRecruiter();
+      allow update: if isRecruiter() && 
+        resource.data.recruiterId == request.auth.uid;
     }
-
-    // Email notifications collection - NEW: For job posting notifications
-    match /emailNotifications/{notificationId} {
-      // Only admins can read/write email notifications
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    
+    // ============================================================================
+    // APPLICATIONS COLLECTION - Job applications
+    // ============================================================================
+    
+    match /applications/{applicationId} {
+      // Students can read and create their own applications
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.studentId;
       
-      // System can create notifications (for backend processes)
-      allow create: if request.auth == null; // For server-side operations
-    }
-
-    // Unsubscribed users collection - NEW: Email unsubscribe management
-    match /unsubscribedUsers/{unsubscribeId} {
-      // Allow anyone to create unsubscribe records (for unsubscribe links)
-      allow create: if true;
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.studentId;
       
-      // Only admins can read unsubscribe data
-      allow read: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Recruiters can read applications for their jobs and update status
+      allow read, update: if isRecruiter() && 
+        isAuthenticated() &&
+        exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
+        get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.recruiterId == request.auth.uid;
+      
+      // Admins and Super Admins can read and update all applications
+      allow read, update: if isAdmin() || isSuperAdmin();
     }
-
-    // Notifications collection - In-app notifications
+    
+    // ============================================================================
+    // STUDENT_QUERIES COLLECTION - Student support queries
+    // ============================================================================
+    
+    match /student_queries/{queryId} {
+      // Students can read and create their own queries
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.studentId;
+      
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.studentId;
+      
+      // Admins and Super Admins can read all queries and update status/responses
+      allow read, update: if isAdmin() || isSuperAdmin();
+      
+      // System can create notifications (for admins)
+      allow read: if isAuthenticated();
+    }
+    
+    // ============================================================================
+    // NOTIFICATIONS COLLECTION - System notifications
+    // ============================================================================
+    
     match /notifications/{notificationId} {
       // Users can read their own notifications
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      
-      // Admins can create notifications for users
-      allow create: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId;
       
       // Users can update their own notifications (mark as read)
-      allow update: if request.auth != null && 
+      allow update: if isAuthenticated() && 
         request.auth.uid == resource.data.userId &&
-        request.resource.diff(resource).affectedKeys().hasOnly(['read', 'readAt']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      
+      // System and admins can create notifications
+      allow create: if isAuthenticated();
+      
+      // Admins and Super Admins can read all notifications
+      allow read: if isAdmin() || isSuperAdmin();
     }
     
-    // Companies collection - allow read for all authenticated users, write for recruiters
-    match /companies/{companyId} {
-      allow read: if request.auth != null;
+    // ============================================================================
+    // EMAIL_NOTIFICATIONS COLLECTION - Email system
+    // ============================================================================
+    
+    match /emailNotifications/{emailId} {
+      // System can create email notifications
+      allow create: if isAuthenticated();
       
-      // Allow recruiters to create/update their company profiles
-      allow create, update: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
+      // Admins and Super Admins can read all email notifications
+      allow read: if isAdmin() || isSuperAdmin();
       
-      // Allow company owner to update/delete their own company
-      allow update, delete: if request.auth != null && 
-        request.auth.uid == resource.data.ownerId;
-    }
-
-    // Jobs collection - UPDATED: Enhanced for job filtering and status management
-    match /jobs/{jobId} {
-      function isAdmin() {
-        return request.auth != null && 
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      }
-      
-      function isRecruiter() {
-        return request.auth != null && 
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter';
-      }
-
-      function isStudent() {
-        return request.auth != null && 
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
-      }
-      
-      // Students can read posted jobs OR any job (for application details); admins and recruiters can read all
-      allow read: if request.auth != null && (
-        isStudent() ||
-        isAdmin() || 
-        isRecruiter()
-      );
-      
-      // Admins can create/update/delete all jobs
-      allow create, update, delete: if isAdmin();
-      
-      // Recruiters can create/update their own jobs
-      allow create, update: if isRecruiter() && 
-        request.resource.data.postedBy == request.auth.uid;
+      // System can update email status (sent, failed, etc.)
+      allow update: if isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
     
-    // Applications collection - UPDATED: Enhanced for student applications
-    match /applications/{applicationId} {
-      function isAdmin() {
-        return request.auth != null && 
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      }
-
-      // Students can read their own applications
-      // Recruiters can read applications for their jobs  
-      // Admins can read all applications
-      allow read: if request.auth != null && (
-        resource.data.studentId == request.auth.uid ||
-        resource.data.applicantId == request.auth.uid ||
-        (exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
-         get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.postedBy == request.auth.uid) ||
-        isAdmin()
-      );
+    // ============================================================================
+    // UNSUBSCRIBED_USERS COLLECTION - Email preferences
+    // ============================================================================
+    
+    match /unsubscribedUsers/{unsubId} {
+      // Anyone can create unsubscribe records (public unsubscribe links)
+      allow create: if true;
       
-      // Students can create applications for themselves
-      allow create: if request.auth != null && 
-        (request.resource.data.studentId == request.auth.uid ||
-         request.resource.data.applicantId == request.auth.uid);
+      // System can read for email filtering
+      allow read: if isAuthenticated();
       
-      // Recruiters can update application status for their jobs
-      // Admins can update any application
-      allow update: if request.auth != null && (
-        (exists(/databases/$(database)/documents/jobs/$(resource.data.jobId)) &&
-         get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.postedBy == request.auth.uid &&
-         request.resource.diff(resource).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
-        isAdmin()
-      );
+      // Admins and Super Admins can read all unsubscribe data
+      allow read: if isAdmin() || isSuperAdmin();
     }
     
-    // Resumes collection - per-user access control
+    // ============================================================================
+    // RESUMES COLLECTION - Resume file storage
+    // ============================================================================
+    
     match /resumes/{resumeId} {
-      // Allow users to read their own resumes
-      // Allow recruiters to read resumes of applicants
-      // Allow admins to read all resumes
-      allow read: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'recruiter' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
+      // Students can manage their own resumes (resumeId = userId)
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == resumeId;
       
-      // Users can create/update their own resumes
-      allow create, update: if request.auth != null && 
-        request.resource.data.userId == request.auth.uid;
+      // Students can create resumes for themselves
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId;
       
-      // Users can delete their own resumes
-      // Admins can delete any resume
-      allow delete: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
+      // Recruiters can read resumes (for applications)
+      allow read: if isRecruiter();
+      
+      // Admins and Super Admins can read all resumes
+      allow read: if isAdmin() || isSuperAdmin();
     }
     
-    // Coding profiles collection - per-student access control
-    match /coding_profiles/{profileId} {
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.studentId;
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.studentId;
-    }
+    // ============================================================================
+    // DEFAULT DENY RULE - Security fallback
+    // ============================================================================
     
-    // Assessments collection
-    match /assessments/{assessmentId} {
-      // Admins can read/write all assessments
-      allow read, write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      
-      // Students can read their own assessments
-      allow read: if request.auth != null && 
-        resource.data.studentId == request.auth.uid;
-    }
-    
-    // Assessment attempts collection
-    match /assessment_attempts/{attemptId} {
-      // Students can create attempts for their assessments
-      allow create: if request.auth != null && 
-        request.resource.data.studentId == request.auth.uid;
-      
-      // Students can read their own attempts
-      // Admins can read all attempts
-      allow read: if request.auth != null && (
-        resource.data.studentId == request.auth.uid ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
-      
-      // Students can update their own attempts (for saving progress)
-      allow update: if request.auth != null && 
-        resource.data.studentId == request.auth.uid &&
-        resource.data.status == 'in_progress';
-    }
-    
-    // Default deny all other operations
     match /{document=**} {
       allow read, write: if false;
     }

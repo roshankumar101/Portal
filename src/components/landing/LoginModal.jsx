@@ -293,18 +293,17 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                     console.log('LoginModal - Starting authentication process...');
                     let uid = null;
                     if (mode === 'login') {
-                      const u = await login(email, password);
-                      uid = u?.uid;
+                      const u = await login(email, password, role.toLowerCase());
+                      uid = u?.user?.uid;
                       console.log('LoginModal - Login successful, UID:', uid);
                       
                       // For existing users logging in, skip email verification
                       // Email verification is only required for new account creation
                       console.log('LoginModal - Existing user login, skipping email verification');
                     } else {
-                      // Register. For Admin, require manual creation in Firestore after registration
+                      // Register with the selected role directly
                       const selected = role.toLowerCase();
-                      const assignRole = selected === 'admin' ? 'student' : selected;
-                      const u = await registerWithEmail({ email, password, role: assignRole });
+                      const u = await registerWithEmail({ email, password, role: selected });
                       uid = u?.uid;
                       console.log('LoginModal - Registration successful, UID:', uid);
                       
@@ -312,10 +311,7 @@ function LoginModal({ isOpen, onClose, defaultRole = 'Student' }) {
                       setRegisteredEmail(email);
                       setShowEmailVerification(true);
                       
-                      if (selected === 'admin') {
-                        // Inform user that admin role must be granted by existing admin in Firestore
-                        alert('Account created. Ask an existing admin to set your role to admin in Firestore.');
-                      }
+                      // Admin accounts are now created directly without approval
                       return; // Don't proceed with navigation, wait for email verification
                     }
                     

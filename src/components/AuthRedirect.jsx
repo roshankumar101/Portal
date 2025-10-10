@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function AuthRedirect() {
-  const { user, role, loading, emailVerified } = useAuth();
+  const { user, role, userStatus, loading, emailVerified } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -18,7 +18,7 @@ export default function AuthRedirect() {
     if (user && role) {
       // User is authenticated with a role, check verification status from Firestore
       const currentPath = location.pathname;
-      console.log('AuthRedirect - User authenticated with role:', role, 'Current path:', currentPath);
+      console.log('AuthRedirect - User authenticated with role:', role, 'status:', userStatus, 'Current path:', currentPath);
       
       // Public paths accessible to logged-in users without a redirect.
       const publicPaths = ['/', '/dev-team', '/test'];
@@ -29,6 +29,7 @@ export default function AuthRedirect() {
         return;
       }
       
+      // Direct role-based redirects (simplified - no status checks)
       if (role === 'student' && currentPath !== '/student') {
         console.log('AuthRedirect - Redirecting to student dashboard');
         navigate('/student', { replace: true });
@@ -51,7 +52,7 @@ export default function AuthRedirect() {
       console.log('AuthRedirect - User not authenticated');
     }
     // If user is null (not authenticated), let ProtectedRoute handle redirects
-  }, [user, role, loading, navigate, location.pathname]);
+  }, [user, role, userStatus, loading, navigate, location.pathname]);
 
   return null; // This component doesn't render anything
 }

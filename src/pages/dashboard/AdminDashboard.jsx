@@ -3,11 +3,12 @@ import AdminLayout from '../../components/dashboard/shared/AdminLayout';
 import AdminHome from '../../components/dashboard/admin/AdminHome';
 import CreateJob from '../../components/dashboard/admin/CreateJob';
 import ManageJobs from '../../components/dashboard/admin/ManageJobs';
+import JobPostingsManager from '../../components/dashboard/admin/JobPostingsManager';
 import StudentDirectory from '../../components/dashboard/admin/StudentDirectory';
 import RecruiterDirectory from '../../components/dashboard/admin/RecruiterDirectory';
 import AdminPanel from '../../components/dashboard/admin/AdminPanel';
 import Notifications from '../../components/dashboard/admin/Notifications';
-import { Home, FilePlus2, Briefcase, GripVertical, LogOut, Users, Bell, Settings } from 'lucide-react';
+import { Home, FilePlus2, Briefcase, ClipboardList, GripVertical, LogOut, Users, Bell, Settings } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'createJob', label: 'Create Job', icon: FilePlus2 },
     { id: 'manageJobs', label: 'Manage Jobs', icon: Briefcase },
+    { id: 'jobPostingsManager', label: 'Job Moderation', icon: ClipboardList },
     { id: 'studentDirectory', label: 'Student Directory', icon: Users },
     { id: 'recruiterDirectory', label: 'Recruiter Directory', icon: Briefcase },
     { id: 'adminPanel', label: 'Admin Panel', icon: Settings },
@@ -84,6 +86,8 @@ export default function AdminDashboard() {
         return <CreateJob onCreated={() => setActiveTab('manageJobs')} />;
       case 'manageJobs':
         return <ManageJobs />;
+      case 'jobPostingsManager':
+        return <JobPostingsManager />;
       case 'studentDirectory':
         return <StudentDirectory />;
       case 'recruiterDirectory':

@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ImMail } from 'react-icons/im';
 import { MdEditNote, MdBlock } from 'react-icons/md';
-import { FaEye, FaChevronDown, FaChevronUp, FaSearch, FaBriefcase, FaMapMarkerAlt, FaCalendarAlt, FaMoneyBillWave, FaBuilding, FaUsers, FaClock, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaEye, FaChevronDown, FaChevronUp, FaSearch, FaBriefcase, FaMapMarkerAlt, FaCalendarAlt, FaMoneyBillWave, FaBuilding, FaUsers, FaClock, FaExternalLinkAlt, FaSpinner } from 'react-icons/fa';
 import { TbHistoryToggle } from 'react-icons/tb';
-import { getRecruiterDirectory } from '../../../services/jobs';
+import { subscribeRecruiterDirectory, blockUnblockRecruiter, getRecruiterJobs, getRecruiterHistory, sendEmailToRecruiter, getRecruiterSummary } from '../../../services/recruiters';
+import { useAuth } from '../../../hooks/useAuth';
+import { useToast } from '../../ui/Toast';
 
 export default function RecruiterDirectory() {
-  const [search, setSearch] = useState('');
   const [expandedRecruiter, setExpandedRecruiter] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,34 +17,93 @@ export default function RecruiterDirectory() {
   const [error, setError] = useState(null);
   const [jobDescriptionModal, setJobDescriptionModal] = useState({ isOpen: false, recruiter: null });
   const [blockModal, setBlockModal] = useState({ isOpen: false, recruiter: null, isUnblocking: false });
+  const [emailSending, setEmailSending] = useState(false);
+  const [operationLoading, setOperationLoading] = useState({});
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 10,
+    totalItems: 0
+  });
+  
+  // Hooks
+  const { user } = useAuth();
+  const toast = useToast();
 
-  // Fetch recruiter directory data on component mount
+  // Real-time subscription to recruiter directory
   useEffect(() => {
-    const fetchRecruiters = async () => {
-      try {
-        setLoading(true);
-        const data = await getRecruiterDirectory();
-        setRecruiters(data);
+    console.log('📡 Setting up real-time recruiter directory subscription');
+    setLoading(true);
+    
+    const unsubscribe = subscribeRecruiterDirectory(
+      (recruitersData) => {
+        console.log('📊 Received recruiter directory update:', recruitersData.length, 'recruiters');
+        setRecruiters(recruitersData);
         setError(null);
-      } catch (err) {
-        console.error('Error fetching recruiters:', err);
-        setError('Failed to load recruiter directory');
-      } finally {
         setLoading(false);
-      }
-    };
+      },
+      { limit: 100 } // Optional: limit for performance
+    );
 
-    fetchRecruiters();
+    return () => {
+      console.log('📡 Cleaning up recruiter directory subscription');
+      unsubscribe();
+    };
   }, []);
 
+  // Enhanced filtering with debounced search
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    location: '',
+    minJobs: '',
+    maxJobs: ''
+  });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
   const filteredRecruiters = recruiters.filter((recruiter) => {
-    const searchLower = search.toLowerCase();
-    return (
-      recruiter.companyName.toLowerCase().includes(searchLower) ||
-      recruiter.recruiterName.toLowerCase().includes(searchLower) ||
-      recruiter.email.toLowerCase().includes(searchLower) ||
-      recruiter.location.toLowerCase().includes(searchLower)
-    );
+    // Search filter
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase();
+      const matchesSearch = (
+        recruiter.companyName?.toLowerCase().includes(searchLower) ||
+        recruiter.recruiterName?.toLowerCase().includes(searchLower) ||
+        recruiter.email?.toLowerCase().includes(searchLower) ||
+        recruiter.location?.toLowerCase().includes(searchLower)
+      );
+      if (!matchesSearch) return false;
+    }
+    
+    // Status filter
+    if (filters.status && recruiter.status !== filters.status) {
+      return false;
+    }
+    
+    // Location filter
+    if (filters.location && !recruiter.location?.toLowerCase().includes(filters.location.toLowerCase())) {
+      return false;
+    }
+    
+    // Job count filters
+    const jobCount = recruiter.totalJobPostings || 0;
+    if (filters.minJobs && jobCount < parseInt(filters.minJobs)) {
+      return false;
+    }
+    if (filters.maxJobs && jobCount > parseInt(filters.maxJobs)) {
+      return false;
+    }
+    
+    return true;
   });
 
   const sortedRecruiters = React.useMemo(() => {
@@ -61,6 +121,25 @@ export default function RecruiterDirectory() {
     }
     return sortableItems;
   }, [filteredRecruiters, sortConfig]);
+  
+  // Paginated results
+  const paginatedRecruiters = React.useMemo(() => {
+    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    const endIndex = startIndex + pagination.itemsPerPage;
+    return sortedRecruiters.slice(startIndex, endIndex);
+  }, [sortedRecruiters, pagination.currentPage, pagination.itemsPerPage]);
+  
+  // Update total items when filtered recruiters change
+  React.useEffect(() => {
+    setPagination(prev => ({ 
+      ...prev, 
+      totalItems: filteredRecruiters.length,
+      // Reset to first page when filters change
+      currentPage: prev.totalItems !== filteredRecruiters.length ? 1 : prev.currentPage
+    }));
+  }, [filteredRecruiters.length]);
+  
+  const totalPages = Math.ceil(pagination.totalItems / pagination.itemsPerPage);
 
   const requestSort = (key) => {
     let direction = 'ascending';
@@ -92,85 +171,150 @@ export default function RecruiterDirectory() {
   };
 
   const handleSendMail = async () => {
+    if (!user || user.role !== 'admin') {
+      toast.showError('Only admin users can send emails to recruiters');
+      return;
+    }
+
+    if (!emailData.subject.trim() || !emailData.body.trim()) {
+      toast.showError('Please provide both subject and message content');
+      return;
+    }
+
     try {
-      // Simulate email sending - in a real app, you would call an email service
-      console.log('Sending email:', emailData);
+      setEmailSending(true);
       
-      // Show success message
-      alert('Email sent successfully!');
+      // Find the recruiter by email to get their ID
+      const targetRecruiter = recruiters.find(r => r.email === emailData.to);
+      if (!targetRecruiter) {
+        throw new Error('Recruiter not found');
+      }
+
+      const result = await sendEmailToRecruiter(
+        targetRecruiter.id, 
+        emailData, 
+        user
+      );
       
-      closeMailModal();
+      if (result.success) {
+        toast.showSuccess('Email sent successfully!');
+        closeMailModal();
+      } else {
+        throw new Error('Failed to send email');
+      }
+      
     } catch (error) {
       console.error('Error sending email:', error);
-      alert('Failed to send email. Please try again.');
+      toast.showError(`Failed to send email: ${error.message}`);
+    } finally {
+      setEmailSending(false);
     }
   };
 
   const handleBlockUnblock = async (blockData) => {
+    if (!user || user.role !== 'admin') {
+      toast.showError('Only admin users can block/unblock recruiters');
+      return;
+    }
+
+    const { recruiter, isUnblocking } = blockData;
+    const operationKey = `block_${recruiter.id}`;
+
     try {
-      const { recruiter, isUnblocking, blockType, endDate, endTime, reason, notes } = blockData;
+      setOperationLoading(prev => ({ ...prev, [operationKey]: true }));
       
-      // Update recruiter status locally
-      const updatedRecruiters = recruiters.map(r => {
-        if (r.id === recruiter.id) {
-          return {
-            ...r,
-            status: isUnblocking ? 'Active' : 'Blocked',
-            blockInfo: isUnblocking ? null : {
-              type: blockType,
-              endDate: blockType === 'temporary' ? endDate : null,
-              endTime: blockType === 'temporary' ? endTime : null,
-              reason,
-              notes,
-              blockedAt: new Date().toISOString(),
-              blockedBy: 'Admin' // In real app, use actual admin info
-            }
-          };
-        }
-        return r;
-      });
+      const result = await blockUnblockRecruiter(
+        recruiter.id, 
+        blockData, 
+        user
+      );
       
-      setRecruiters(updatedRecruiters);
-      
-      // In a real app, you would update Firebase here
-      console.log('Block/Unblock action:', blockData);
-      
-      // Show success message
-      alert(isUnblocking ? 'Recruiter unblocked successfully!' : 'Recruiter blocked successfully!');
-      
-      // Close modal
-      setBlockModal({ isOpen: false, recruiter: null, isUnblocking: false });
+      if (result.success) {
+        const action = result.action;
+        toast.showSuccess(
+          `Recruiter ${action} successfully! Changes will reflect immediately.`
+        );
+        
+        // Close modal
+        setBlockModal({ isOpen: false, recruiter: null, isUnblocking: false });
+      } else {
+        throw new Error('Operation failed');
+      }
       
     } catch (error) {
       console.error('Error blocking/unblocking recruiter:', error);
-      alert('Failed to update recruiter status. Please try again.');
+      toast.showError(
+        `Failed to ${isUnblocking ? 'unblock' : 'block'} recruiter: ${error.message}`
+      );
+    } finally {
+      setOperationLoading(prev => ({ ...prev, [operationKey]: false }));
     }
   };
 
-  const getRecruiterSummary = (recruiter) => {
-    const centers = ['Lucknow', 'Pune', 'Bangalore', 'Delhi'];
-    const schools = ['SOT', 'SOH', 'SOM'];
+  const [recruiterSummaries, setRecruiterSummaries] = useState({});
+  
+  const getRecruiterSummary = async (recruiterId) => {
+    if (recruiterSummaries[recruiterId]) {
+      return recruiterSummaries[recruiterId];
+    }
 
-    const jobsPerCenter = centers.reduce((acc, center) => {
-      acc[center] = Math.floor(Math.random() * 10); // Replace with actual data
-      return acc;
-    }, {});
-
-    const jobsPerSchool = schools.reduce((acc, school) => {
-      acc[school] = Math.floor(Math.random() * 10); // Replace with actual data
-      return acc;
-    }, {});
-
-    return {
-      jobsPerCenter,
-      jobsPerSchool,
-      relationshipType: 'Partner Company', // Replace with actual data
-      zone: 'North Zone', // Replace with actual data
-    };
+    try {
+      const summary = await getRecruiterSummary(recruiterId);
+      setRecruiterSummaries(prev => ({ ...prev, [recruiterId]: summary }));
+      return summary;
+    } catch (error) {
+      console.error('Error fetching recruiter summary:', error);
+      // Fallback to basic data
+      const fallbackSummary = {
+        jobsPerCenter: { 'Lucknow': 0, 'Pune': 0, 'Bangalore': 0, 'Delhi': 0 },
+        jobsPerSchool: { 'SOT': 0, 'SOH': 0, 'SOM': 0 },
+        totalJobs: 0,
+        activeJobs: 0,
+        relationshipType: 'Partner Company',
+        zone: 'North Zone',
+        emailsSent: 0,
+        statusChanges: 0
+      };
+      setRecruiterSummaries(prev => ({ ...prev, [recruiterId]: fallbackSummary }));
+      return fallbackSummary;
+    }
   };
 
   const RecruiterHistory = ({ recruiter }) => {
-    const summary = getRecruiterSummary(recruiter);
+    const [history, setHistory] = useState(null);
+    const [summary, setSummary] = useState(null);
+    const [historyLoading, setHistoryLoading] = useState(true);
+
+    useEffect(() => {
+      const loadRecruiterData = async () => {
+        try {
+          setHistoryLoading(true);
+          const [historyData, summaryData] = await Promise.all([
+            getRecruiterHistory(recruiter.id),
+            getRecruiterSummary(recruiter.id)
+          ]);
+          setHistory(historyData);
+          setSummary(summaryData);
+        } catch (error) {
+          console.error('Error loading recruiter data:', error);
+        } finally {
+          setHistoryLoading(false);
+        }
+      };
+
+      if (recruiter.id) {
+        loadRecruiterData();
+      }
+    }, [recruiter.id]);
+
+    if (historyLoading) {
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-inner flex items-center justify-center">
+          <FaSpinner className="animate-spin text-blue-600 mr-2" />
+          <span className="text-gray-600">Loading recruiter history...</span>
+        </div>
+      );
+    }
 
     return (
       <div className="bg-white p-4 rounded-lg shadow-inner">
@@ -178,52 +322,140 @@ export default function RecruiterDirectory() {
 
         {/* Summary Section */}
         <div className="mb-4">
-          <h4 className="text-md font-medium text-gray-600">Summary</h4>
-          <ul className="list-disc pl-5 text-gray-600">
-            <li>Jobs per Center: {JSON.stringify(summary.jobsPerCenter)}</li>
-            <li>Jobs per School: {JSON.stringify(summary.jobsPerSchool)}</li>
-            <li>Relationship Type: {summary.relationshipType}</li>
-            <li>Zone: {summary.zone}</li>
-          </ul>
+          <h4 className="text-md font-medium text-gray-600 mb-2">Summary</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-3 rounded">
+              <h5 className="font-medium text-sm text-gray-700 mb-2">Jobs per Center</h5>
+              {summary && Object.entries(summary.jobsPerCenter).map(([center, count]) => (
+                <div key={center} className="flex justify-between text-sm">
+                  <span>{center}:</span>
+                  <span className="font-medium">{count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 p-3 rounded">
+              <h5 className="font-medium text-sm text-gray-700 mb-2">Jobs per School</h5>
+              {summary && Object.entries(summary.jobsPerSchool).map(([school, count]) => (
+                <div key={school} className="flex justify-between text-sm">
+                  <span>{school}:</span>
+                  <span className="font-medium">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-gray-600 space-y-1">
+            <div>Total Jobs: <span className="font-medium">{summary?.totalJobs || 0}</span></div>
+            <div>Active Jobs: <span className="font-medium">{summary?.activeJobs || 0}</span></div>
+            <div>Relationship Type: <span className="font-medium">{summary?.relationshipType || 'Partner Company'}</span></div>
+            <div>Zone: <span className="font-medium">{summary?.zone || 'Not specified'}</span></div>
+            <div>Emails Sent: <span className="font-medium">{summary?.emailsSent || 0}</span></div>
+          </div>
         </div>
 
         {/* Job Posting History */}
         <div className="mb-4">
-          <h4 className="text-md font-medium text-gray-600">Job Posting History</h4>
-          <ul className="list-disc pl-5 text-gray-600">
-            {recruiter.activityHistory.map((activity, index) => (
-              <li key={index}>
-                Job Title: {activity.type}, Date: {activity.date}, Center: Lucknow, School: SOT, Status: Active
-              </li>
-            ))}
-          </ul>
+          <h4 className="text-md font-medium text-gray-600 mb-2">Job Posting History</h4>
+          <div className="max-h-40 overflow-y-auto">
+            {history?.jobPostings && history.jobPostings.length > 0 ? (
+              <div className="space-y-2">
+                {history.jobPostings.slice(0, 10).map((job, index) => (
+                  <div key={job.id || index} className="text-sm bg-gray-50 p-2 rounded">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-medium text-gray-800">{job.jobTitle}</span>
+                        <span className="text-gray-600 ml-2">at {job.company}</span>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {job.status}
+                      </span>
+                    </div>
+                    <div className="text-gray-600 mt-1">
+                      {job.date ? new Date(job.date.toMillis()).toLocaleDateString() : 'Unknown date'} • {job.location || 'Location not specified'}
+                    </div>
+                  </div>
+                ))}
+                {history.jobPostings.length > 10 && (
+                  <div className="text-center text-sm text-gray-500">... and {history.jobPostings.length - 10} more</div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 italic">No job posting history available</div>
+            )}
+          </div>
         </div>
 
         {/* Login History */}
         <div className="mb-4">
-          <h4 className="text-md font-medium text-gray-600">Login History</h4>
-          <ul className="list-disc pl-5 text-gray-600">
-            <li>2025-09-10 10:00 AM</li>
-            <li>2025-09-09 02:30 PM</li>
-          </ul>
+          <h4 className="text-md font-medium text-gray-600 mb-2">Recent Activity</h4>
+          <div className="text-sm text-gray-600">
+            {summary?.lastActivity ? (
+              <div>Last seen: {new Date(summary.lastActivity.toMillis()).toLocaleString()}</div>
+            ) : (
+              <div className="italic">No recent activity recorded</div>
+            )}
+            {summary?.joinDate && (
+              <div>Member since: {new Date(summary.joinDate.toMillis()).toLocaleDateString()}</div>
+            )}
+          </div>
         </div>
 
         {/* Past Emails Sent */}
         <div className="mb-4">
-          <h4 className="text-md font-medium text-gray-600">Past Emails Sent</h4>
-          <ul className="list-disc pl-5 text-gray-600">
-            <li>Subject: Welcome, Date: 2025-09-08 11:00 AM, Status: Sent</li>
-            <li>Subject: Reminder, Date: 2025-09-07 03:00 PM, Status: Sent</li>
-          </ul>
+          <h4 className="text-md font-medium text-gray-600 mb-2">Email History</h4>
+          <div className="max-h-32 overflow-y-auto">
+            {history?.notifications && history.notifications.filter(n => n.type === 'email_sent').length > 0 ? (
+              <div className="space-y-1">
+                {history.notifications
+                  .filter(n => n.type === 'email_sent')
+                  .slice(0, 5)
+                  .map((email, index) => (
+                    <div key={email.id || index} className="text-sm bg-gray-50 p-2 rounded">
+                      <div className="font-medium">{email.data?.subject || 'No Subject'}</div>
+                      <div className="text-gray-600">
+                        {email.date ? new Date(email.date.toMillis()).toLocaleString() : 'Unknown date'} • 
+                        from {email.data?.adminName || 'Admin'}
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 italic">No emails sent to this recruiter</div>
+            )}
+          </div>
         </div>
 
         {/* Status Change History */}
         <div className="mb-4">
-          <h4 className="text-md font-medium text-gray-600">Status Change History</h4>
-          <ul className="list-disc pl-5 text-gray-600">
-            <li>Status: Blocked, By: Admin, Date: 2025-09-06</li>
-            <li>Status: Unblocked, By: Admin, Date: 2025-09-05</li>
-          </ul>
+          <h4 className="text-md font-medium text-gray-600 mb-2">Status Change History</h4>
+          <div className="max-h-32 overflow-y-auto">
+            {history?.statusChanges && history.statusChanges.length > 0 ? (
+              <div className="space-y-1">
+                {history.statusChanges.map((change, index) => (
+                  <div key={change.id || index} className="text-sm bg-gray-50 p-2 rounded">
+                    <div className="flex justify-between items-start">
+                      <span className={`font-medium ${
+                        change.type === 'recruiter_blocked' ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        {change.type === 'recruiter_blocked' ? 'Blocked' : 'Unblocked'}
+                      </span>
+                      <span className="text-gray-600 text-xs">
+                        {change.date ? new Date(change.date.toMillis()).toLocaleDateString() : 'Unknown date'}
+                      </span>
+                    </div>
+                    <div className="text-gray-600 mt-1">
+                      By: {change.data?.adminName || 'Admin'}
+                      {change.data?.reason && <div>Reason: {change.data.reason}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500 italic">No status changes recorded</div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -239,25 +471,109 @@ export default function RecruiterDirectory() {
           </span>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
+        {/* Search and Filters */}
+        <div className="mb-6 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by recruiter name, company name, email, or location"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search by recruiter name, company name, email, or location"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          
+          {/* Advanced Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Blocked">Blocked</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input
+                type="text"
+                placeholder="Filter by location"
+                value={filters.location}
+                onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min Jobs</label>
+              <input
+                type="number"
+                placeholder="0"
+                min="0"
+                value={filters.minJobs}
+                onChange={(e) => setFilters(prev => ({ ...prev, minJobs: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Max Jobs</label>
+              <input
+                type="number"
+                placeholder="100"
+                min="0"
+                value={filters.maxJobs}
+                onChange={(e) => setFilters(prev => ({ ...prev, maxJobs: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Clear Filters Button */}
+          {(debouncedSearch || filters.status || filters.location || filters.minJobs || filters.maxJobs) && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setDebouncedSearch('');
+                  setFilters({ status: '', location: '', minJobs: '', maxJobs: '' });
+                }}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Search Results Summary */}
+        {!loading && !error && (
+          <div className="mb-4 text-sm text-gray-600">
+            {debouncedSearch || filters.status || filters.location || filters.minJobs || filters.maxJobs ? (
+              <span>
+                Showing {filteredRecruiters.length} of {recruiters.length} recruiters
+                {debouncedSearch && <span className="font-medium"> matching "{debouncedSearch}"</span>}
+              </span>
+            ) : (
+              <span>Showing all {recruiters.length} recruiters</span>
+            )}
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading recruiters...</span>
+            <FaSpinner className="animate-spin text-blue-600 mr-3" />
+            <span className="text-gray-600">Loading recruiters...</span>
           </div>
         )}
 
@@ -338,7 +654,7 @@ export default function RecruiterDirectory() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {sortedRecruiters.map((recruiter) => (
+                {paginatedRecruiters.map((recruiter) => (
                   <React.Fragment key={recruiter.id}>
                     <tr className="hover:bg-gray-50 transition-colors duration-150">
                       <td className="p-4 text-gray-800 text-sm font-medium">{recruiter.companyName}</td>
@@ -361,11 +677,21 @@ export default function RecruiterDirectory() {
                         <div className="flex items-center justify-center space-x-4">
                           <div className="relative group">
                             <ImMail 
-                              className="text-blue-500 cursor-pointer text-lg hover:text-blue-700 transition-colors" 
-                              onClick={() => openMailModal(recruiter.email)}
+                              className={`text-lg transition-colors ${
+                                user?.role === 'admin' 
+                                  ? 'text-blue-500 cursor-pointer hover:text-blue-700' 
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              onClick={() => {
+                                if (user?.role === 'admin') {
+                                  openMailModal(recruiter.email);
+                                } else {
+                                  toast.showError('Only admin users can send emails');
+                                }
+                              }}
                             />
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              Send Mail
+                              {user?.role === 'admin' ? 'Send Mail' : 'Admin only'}
                             </span>
                           </div>
                           <div className="relative group">
@@ -381,16 +707,33 @@ export default function RecruiterDirectory() {
                             </span>
                           </div>
                           <div className="relative group">
-                            <MdBlock 
-                              className="text-red-500 cursor-pointer text-xl hover:text-red-700 transition-colors" 
-                              onClick={() => setBlockModal({ 
-                                isOpen: true, 
-                                recruiter, 
-                                isUnblocking: recruiter.status === 'Blocked' 
-                              })}
-                            />
+                            {operationLoading[`block_${recruiter.id}`] ? (
+                              <FaSpinner className="animate-spin text-gray-500 text-xl" />
+                            ) : (
+                              <MdBlock 
+                                className={`text-xl transition-colors ${
+                                  user?.role === 'admin' 
+                                    ? 'text-red-500 cursor-pointer hover:text-red-700' 
+                                    : 'text-gray-400 cursor-not-allowed'
+                                }`}
+                                onClick={() => {
+                                  if (user?.role === 'admin') {
+                                    setBlockModal({ 
+                                      isOpen: true, 
+                                      recruiter, 
+                                      isUnblocking: recruiter.status === 'Blocked' 
+                                    });
+                                  } else {
+                                    toast.showError('Only admin users can block/unblock recruiters');
+                                  }
+                                }}
+                              />
+                            )}
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              {recruiter.status === 'Active' ? 'Block' : 'Unblock'}
+                              {user?.role === 'admin' 
+                                ? (recruiter.status === 'Active' ? 'Block' : 'Unblock')
+                                : 'Admin only'
+                              }
                             </span>
                           </div>
                           <div className="relative group flex justify-center">
@@ -426,6 +769,121 @@ export default function RecruiterDirectory() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {!loading && !error && filteredRecruiters.length > pagination.itemsPerPage && (
+          <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex flex-1 justify-between sm:hidden">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                disabled={pagination.currentPage === 1}
+                className={`relative inline-flex items-center rounded-md px-4 py-2 text-sm font-medium ${
+                  pagination.currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border border-gray-300`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                disabled={pagination.currentPage === totalPages}
+                className={`relative ml-3 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium ${
+                  pagination.currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                } border border-gray-300`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing{' '}
+                  <span className="font-medium">
+                    {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-medium">
+                    {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+                  </span>{' '}
+                  of <span className="font-medium">{pagination.totalItems}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                    disabled={pagination.currentPage === 1}
+                    className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-sm font-medium ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 ${
+                      pagination.currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-400 hover:bg-gray-50 focus:z-20'
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <FaChevronUp className="h-5 w-5 rotate-90" aria-hidden="true" />
+                  </button>
+                  
+                  {/* Page numbers */}
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNumber = index + 1;
+                    const isCurrentPage = pageNumber === pagination.currentPage;
+                    
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                      pageNumber === 1 ||
+                      pageNumber === totalPages ||
+                      (pageNumber >= pagination.currentPage - 1 && pageNumber <= pagination.currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNumber }))}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 ${
+                            isCurrentPage
+                              ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                              : 'bg-white text-gray-900 hover:bg-gray-50 focus:z-20'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                    
+                    // Show ellipsis
+                    if (pageNumber === pagination.currentPage - 2 || pageNumber === pagination.currentPage + 2) {
+                      return (
+                        <span
+                          key={pageNumber}
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    
+                    return null;
+                  })}
+                  
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                    disabled={pagination.currentPage === totalPages}
+                    className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-sm font-medium ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 ${
+                      pagination.currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-400 hover:bg-gray-50 focus:z-20'
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <FaChevronUp className="h-5 w-5 -rotate-90" aria-hidden="true" />
+                  </button>
+                </nav>
+              </div>
+            </div>
           </div>
         )}
 
@@ -476,7 +934,35 @@ export default function RecruiterDirectory() {
 }
 
 const JobDescriptionModal = ({ isOpen, recruiter, onClose }) => {
-  console.log('JobDescriptionModal props:', { isOpen, recruiter, onClose });
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const loadJobs = async () => {
+      if (!recruiter?.email) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const recruiterJobs = await getRecruiterJobs(recruiter.email);
+        setJobs(recruiterJobs);
+      } catch (err) {
+        console.error('Error loading recruiter jobs:', err);
+        setError('Failed to load job descriptions');
+        // Fallback to jobs from recruiter object if available
+        setJobs(recruiter.jobs || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen && recruiter) {
+      loadJobs();
+    }
+  }, [isOpen, recruiter]);
+  
+  console.log('JobDescriptionModal props:', { isOpen, recruiter, jobs: jobs.length });
   if (!isOpen || !recruiter) return null;
 
   return (
@@ -499,9 +985,24 @@ const JobDescriptionModal = ({ isOpen, recruiter, onClose }) => {
 
         {/* Modal Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {recruiter.jobs && recruiter.jobs.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <FaSpinner className="animate-spin text-blue-600 mr-3" />
+              <span className="text-gray-600">Loading job descriptions...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="text-red-600 mb-2">{error}</div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : jobs && jobs.length > 0 ? (
             <div className="space-y-6">
-              {recruiter.jobs.map((job, index) => (
+              {jobs.map((job, index) => (
                 <div key={job.id || index} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
                   {/* Job Header */}
                   <div className="flex justify-between items-start mb-4">
@@ -520,14 +1021,20 @@ const JobDescriptionModal = ({ isOpen, recruiter, onClose }) => {
                         </span>
                         <span className="flex items-center">
                           <FaCalendarAlt className="mr-1" />
-                          {job.createdAt ? new Date(job.createdAt.toMillis()).toLocaleDateString() : 'Date not available'}
+                          {job.createdAt ? (
+                            job.createdAt.toMillis ? 
+                              new Date(job.createdAt.toMillis()).toLocaleDateString() :
+                              new Date(job.createdAt).toLocaleDateString()
+                          ) : 'Date not available'}
                         </span>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      job.status === 'active' || job.status === 'posted' ? 'bg-green-100 text-green-800' : 
+                      job.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
                     }`}>
-                      {job.status || 'Active'}
+                      {job.status === 'posted' ? 'Active' : (job.status || 'Draft')}
                     </span>
                   </div>
 
@@ -633,7 +1140,11 @@ const JobDescriptionModal = ({ isOpen, recruiter, onClose }) => {
                       <div className="bg-white p-3 rounded border text-sm text-gray-600">
                         {job.driveDate && (
                           <div className="mb-1">
-                            <span className="font-medium">Date:</span> {new Date(job.driveDate).toLocaleDateString()}
+                            <span className="font-medium">Date:</span> {
+                              job.driveDate.toMillis ? 
+                                new Date(job.driveDate.toMillis()).toLocaleDateString() :
+                                new Date(job.driveDate).toLocaleDateString()
+                            }
                           </div>
                         )}
                         {job.driveVenues && job.driveVenues.length > 0 && (
@@ -1173,13 +1684,27 @@ const MailModal = ({ isModalOpen, closeMailModal, emailData, setEmailData, handl
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <button
-                onClick={handleSendWithRecipients}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                onClick={handleSendMail}
+                disabled={emailSending}
+                className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
+                  emailSending 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } text-white`}
               >
-                <span>Send</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+                {emailSending ? (
+                  <>
+                    <FaSpinner className="animate-spin w-4 h-4" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </>
+                )}
               </button>
               <button className="p-2 rounded-full hover:bg-gray-100 text-gray-600" title="Save draft">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

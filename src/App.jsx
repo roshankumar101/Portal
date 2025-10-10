@@ -26,7 +26,7 @@ import Unsubscribe from './pages/Unsubscribe'
 import { useAuth } from './hooks/useAuth'
 import { AuthProvider } from './context/AuthContext'
 import AuthRedirect from './components/AuthRedirect'
-import DatabaseTest from './components/DatabaseTest'
+import { ToastProvider } from './components/ui/Toast'
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -173,7 +173,6 @@ function AppContent() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/dev-team" element={<DevTeam />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
-        <Route path="/test" element={<DatabaseTest />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute allowRoles={['student']} />}>
@@ -198,7 +197,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   )
 }

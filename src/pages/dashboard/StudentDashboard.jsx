@@ -71,7 +71,7 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dragRef = useRef(null);
-  const [batch, setBatch] = useState('2023-2027');
+  const [batch, setBatch] = useState('23-27');
   const [center, setCenter] = useState('Bangalore');
 
 
@@ -208,7 +208,7 @@ export default function StudentDashboard() {
           phone: profileData.phone || '',
           enrollmentId: profileData.enrollmentId || '',
           cgpa: profileData.cgpa?.toString?.() || '',
-          batch: profileData.batch || '2023-2027', // Default batch
+          batch: profileData.batch || '23-27', // Default batch
           center: profileData.center || 'Bangalore', // Default center
           bio: profileData.bio || '',
           Headline: profileData.Headline || '',
@@ -267,7 +267,7 @@ export default function StudentDashboard() {
     } catch (err) {
       console.warn('Failed to load profile data', err);
       // Set reasonable defaults on error
-      setBatch('2023-2027');
+      setBatch('23-27');
       setCenter('Bangalore');
       setDataLoaded(true);
     }
@@ -1479,9 +1479,9 @@ export default function StudentDashboard() {
                       }}
                     >
                       <option value="">Select Batch</option>
-                      <option value="2022-2026">2025-2029</option>
-                      <option value="2024-2028">2024-2028</option>
-                      <option value="2023-2027">2023-2027</option>
+                      <option value="25-29">25-29</option>
+                      <option value="24-28">24-28</option>
+                      <option value="23-27">23-27</option>
                     </select>
                     {validationErrors.batch && (
                       <p className="text-red-500 text-sm mt-1">{validationErrors.batch}</p>

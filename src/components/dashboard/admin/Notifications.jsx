@@ -1,49 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FaBell, 
-  FaCheck, 
-  FaTimes, 
-  FaEnvelope, 
-  FaCalendarAlt,
-  FaBriefcase,
+  FaUserGraduate, 
+  FaBriefcase, 
+  FaClipboardCheck, 
+  FaUsers, 
+  FaSearch, 
+  FaFilter,
+  FaCheck,
+  FaTimes,
   FaTrash,
-  FaUserGraduate,
-  FaQuestionCircle,
-  FaSearch,
   FaEye,
-  FaReply,
+  FaEyeSlash,
+  FaExclamationTriangle,
+  FaInfoCircle,
   FaCheckCircle,
-  FaPaperPlane,
-  FaRegCommentDots,
-  FaFilePdf,
-  FaFileAlt,
-  FaUserTie,
-  FaGraduationCap,
-  FaClipboardCheck,
-  FaUsers,
-  FaChartLine,
-  FaUniversity,
-  FaIdBadge,
   FaClock,
-  FaLink,
-  FaDownload,
-  FaCog,
-  FaComment,
-  FaShare,
-  FaEnvelopeOpen,
+  FaChevronDown,
+  FaChevronUp,
+  FaSync,
   FaSpinner,
+  FaEnvelopeOpen,
+  FaQuestionCircle,
+  FaChartLine,
+  FaCalendarAlt,
+  FaReply
 } from 'react-icons/fa';
-
-// Import from the single queries.js file
 import { 
   subscribeToNotifications, 
   markNotificationAsRead, 
   deleteNotification,
+  QUERY_STATUS,
+  QUERY_TYPES,
   NOTIFICATION_TYPES,
   PRIORITY_LEVELS 
 } from '../../../services/queries';
+import { markAllAsReadForCurrentUser } from '../../../services/notificationActions';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Notifications = () => {
+  const { getPendingAdminRequests, approveAdminRequest, rejectAdminRequest } = useAuth();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -53,6 +49,11 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
+  
+  // Admin requests state
+  const [adminRequests, setAdminRequests] = useState([]);
+  const [loadingAdminRequests, setLoadingAdminRequests] = useState(false);
 
   // Subscribe to real-time notifications from Firebase
   useEffect(() => {
@@ -72,6 +73,55 @@ const Notifications = () => {
       }
     };
   }, []);
+
+  // Load admin requests when admin_coordination filter is active
+  useEffect(() => {
+    if (activeFilter === 'admin_coordination') {
+      loadAdminRequests();
+    }
+  }, [activeFilter]);
+
+  const loadAdminRequests = async () => {
+    try {
+      setLoadingAdminRequests(true);
+      const requests = await getPendingAdminRequests();
+      setAdminRequests(requests);
+    } catch (error) {
+      console.error('Error loading admin requests:', error);
+    } finally {
+      setLoadingAdminRequests(false);
+    }
+  };
+
+  // Handle admin request approval
+  const handleApproveAdmin = async (requestId, requestUid, email) => {
+    setActionLoading(prev => ({ ...prev, [`admin_${requestId}`]: 'approving' }));
+    try {
+      await approveAdminRequest(requestId, requestUid);
+      setAdminRequests(prev => prev.filter(req => req.id !== requestId));
+      console.log(`✅ Admin request approved for ${email}`);
+    } catch (error) {
+      console.error('Error approving admin request:', error);
+      alert(`Failed to approve ${email}: ${error.message}`);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`admin_${requestId}`]: null }));
+    }
+  };
+
+  // Handle admin request rejection
+  const handleRejectAdmin = async (requestId, requestUid, email) => {
+    setActionLoading(prev => ({ ...prev, [`admin_${requestId}`]: 'rejecting' }));
+    try {
+      await rejectAdminRequest(requestId, requestUid);
+      setAdminRequests(prev => prev.filter(req => req.id !== requestId));
+      console.log(`❌ Admin request rejected for ${email}`);
+    } catch (error) {
+      console.error('Error rejecting admin request:', error);
+      alert(`Failed to reject ${email}: ${error.message}`);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`admin_${requestId}`]: null }));
+    }
+  };
 
   // Get BIG notification icon based on type - MATCHING STUDENT QUERY ICONS
   const getNotificationIcon = (type) => {
@@ -206,6 +256,37 @@ const Notifications = () => {
     }
   };
 
+  // Mark all notifications as read
+  const handleMarkAllAsRead = async () => {
+    if (markingAllAsRead) return;
+    
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    if (unreadCount === 0) {
+      alert('No unread notifications to mark as read.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to mark all ${unreadCount} unread notifications as read?`)) {
+      return;
+    }
+
+    setMarkingAllAsRead(true);
+    
+    try {
+      const result = await markAllAsReadForCurrentUser();
+      console.log('✅ Mark all as read result:', result);
+      
+      if (result.success) {
+        alert(`Successfully marked ${result.updatedCount} notifications as read!`);
+      }
+    } catch (error) {
+      console.error('❌ Error marking all as read:', error);
+      alert('Failed to mark all notifications as read: ' + error.message);
+    } finally {
+      setMarkingAllAsRead(false);
+    }
+  };
+
   // Get filter counts with proper counting
   const getFilterCounts = () => {
     const counts = {
@@ -223,8 +304,8 @@ const Notifications = () => {
       ).length,
       admin_coordination: notifications.filter(n => 
         n.type === 'admincollab' || n.type === 'admin_coordination'
-      ).length,
-      unread: notifications.filter(n => !n.isRead).length,
+      ).length + adminRequests.length,
+      unread: notifications.filter(n => !n.isRead).length + adminRequests.filter(req => !req.isApproved && !req.isRejected).length,
       high_priority: notifications.filter(n => 
         n.priority === PRIORITY_LEVELS.HIGH || n.priority === 'high'
       ).length
@@ -321,10 +402,18 @@ const Notifications = () => {
             
             {/* Mark All Read Button - NO ICON */}
             <button 
-              onClick={() => {/* markAllAsRead functionality */}}
-              className="ml-3 px-4 py-2.5 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-200 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              onClick={handleMarkAllAsRead}
+              disabled={markingAllAsRead || loadingNotifications}
+              className="ml-3 px-4 py-2.5 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-200 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Mark all as read
+              {markingAllAsRead ? (
+                <span className="flex items-center gap-2">
+                  <FaSpinner className="animate-spin w-3 h-3" />
+                  Marking as read...
+                </span>
+              ) : (
+                'Mark all as read'
+              )}
             </button>
           </div>
         </div>
@@ -511,6 +600,100 @@ const Notifications = () => {
                     </div>
                   </div>
                 ))}
+                
+                {/* Admin Requests Section - Only show when admin_coordination filter is active */}
+                {activeFilter === 'admin_coordination' && (
+                  <>
+                    {adminRequests.length > 0 && (
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                          <FaUsers className="mr-2 text-violet-600" />
+                          Pending Admin Requests ({adminRequests.length})
+                        </h3>
+                        
+                        {loadingAdminRequests ? (
+                          <div className="text-center py-8">
+                            <FaSync className="animate-spin text-2xl text-gray-400 mx-auto mb-2" />
+                            <p className="text-gray-500">Loading admin requests...</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {adminRequests.map((request) => (
+                              <div
+                                key={request.id}
+                                className="p-4 bg-gradient-to-r from-violet-50 to-violet-100 border border-violet-200 rounded-xl"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-violet-200 rounded-full flex items-center justify-center">
+                                      <span className="text-violet-700 font-semibold text-sm">
+                                        {request.email.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold text-gray-900">{request.email}</h4>
+                                      <p className="text-sm text-gray-600">
+                                        Requested: {new Date(request.createdAt?.toDate?.() || request.createdAt).toLocaleDateString()}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        UID: <code className="bg-gray-200 px-1 rounded">{request.uid}</code>
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={() => handleApproveAdmin(request.id, request.uid, request.email)}
+                                      disabled={actionLoading[`admin_${request.id}`]}
+                                      className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {actionLoading[`admin_${request.id}`] === 'approving' ? (
+                                        <>
+                                          <FaSync className="animate-spin text-xs" />
+                                          Approving...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaCheck className="text-xs" />
+                                          Approve
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectAdmin(request.id, request.uid, request.email)}
+                                      disabled={actionLoading[`admin_${request.id}`]}
+                                      className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                      {actionLoading[`admin_${request.id}`] === 'rejecting' ? (
+                                        <>
+                                          <FaSync className="animate-spin text-xs" />
+                                          Rejecting...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaTimes className="text-xs" />
+                                          Reject
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {adminRequests.length === 0 && !loadingAdminRequests && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 text-center py-8">
+                        <FaUsers className="text-4xl text-gray-300 mx-auto mb-3" />
+                        <h3 className="text-lg font-medium text-gray-600 mb-2">No Pending Admin Requests</h3>
+                        <p className="text-gray-500">All admin requests have been processed.</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

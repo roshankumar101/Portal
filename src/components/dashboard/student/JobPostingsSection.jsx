@@ -1,61 +1,97 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, Loader } from 'lucide-react';
-import AwsLogoUrl from '../../../assets/Amazon_Web_Services-Logo.wine.svg';
-
-const companySvgs = {
-  Google: (
-    <svg
-      viewBox="0 0 533.5 544.3"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-8 h-8"
-    >
-      <path fill="#4285F4" d="M533.5 278.4c0-17.3-1.6-34-4.7-50.2H272v95.4h147c-6.3 34-25 62.8-53.4 82.1l86.1 67.3c50.4-46.5 81.8-114.9 81.8-194.6z" />
-      <path fill="#34A853" d="M272 544.3c72.1 0 132.6-23.9 176.8-65.2l-86.1-67.3c-23.9 16-54.7 25.5-90.7 25.5-69.6 0-128.6-47-149.7-110.3L31 362.9C76.6 458 167.8 544.3 272 544.3z" />
-      <path fill="#FBBC05" d="M122.3 327.1c-10.9-32-10.9-66.8 0-98.8L31 181c-41.9 83.8-41.9 183.6 0 267.4l91.3-71.3z" />
-      <path fill="#EA4335" d="M272 107.7c39.2-.6 76.9 13.7 106 39.7l79-79C416.4 24.4 346.8-1.6 272 0 167.8 0 76.6 86.3 31 181l91.3 47.3C143.3 154.7 202.3 107.7 272 107.7z" />
-    </svg>
-  ),
-  Microsoft: (
-    <svg viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
-      <rect width="10" height="10" x="0" y="0" fill="#F25022" />
-      <rect width="10" height="10" x="12" y="0" fill="#7FBA00" />
-      <rect width="10" height="10" x="0" y="12" fill="#00A4EF" />
-      <rect width="10" height="10" x="12" y="12" fill="#FFB900" />
-    </svg>
-  ),
-
-  Amazon: <img src={AwsLogoUrl} alt="Amazon Web Services logo" className="w-12 h-12" />,
-
-  Facebook: (
-    <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="#1877F2">
-      <path d="M18 0C8 0 0 8 0 18c0 9 7 16.5 16 17.8v-12.6h-4v-5.3h4v-4c0-4 2.5-6 6-6 1.7 0 3 .1 3 .1v3.5h-2c-1.8 0-2.3 1.1-2.3 2.3v2.6h4l-.6 5.3h-3.5V36c8-1.5 14-8.8 14-17.7C36 8 28 0 18 0z" />
-    </svg>
-  ),
-  Apple: (
-    <svg viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg" className="w-8 h-10" fill="black">
-      <path d="M318.7 268c-.2-37.3 16.4-65.5 51.2-86-19.3-28.1-48.5-44-92-47.7-39-3.5-81.4 23.4-96.1 23.4-15.3 0-49-22.7-75.8-22-55.4 1-114.6 32.2-114.6 96.5 0 28.7 10.8 59.1 31.7 95.9 30.3 52.6 70.5 111.8 128.2 110 25.2-.6 43-15.9 72.1-15.9 28.4 0 45.6 15.9 75.9 15.5 30.5-.4 62.3-28.8 85.6-81-50.2-19.2-96.3-80.2-94.2-88.7zM251.4 92c17.4-21.1 29.2-50.6 25.9-80-24.9 1-54.8 17-72.3 38.5-15.8 19.3-29.9 49.9-26.1 78.8 27.5 2.1 55.1-14.8 72.5-37.3z" />
-    </svg>
-  ),
-  PwC: (
-    <svg viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg" className="w-24 h-6">
-      <rect width="50" height="50" fill="#FF6600" />
-      <rect x="50" width="50" height="35" fill="#FF9900" />
-      <rect x="100" width="100" height="20" fill="#FFCC00" />
-    </svg>
-  ),
-  Deloitte: (
-    <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" className="w-20 h-6">
-      <text x="0" y="40" fontSize="36" fontFamily="Arial, sans-serif" fill="black">
-        Deloitte
-      </text>
-      <circle cx="185" cy="30" r="10" fill="#86BC25" />
-    </svg>
-  ),
-};
 
 export default function JobPostingsSection({ jobs, onApply, hasApplied, applying, onExploreMore, onKnowMore }) {
-  const getCompanySvg = (companyName) => {
-    return companyName && companySvgs[companyName] ? companySvgs[companyName] : null;
+  const [logoStates, setLogoStates] = useState({});
+
+  // Function to get company logo URL from Clearbit API or other sources
+  const getCompanyLogoUrl = (companyName) => {
+    if (!companyName) return null;
+    
+    // Clean company name for URL
+    const cleanName = companyName.toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    
+    // Try multiple logo sources
+    const logoSources = [
+      `https://logo.clearbit.com/${cleanName}.com`,
+      `https://img.logo.dev/${cleanName}.com?token=pk_X-XcVpYzThmk7wK4y3w_tQ`, // Logo.dev API
+      `https://logo.uplead.com/${cleanName}.com`,
+      `https://api.brandfetch.io/v2/search/${companyName}`, // Brandfetch API
+    ];
+    
+    return logoSources[0]; // Primary source: Clearbit
+  };
+
+  // Handle logo loading states
+  const handleLogoLoad = (companyName) => {
+    setLogoStates(prev => ({
+      ...prev,
+      [companyName]: 'loaded'
+    }));
+  };
+
+  const handleLogoError = (companyName) => {
+    setLogoStates(prev => ({
+      ...prev,
+      [companyName]: 'error'
+    }));
+  };
+
+  // Get company initial for fallback
+  const getCompanyInitial = (companyName) => {
+    return companyName ? companyName.charAt(0).toUpperCase() : '?';
+  };
+
+  // Get company color for fallback avatar
+  const getCompanyColor = (companyName) => {
+    const colors = [
+      'bg-gradient-to-r from-blue-500 to-purple-600',
+      'bg-gradient-to-r from-green-500 to-teal-600',
+      'bg-gradient-to-r from-purple-500 to-pink-600',
+      'bg-gradient-to-r from-red-500 to-orange-600',
+      'bg-gradient-to-r from-indigo-500 to-blue-600',
+      'bg-gradient-to-r from-pink-500 to-rose-600',
+      'bg-gradient-to-r from-teal-500 to-cyan-600',
+      'bg-gradient-to-r from-orange-500 to-red-600',
+    ];
+    const index = companyName ? companyName.length % colors.length : 0;
+    return colors[index];
+  };
+
+  // Render company logo or fallback
+  const renderCompanyLogo = (companyName) => {
+    const logoUrl = getCompanyLogoUrl(companyName);
+    const logoState = logoStates[companyName];
+
+    if (logoUrl && logoState !== 'error') {
+      return (
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+          <img
+            src={logoUrl}
+            alt={`${companyName} logo`}
+            className="w-full h-full object-contain"
+            onLoad={() => handleLogoLoad(companyName)}
+            onError={() => handleLogoError(companyName)}
+            style={{ display: logoState === 'error' ? 'none' : 'block' }}
+          />
+          {/* Fallback while loading or on error */}
+          {(logoState === 'error' || !logoState) && (
+            <div className={`w-full h-full rounded-full ${getCompanyColor(companyName)} flex items-center justify-center text-white font-bold text-sm`}>
+              {getCompanyInitial(companyName)}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Fallback to letter avatar
+    return (
+      <div className={`w-10 h-10 rounded-full ${getCompanyColor(companyName)} flex items-center justify-center text-white font-bold text-sm`}>
+        {getCompanyInitial(companyName)}
+      </div>
+    );
   };
 
   const formatSalary = (salary) => {
@@ -79,7 +115,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
     }
   };
 
-  // Show all jobs, not just those with SVGs
+  // Show all jobs from backend (already filtered by StudentDashboard with case-insensitive matching)
   const displayJobs = jobs || [];
 
   return (
@@ -93,6 +129,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
           {displayJobs.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No job postings available at the moment.</p>
+              <p className="text-gray-400 text-sm mt-2">Complete your profile to see targeted job opportunities.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -109,37 +146,30 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
 
               {/* Job Listings */}
               {displayJobs.slice(0, 3).map((job) => {
-                const companyName = job.company || 'Unknown Company';
-                const logoSvg = getCompanySvg(companyName);
+                const companyName = job.company || job.companyName || 'Unknown Company';
 
                 return (
                   <div
                     key={job.id}
-                    className="grid grid-cols-5 gap-6 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:bg-[#f0f8fa] hover:shadow-md transition-all duration-200"
+                    className="grid grid-cols-5 gap-6 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:bg-[#f0f8fa] hover:shadow-md transition-all duration-200 border border-gray-200"
                   >
                     <div className="flex items-center space-x-3">
-                      {logoSvg ? (
-                        <div className="w-10 h-8">{logoSvg}</div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {companyName.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      {renderCompanyLogo(companyName)}
                       <span className="text-base font-semibold text-black truncate">
                         {companyName}
                       </span>
                     </div>
 
                     <div className="text-sm font-medium text-gray-800 flex items-center whitespace-nowrap overflow-hidden text-ellipsis">
-                      {job.jobTitle || 'Position Available'}
+                      {job.jobTitle || job.title || 'Position Available'}
                     </div>
 
                     <div className="text-sm text-gray-600 flex items-center whitespace-nowrap">
-                      {formatDate(job.driveDate)}
+                      {formatDate(job.driveDate || job.applicationDeadline)}
                     </div>
 
                     <div className="text-sm font-medium text-gray-800 flex items-center whitespace-nowrap">
-                      {formatSalary(job.salary)}
+                      {formatSalary(job.salary || job.ctc)}
                     </div>
 
                     <div className="flex justify-end space-x-2">
@@ -195,5 +225,4 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
       </fieldset>
     </div>
   );
-};
-
+}

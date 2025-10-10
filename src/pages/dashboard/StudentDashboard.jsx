@@ -64,27 +64,25 @@ export default function StudentDashboard() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab]);
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(15); // Default 15% (within 5%-15%)
+  const [sidebarWidth, setSidebarWidth] = useState(15);
   const [isDragging, setIsDragging] = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dragRef = useRef(null);
-  const [batch, setBatch] = useState('23-27');
-  const [center, setCenter] = useState('Bangalore');
-
-
-
-  // New state for checkbox in Edit Profile
+  
+  // UPDATED: Remove static profile data - students must have complete profiles
+  const [batch, setBatch] = useState('');
+  const [center, setCenter] = useState('');
+  const [school, setSchool] = useState('');
+  
+  // Other profile states
   const [isChecked, setIsChecked] = useState(false);
-  
-  // Validation state for real-time feedback
   const [validationErrors, setValidationErrors] = useState({});
-  
-  // Alert state for Edit Profile
   const [alertMessage, setAlertMessage] = useState(null);
-  const [alertType, setAlertType] = useState('info'); // 'success', 'error', 'warning', 'info'
+  const [alertType, setAlertType] = useState('info');
   const [showFloatingAlert, setShowFloatingAlert] = useState(false);
 
   // Edit Profile form state
@@ -105,9 +103,9 @@ export default function StudentDashboard() {
   const [hackerrank, setHackerrank] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [school, setSchool] = useState('');
   const [profilePhoto, setProfilePhoto] = useState('');
   const [jobFlexibility, setJobFlexibility] = useState('');
+  
   // Resume state
   const [resumeInfo, setResumeInfo] = useState({
     url: null,
@@ -134,120 +132,177 @@ export default function StudentDashboard() {
   // Job Description Modal state
   const [selectedJob, setSelectedJob] = useState(null);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
-  
 
-  // Handle URL parameters to set active tab
-  useEffect(() => {
-    const tab = searchParams.get('tab');
+  // Case-insensitive string matching helper
+  const matchesIgnoreCase = (str1, str2) => {
+    if (!str1 || !str2) return false;
+    return str1.toLowerCase().trim() === str2.toLowerCase().trim();
+  };
 
-    // Listen for edit profile button clicks
-    const handleEditProfileClick = () => {
-      setActiveTab('editProfile');
-    };
-
-    // Listen for navigate to jobs event
-    const handleNavigateToJobs = () => {
-      setActiveTab('jobs');
-    };
-
-    // Listen for navigate to applications event
-    const handleNavigateToApplications = () => {
-      setActiveTab('applications');
-    };
-
-
-    window.addEventListener('editProfileClicked', handleEditProfileClick);
-    window.addEventListener('navigateToJobs', handleNavigateToJobs);
-    window.addEventListener('navigateToApplications', handleNavigateToApplications);
-
-    // Only set tab from URL if it's a valid tab and not on page refresh
-    if (tab && ['dashboard', 'jobs', 'calendar', 'applications', 'resources', 'resume', 'editProfile'].includes(tab)) {
-      // Check if this is a fresh navigation (not a refresh)
-      const isRefresh = window.performance.navigation?.type === 1 ||
-        window.performance.getEntriesByType('navigation')[0]?.type === 'reload';
-
-      if (!isRefresh || tab !== 'editProfile') {
-        setActiveTab(tab);
-      } else {
-        // On refresh, always default to dashboard
-        setActiveTab('dashboard');
-        // Clear the URL parameter
-        navigate('/student', { replace: true });
-      }
-    } else {
-      setActiveTab('dashboard');
+  // UPDATED: Enhanced job filtering with case-insensitive matching for targetSchools, targetCenters, targetBatches
+  const loadJobsData = useCallback(() => {
+    // Only load jobs if student profile is complete
+    if (!batch || !center || !school) {
+      console.log('⚠️ Student profile incomplete - batch, center, or school missing');
+      setJobs([]);
+      setLoadingJobs(false);
+      return;
     }
 
-    return () => {
-      window.removeEventListener('editProfileClicked', handleEditProfileClick);
-      window.removeEventListener('navigateToJobs', handleNavigateToJobs);
-      window.removeEventListener('navigateToApplications', handleNavigateToApplications);
-    };
-  }, [searchParams, navigate]);
+    setLoadingJobs(true);
+    
+    console.log('🔄 Loading jobs for student profile:', {
+      batch: batch.trim(),
+      center: center.trim(),
+      school: school.trim()
+    });
+    
+    const unsubscribe = subscribePostedJobs((jobsData) => {
+      console.log('📦 Raw jobs received from Firestore:', jobsData?.length || 0);
+      
+      if (jobsData && jobsData.length > 0) {
+        const filteredJobs = jobsData.filter(job => {
+          // Get job target criteria from Firestore fields
+          const jobTargetCenters = job.targetCenters || [];
+          const jobTargetSchools = job.targetSchools || [];
+          const jobTargetBatches = job.targetBatches || [];
+          
+          console.log('🎯 Checking job eligibility:', {
+            jobId: job.id,
+            jobTitle: job.jobTitle || job.title,
+            targetCenters: jobTargetCenters,
+            targetSchools: jobTargetSchools,
+            targetBatches: jobTargetBatches
+          });
+          
+          // If no target filters are set in Firestore, job is available to all students
+          if (jobTargetCenters.length === 0 && jobTargetSchools.length === 0 && jobTargetBatches.length === 0) {
+            console.log('✅ Job has no targeting filters - available to all students');
+            return true;
+          }
+          
+          // Check if student matches target criteria (case-insensitive)
+          let centerMatch = true;
+          let schoolMatch = true;
+          let batchMatch = true;
+          
+          // Check targetCenters match (case-insensitive)
+          if (jobTargetCenters.length > 0) {
+            centerMatch = jobTargetCenters.some(targetCenter => 
+              matchesIgnoreCase(targetCenter, center)
+            );
+            console.log('🏢 Center eligibility check:', {
+              studentCenter: center,
+              jobTargetCenters: jobTargetCenters,
+              centerMatch: centerMatch
+            });
+          }
+          
+          // Check targetSchools match (case-insensitive)
+          if (jobTargetSchools.length > 0) {
+            schoolMatch = jobTargetSchools.some(targetSchool => 
+              matchesIgnoreCase(targetSchool, school)
+            );
+            console.log('🏫 School eligibility check:', {
+              studentSchool: school,
+              jobTargetSchools: jobTargetSchools,
+              schoolMatch: schoolMatch
+            });
+          }
+          
+          // Check targetBatches match (case-insensitive)
+          if (jobTargetBatches.length > 0) {
+            batchMatch = jobTargetBatches.some(targetBatch => 
+              matchesIgnoreCase(targetBatch, batch)
+            );
+            console.log('📚 Batch eligibility check:', {
+              studentBatch: batch,
+              jobTargetBatches: jobTargetBatches,
+              batchMatch: batchMatch
+            });
+          }
+          
+          // Student must match ALL specified target criteria from Firestore
+          const isEligible = centerMatch && schoolMatch && batchMatch;
+          
+          console.log('🔍 Final eligibility result:', {
+            jobId: job.id,
+            jobTitle: job.jobTitle || job.title,
+            centerMatch,
+            schoolMatch,
+            batchMatch,
+            isEligible,
+            studentProfile: { batch, center, school }
+          });
+          
+          return isEligible;
+        });
+        
+        console.log('✅ Job filtering completed:', {
+          totalJobsFromFirestore: jobsData.length,
+          eligibleJobsForStudent: filteredJobs.length,
+          studentProfile: { batch, center, school }
+        });
+        
+        setJobs(filteredJobs);
+      } else {
+        console.log('📭 No jobs found in Firestore');
+        setJobs([]);
+      }
+      setLoadingJobs(false);
+    }, { 
+      limitTo: 100, // Increased limit for better coverage
+      orderBy: 'createdAt',
+      orderDirection: 'desc'
+    });
 
-  // Load profile data function (optimized with caching and minimal loading)
+    return unsubscribe;
+  }, [batch, center, school]); // Re-filter when student profile changes
+
+  // UPDATED: Load profile data function without defaults
   const loadProfile = useCallback(async (forceRefresh = false) => {
     if (!user?.uid) return;
     
-    // Check if data is already loaded and fresh (within 2 minutes for faster updates)
+    // Check cache validity
     const now = Date.now();
     const twoMinutes = 2 * 60 * 1000;
     if (!forceRefresh && dataLoaded && lastLoadTime && (now - lastLoadTime) < twoMinutes) {
-      return; // Use cached data
+      return;
     }
     
     try {
-      // Load profile data with minimal processing
+      console.log('📖 Loading student profile from backend...');
       const profileData = await getStudentProfile(user.uid);
       
       if (profileData) {
-        // Batch update all state at once to prevent multiple re-renders
-        const updates = {
-          fullName: profileData.fullName || '',
-          email: profileData.email || '',
-          phone: profileData.phone || '',
-          enrollmentId: profileData.enrollmentId || '',
-          cgpa: profileData.cgpa?.toString?.() || '',
-          batch: profileData.batch || '23-27', // Default batch
-          center: profileData.center || 'Bangalore', // Default center
-          bio: profileData.bio || '',
-          Headline: profileData.Headline || '',
-          city: profileData.city || '',
-          stateRegion: profileData.stateRegion || profileData.state || '',
-          linkedin: profileData.linkedin || '',
-          leetcode: profileData.leetcode || '',
-          codeforces: profileData.codeforces || '',
-          gfg: profileData.gfg || '',
-          hackerrank: profileData.hackerrank || '',
-          githubUrl: profileData.githubUrl || profileData.github || '',
-          youtubeUrl: profileData.youtubeUrl || profileData.youtube || '',
-          school: profileData.school || '',
-          profilePhoto: profileData.profilePhoto || '',
-          jobFlexibility: profileData.jobFlexibility || ''
-        };
-
-        // Apply all updates at once
-        setFullName(updates.fullName);
-        setEmail(updates.email);
-        setPhone(updates.phone);
-        setEnrollmentId(updates.enrollmentId);
-        setCgpa(updates.cgpa);
-        setBatch(updates.batch);
-        setCenter(updates.center);
-        setBio(updates.bio);
-        setHeadline(updates.Headline);
-        setCity(updates.city);
-        setStateRegion(updates.stateRegion);
-        setLinkedin(updates.linkedin);
-        setLeetcode(updates.leetcode);
-        setCodeforces(updates.codeforces);
-        setGfg(updates.gfg);
-        setHackerrank(updates.hackerrank);
-        setGithubUrl(updates.githubUrl);
-        setYoutubeUrl(updates.youtubeUrl);
-        setSchool(updates.school);
-        setProfilePhoto(updates.profilePhoto);
-        setJobFlexibility(updates.jobFlexibility);
+        console.log('✅ Profile loaded:', {
+          batch: profileData.batch,
+          center: profileData.center,
+          school: profileData.school
+        });
+        
+        // Update all profile states - REMOVED DEFAULT VALUES
+        setFullName(profileData.fullName || '');
+        setEmail(profileData.email || '');
+        setPhone(profileData.phone || '');
+        setEnrollmentId(profileData.enrollmentId || '');
+        setCgpa(profileData.cgpa?.toString?.() || '');
+        setBatch(profileData.batch || ''); // No default - must be set
+        setCenter(profileData.center || ''); // No default - must be set
+        setSchool(profileData.school || ''); // No default - must be set
+        setBio(profileData.bio || '');
+        setHeadline(profileData.Headline || '');
+        setCity(profileData.city || '');
+        setStateRegion(profileData.stateRegion || profileData.state || '');
+        setLinkedin(profileData.linkedin || '');
+        setLeetcode(profileData.leetcode || '');
+        setCodeforces(profileData.codeforces || '');
+        setGfg(profileData.gfg || '');
+        setHackerrank(profileData.hackerrank || '');
+        setGithubUrl(profileData.githubUrl || profileData.github || '');
+        setYoutubeUrl(profileData.youtubeUrl || profileData.youtube || '');
+        setProfilePhoto(profileData.profilePhoto || '');
+        setJobFlexibility(profileData.jobFlexibility || '');
 
         // Load resume info if present
         if (profileData.resumeUrl) {
@@ -258,21 +313,19 @@ export default function StudentDashboard() {
             hasResume: true
           });
         }
+      } else {
+        console.log('⚠️ No profile data found - new user?');
+        // Keep empty states for new users
       }
       
-      // Mark data as loaded immediately
       setDataLoaded(true);
       setLastLoadTime(now);
       
     } catch (err) {
-      console.warn('Failed to load profile data', err);
-      // Set reasonable defaults on error
-      setBatch('23-27');
-      setCenter('Bangalore');
-      setDataLoaded(true);
+      console.error('❌ Failed to load profile data:', err);
+      setDataLoaded(true); // Still mark as loaded to prevent infinite retries
     }
   }, [user?.uid, dataLoaded, lastLoadTime]);
-
 
   const loadSkillsData = useCallback(async () => {
     if (!user?.uid) return;
@@ -292,57 +345,13 @@ export default function StudentDashboard() {
     
     setLoadingApplications(true);
     const unsubscribe = subscribeStudentApplications(user.uid, (applicationsData) => {
+      console.log('📋 Applications updated:', applicationsData?.length || 0);
       setApplications(applicationsData || []);
       setLoadingApplications(false);
     });
 
     return unsubscribe;
   }, [user?.uid]);
-
-  const loadJobsData = useCallback(() => {
-    setLoadingJobs(true);
-    
-    // Use subscribePostedJobs for better performance - only gets posted jobs
-    const unsubscribe = subscribePostedJobs((jobsData) => {
-      // Filter jobs based on student's profile
-      if (jobsData && jobsData.length > 0) {
-        const filteredJobs = jobsData.filter(job => {
-          // Check if job targets match student profile
-          const jobTargetCenters = job.targetCenters || [];
-          const jobTargetSchools = job.targetSchools || [];
-          const jobTargetBatches = job.targetBatches || [];
-          
-          // If no target filters are set, job is available to all students
-          if (jobTargetCenters.length === 0 && jobTargetSchools.length === 0 && jobTargetBatches.length === 0) {
-            return true;
-          }
-          
-          // Check if student matches any of the target criteria
-          const centerMatch = jobTargetCenters.length === 0 || jobTargetCenters.includes(center);
-          const schoolMatch = jobTargetSchools.length === 0 || jobTargetSchools.includes(school);
-          const batchMatch = jobTargetBatches.length === 0 || jobTargetBatches.includes(batch);
-          
-          // Student must match all specified target criteria
-          return centerMatch && schoolMatch && batchMatch;
-        });
-        
-        console.log('🎯 Filtered jobs for student:', {
-          total: jobsData.length,
-          filtered: filteredJobs.length,
-          studentCenter: center,
-          studentSchool: school,
-          studentBatch: batch
-        });
-        
-        setJobs(filteredJobs);
-      } else {
-        setJobs([]);
-      }
-      setLoadingJobs(false);
-    }, { limitTo: 50 }); // Get up to 50 posted jobs
-
-    return unsubscribe;
-  }, [center, school, batch]); // Add dependencies for student profile
 
   const handleApplyToJob = async (job) => {
     if (!user?.uid || !job?.id) {
@@ -353,24 +362,21 @@ export default function StudentDashboard() {
     try {
       setApplying(prev => ({ ...prev, [job.id]: true }));
       
-      console.log('Applying to job:', {
+      console.log('📝 Applying to job:', {
         jobId: job.id,
         jobTitle: job.jobTitle,
         companyId: job.companyId,
-        companyName: job.company?.name,
-        fullJob: job
+        companyName: job.company?.name
       });
       
-      // Extract companyId from job data or company object
       const companyId = job.companyId || job.company?.id || null;
-      console.log('Using companyId:', companyId);
-      
       await applyToJob(user.uid, job.id, companyId);
       
-      // No need to manually reload - real-time subscription will update automatically
+      console.log('✅ Application submitted successfully');
       
     } catch (error) {
-      console.error('Error applying to job:', error);
+      console.error('❌ Error applying to job:', error);
+      alert('Failed to apply to job. Please try again.');
     } finally {
       setApplying(prev => ({ ...prev, [job.id]: false }));
     }
@@ -382,7 +388,6 @@ export default function StudentDashboard() {
 
   // Job Description Modal handlers
   const handleKnowMore = (job) => {
-    console.log('handleKnowMore called with job:', job);
     setSelectedJob(job);
     setIsJobModalOpen(true);
   };
@@ -392,23 +397,58 @@ export default function StudentDashboard() {
     setSelectedJob(null);
   };
 
-  // Load data when user is available - separate profile from skills for faster loading
+  // Handle URL parameters to set active tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+
+    const handleEditProfileClick = () => setActiveTab('editProfile');
+    const handleNavigateToJobs = () => setActiveTab('jobs');
+    const handleNavigateToApplications = () => setActiveTab('applications');
+
+    window.addEventListener('editProfileClicked', handleEditProfileClick);
+    window.addEventListener('navigateToJobs', handleNavigateToJobs);
+    window.addEventListener('navigateToApplications', handleNavigateToApplications);
+
+    if (tab && ['dashboard', 'jobs', 'calendar', 'applications', 'resources', 'resume', 'editProfile'].includes(tab)) {
+      const isRefresh = window.performance.navigation?.type === 1 ||
+        window.performance.getEntriesByType('navigation')[0]?.type === 'reload';
+
+      if (!isRefresh || tab !== 'editProfile') {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('dashboard');
+        navigate('/student', { replace: true });
+      }
+    } else {
+      setActiveTab('dashboard');
+    }
+
+    return () => {
+      window.removeEventListener('editProfileClicked', handleEditProfileClick);
+      window.removeEventListener('navigateToJobs', handleNavigateToJobs);
+      window.removeEventListener('navigateToApplications', handleNavigateToApplications);
+    };
+  }, [searchParams, navigate]);
+
+  // Load profile when user is available
   useEffect(() => {
     if (user?.uid && !dataLoaded) {
       loadProfile();
     }
   }, [user?.uid, dataLoaded, loadProfile]);
 
-  // Load skills separately after profile is loaded
+  // Load skills after profile is loaded
   useEffect(() => {
     if (user?.uid && dataLoaded) {
       loadSkillsData();
     }
   }, [user?.uid, dataLoaded, loadSkillsData]);
 
-  // Always maintain real-time subscriptions for jobs and applications
+  // UPDATED: Maintain real-time subscriptions only when profile is complete
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.uid && batch && center && school) { // Only load jobs when profile is complete
+      console.log('🚀 Starting real-time subscriptions with complete profile');
+      
       const unsubscribeJobs = loadJobsData();
       const unsubscribeApplications = loadApplicationsData();
       
@@ -416,8 +456,15 @@ export default function StudentDashboard() {
         if (unsubscribeJobs) unsubscribeJobs();
         if (unsubscribeApplications) unsubscribeApplications();
       };
+    } else if (user?.uid) {
+      console.log('⏳ Waiting for complete profile before loading jobs');
+      // Start applications subscription even without complete profile
+      const unsubscribeApplications = loadApplicationsData();
+      return () => {
+        if (unsubscribeApplications) unsubscribeApplications();
+      };
     }
-  }, [user?.uid, loadJobsData, loadApplicationsData]);
+  }, [user?.uid, batch, center, school, loadJobsData, loadApplicationsData]);
 
   // Validation helper functions
   const validateEmail = (email) => {
@@ -570,58 +617,6 @@ export default function StudentDashboard() {
     setValidationErrors(errors);
   };
 
-  // Skills management functions
-  const handleSaveSkill = async () => {
-    if (!user?.uid) return;
-    
-    const { skillName, rating } = newSkill;
-    if (!skillName.trim()) {
-      alert('Please enter a skill name');
-      return;
-    }
-
-    try {
-      const skillData = {
-        studentId: user.uid,
-        skillName: skillName.trim(),
-        rating: parseInt(rating)
-      };
-
-      await addOrUpdateSkill(skillData);
-      
-      // Reload skills data
-      const updatedSkills = await getStudentSkills(user.uid);
-      setSkillsEntries(updatedSkills || []);
-      
-      // Reset form
-      setNewSkill({ skillName: '', rating: 1 });
-      
-      alert('Skill saved successfully!');
-    } catch (error) {
-      console.error('Error saving skill:', error);
-      alert('Failed to save skill');
-    }
-  };
-
-  const handleDeleteSkill = async (skillId) => {
-    if (!user?.uid || !skillId) return;
-    
-    if (!confirm('Are you sure you want to delete this skill?')) return;
-
-    try {
-      await deleteSkill(skillId);
-      
-      // Reload skills data
-      const updatedSkills = await getStudentSkills(user.uid);
-      setSkillsEntries(updatedSkills || []);
-      
-      alert('Skill deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting skill:', error);
-      alert('Failed to delete skill');
-    }
-  };
-
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!user?.uid) {
@@ -693,10 +688,6 @@ export default function StudentDashboard() {
         await createCompleteStudentProfile(user.uid, profileData, []);
       }
       
-      // Preload dashboard data while showing success message
-      const unsubscribe = loadJobsData();
-      // Note: cleanup handled by useEffect
-      
       setTimeout(() => {
         setShowFloatingAlert(false);
         setAlertMessage(null);
@@ -744,7 +735,7 @@ export default function StudentDashboard() {
     { id: 'applications', label: 'Track Applications', icon: ClipboardList },
     { id: 'resources', label: 'Placement Resources', icon: BookOpen },
     { id: 'editProfile', label: 'Edit Profile', icon: SquarePen },
-    { id: 'raiseQuery', label: 'Raise Query', icon: AlertCircle }, // Added new tab
+    { id: 'raiseQuery', label: 'Raise Query', icon: AlertCircle },
   ];
 
   const LeetCodeIcon = (props) => (
@@ -1040,9 +1031,7 @@ export default function StudentDashboard() {
       case 'resume':
         return (
           <div className="space-y-6">
-            {/* Outer card matching Edit Profile style */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              {/* Heading inside the card */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <FileText className="h-6 w-6 text-blue-600" />
@@ -1050,7 +1039,6 @@ export default function StudentDashboard() {
                 </h2>
               </div>
               
-              {/* Tab Navigation */}
               <div className="mb-6">
                 <div className="space-y-4">
                   <div className="flex border-b border-gray-200">
@@ -1111,44 +1099,6 @@ export default function StudentDashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Tab Content */}
-              {activeResumeTab === 'manager' && (
-                <div className="w-full">
-                  <ErrorBoundary>
-                    {user?.uid && (
-                      <ResumeManager 
-                        userId={user.uid}
-                        onResumeUpdate={handleResumeUpdate}
-                      />
-                    )}
-                  </ErrorBoundary>
-                </div>
-              )}
-
-              {activeResumeTab === 'analyzer' && (
-                <div className="w-full">
-                  <ErrorBoundary>
-                    {user?.uid && (
-                      <ResumeAnalyzer 
-                        resumeInfo={resumeInfo}
-                        userId={user.uid}
-                      />
-                    )}
-                  </ErrorBoundary>
-                </div>
-              )}
-
-
-              {activeResumeTab === 'enhancer' && (
-                <div className="w-full h-[70vh]">
-                  <ErrorBoundary>
-                    {user?.uid && (
-                      <ResumeEnhancer uid={user.uid} resumeId="default" />
-                    )}
-                  </ErrorBoundary>
-                </div>
-              )}
             </div>
           </div>
         );
@@ -1342,7 +1292,6 @@ export default function StudentDashboard() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h2>
               
-              
               <form className="space-y-6" onSubmit={handleSaveProfile}>
                 {/* Profile Photo Section - Top Row */}
                 <div className="flex gap-4 w-1/2 pr-3">
@@ -1377,7 +1326,6 @@ export default function StudentDashboard() {
                       </div>
                     </div>
                   </div>
-                  
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1499,9 +1447,9 @@ export default function StudentDashboard() {
                       }}
                     >
                       <option value="">Select School</option>
-                      <option value="School of Technology">School of Technology</option>
-                      <option value="School of Management">School of Management</option>
-                      <option value="School of HealthCare">School of HealthCare</option>
+                      <option value="SOT">School of Technology</option>
+                      <option value="SOM">School of Management</option>
+                      <option value="SOH">School of HealthCare</option>
                     </select>
                     {validationErrors.school && (
                       <p className="text-red-500 text-sm mt-1">{validationErrors.school}</p>
@@ -1519,12 +1467,12 @@ export default function StudentDashboard() {
                       }}
                     >
                       <option value="">Select Center</option>
-                      <option value="Bangalore">Bangalore</option>
-                      <option value="Noida">Noida</option>
-                      <option value="Lucknow">Lucknow</option>
-                      <option value="Pune">Pune</option>
-                      <option value="Patna">Patna</option>
-                      <option value="Indore">Indore</option>
+                      <option value="BANGLORE">Bangalore</option>
+                      <option value="NOIDA">Noida</option>
+                      <option value="LUCKNOW">Lucknow</option>
+                      <option value="PUNE">Pune</option>
+                      <option value="PATNA">Patna</option>
+                      <option value="INDORE">Indore</option>
                     </select>
                     {validationErrors.center && (
                       <p className="text-red-500 text-sm mt-1">{validationErrors.center}</p>
@@ -1589,7 +1537,7 @@ export default function StudentDashboard() {
                       onChange={(e) => setYoutubeUrl(e.target.value)}
                     />
                   </div>
-                  {school === 'School of Technology' && (
+                  {school === 'SOT' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">GitHub</label>
                       <input
@@ -1603,7 +1551,7 @@ export default function StudentDashboard() {
                   )}
                 </div>
 
-                {school === 'School of Technology' && (
+                {school === 'SOT' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">LeetCode</label>
@@ -1628,7 +1576,7 @@ export default function StudentDashboard() {
                   </div>
                 )}
 
-                {school === 'School of Technology' && (
+                {school === 'SOT' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">GeeksforGeeks</label>
@@ -1654,15 +1602,15 @@ export default function StudentDashboard() {
                 )}
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                    <textarea
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows="4"
-                      placeholder="Write a brief bio about yourself"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                    ></textarea>
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                  <textarea
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="4"
+                    placeholder="Write a brief bio about yourself"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                  ></textarea>
+                </div>
 
                 <div className="space-x-2 px-4 mb-2 text-xs">
                   <input
@@ -1672,7 +1620,7 @@ export default function StudentDashboard() {
                     onChange={() => setIsChecked(!isChecked)}
                   />
                   <label htmlFor="editCheckbox">
-                    I acknowledge that the information provided on this dashboard is accurate to the best of the institution’s knowledge. I understand that the institution shall not be held liable for any errors, omissions, or discrepancies.
+                    I acknowledge that the information provided on this dashboard is accurate to the best of the institution's knowledge. I understand that the institution shall not be held liable for any errors, omissions, or discrepancies.
                   </label>
                 </div>
 
@@ -1830,32 +1778,6 @@ export default function StudentDashboard() {
               width: `${100 - sidebarWidth}%`
             }}
           >
-            {mobileMenuOpen && (
-              <div className="md:hidden bg-white border-b border-gray-200 shadow-lg">
-                <div className="px-4 py-3">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Navigation</h3>
-                  <div className="space-y-2">
-                    {tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => handleTabClick(tab.id)}
-                          className={`flex items-center w-full px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
-                            : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-                            }`}
-                        >
-                          <Icon className="h-5 w-5 mr-3" />
-                          {tab.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="p-8">
               {renderContent()}
             </div>
@@ -1931,7 +1853,6 @@ export default function StudentDashboard() {
       )}
 
       {/* Job Description Modal */}
-      {console.log('Rendering modal with state:', { selectedJob, isJobModalOpen })}
       <JobDescription 
         job={selectedJob}
         isOpen={isJobModalOpen}

@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "seed": "node seed-database.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.0.0",
@@ -22,7 +21,6 @@
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
     "firebase": "^12.1.0",
-    "firebase-admin": "^12.7.0",
     "gsap": "^3.13.0",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.541.0",

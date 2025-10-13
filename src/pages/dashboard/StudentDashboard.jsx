@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import SampleResume from '../../assets/Docs/Resume(1).pdf';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import DashboardLayout from '../../components/dashboard/shared/DashboardLayout';
 import DashboardHome from '../../components/dashboard/student/DashboardHome';
 import JobDescription from '../../components/dashboard/student/JobDescription';
@@ -139,125 +138,112 @@ export default function StudentDashboard() {
     return str1.toLowerCase().trim() === str2.toLowerCase().trim();
   };
 
-  // UPDATED: Enhanced job filtering with case-insensitive matching for targetSchools, targetCenters, targetBatches
-  const loadJobsData = useCallback(() => {
-    // Only load jobs if student profile is complete
-    if (!batch || !center || !school) {
-      console.log('⚠️ Student profile incomplete - batch, center, or school missing');
-      setJobs([]);
-      setLoadingJobs(false);
-      return;
-    }
+  // Check if student profile is complete for job access
+  // All fields marked with * (red asterisk) in editProfile section are required
+  const isProfileComplete = useCallback(() => {
+    return fullName && fullName.trim() &&
+           email && email.trim() && 
+           phone && phone.trim() &&
+           enrollmentId && enrollmentId.trim() &&
+           school && school.trim() &&
+           center && center.trim() &&
+           batch && batch.trim();
+  }, [fullName, email, phone, enrollmentId, school, center, batch]);
+  
+  // Memoized profile completeness status to prevent infinite loops
+  const profileComplete = useMemo(() => isProfileComplete(), [isProfileComplete]);
 
+  // Job loading with proper targeting logic
+  const loadJobsData = useCallback(async () => {
     setLoadingJobs(true);
     
-    console.log('🔄 Loading jobs for student profile:', {
-      batch: batch.trim(),
-      center: center.trim(),
-      school: school.trim()
-    });
-    
-    const unsubscribe = subscribePostedJobs((jobsData) => {
-      console.log('📦 Raw jobs received from Firestore:', jobsData?.length || 0);
+    try {
+      // Import Firebase functions
+      const { collection, getDocs, query, where, limit } = await import('firebase/firestore');
+      const { db } = await import('../../firebase');
       
-      if (jobsData && jobsData.length > 0) {
-        const filteredJobs = jobsData.filter(job => {
-          // Get job target criteria from Firestore fields
-          const jobTargetCenters = job.targetCenters || [];
-          const jobTargetSchools = job.targetSchools || [];
-          const jobTargetBatches = job.targetBatches || [];
+      // Query posted jobs
+      const postedQuery = query(
+        collection(db, 'jobs'),
+        where('status', '==', 'posted'),
+        limit(100)
+      );
+      
+      const postedSnapshot = await getDocs(postedQuery);
+      const postedJobs = [];
+      
+      postedSnapshot.docs.forEach((doc) => {
+        const jobData = { id: doc.id, ...doc.data() };
+        postedJobs.push(jobData);
+      });
+      
+      // Apply job targeting logic with proper "ALL" handling
+      if (profileComplete && school && center && batch) {
+        const targetedJobs = postedJobs.filter(job => {
+          const targetCenters = job.targetCenters || [];
+          const targetSchools = job.targetSchools || [];
+          const targetBatches = job.targetBatches || [];
           
-          console.log('🎯 Checking job eligibility:', {
-            jobId: job.id,
-            jobTitle: job.jobTitle || job.title,
-            targetCenters: jobTargetCenters,
-            targetSchools: jobTargetSchools,
-            targetBatches: jobTargetBatches
-          });
-          
-          // If no target filters are set in Firestore, job is available to all students
-          if (jobTargetCenters.length === 0 && jobTargetSchools.length === 0 && jobTargetBatches.length === 0) {
-            console.log('✅ Job has no targeting filters - available to all students');
+          // If no targeting specified, show to all students
+          if (targetCenters.length === 0 && targetSchools.length === 0 && targetBatches.length === 0) {
             return true;
           }
           
-          // Check if student matches target criteria (case-insensitive)
-          let centerMatch = true;
-          let schoolMatch = true;
-          let batchMatch = true;
-          
-          // Check targetCenters match (case-insensitive)
-          if (jobTargetCenters.length > 0) {
-            centerMatch = jobTargetCenters.some(targetCenter => 
-              matchesIgnoreCase(targetCenter, center)
+          // CENTER MATCH LOGIC:
+          let centerMatch = false;
+          if (targetCenters.length === 0) {
+            centerMatch = true; // No center targeting
+          } else if (targetCenters.includes('ALL')) {
+            centerMatch = true; // "ALL" means every student
+          } else {
+            // Exact match required (case-insensitive)
+            centerMatch = targetCenters.some(targetCenter => 
+              targetCenter.toLowerCase().trim() === center.toLowerCase().trim()
             );
-            console.log('🏢 Center eligibility check:', {
-              studentCenter: center,
-              jobTargetCenters: jobTargetCenters,
-              centerMatch: centerMatch
-            });
           }
           
-          // Check targetSchools match (case-insensitive)
-          if (jobTargetSchools.length > 0) {
-            schoolMatch = jobTargetSchools.some(targetSchool => 
-              matchesIgnoreCase(targetSchool, school)
+          // SCHOOL MATCH LOGIC:
+          let schoolMatch = false;
+          if (targetSchools.length === 0) {
+            schoolMatch = true; // No school targeting
+          } else if (targetSchools.includes('ALL')) {
+            schoolMatch = true; // "ALL" means every student
+          } else {
+            // Exact match required (case-insensitive)
+            schoolMatch = targetSchools.some(targetSchool => 
+              targetSchool.toLowerCase().trim() === school.toLowerCase().trim()
             );
-            console.log('🏫 School eligibility check:', {
-              studentSchool: school,
-              jobTargetSchools: jobTargetSchools,
-              schoolMatch: schoolMatch
-            });
           }
           
-          // Check targetBatches match (case-insensitive)
-          if (jobTargetBatches.length > 0) {
-            batchMatch = jobTargetBatches.some(targetBatch => 
-              matchesIgnoreCase(targetBatch, batch)
+          // BATCH MATCH LOGIC:
+          let batchMatch = false;
+          if (targetBatches.length === 0) {
+            batchMatch = true; // No batch targeting
+          } else if (targetBatches.includes('ALL')) {
+            batchMatch = true; // "ALL" means every student
+          } else {
+            // Exact match required (case-insensitive)
+            batchMatch = targetBatches.some(targetBatch => 
+              targetBatch.toLowerCase().trim() === batch.toLowerCase().trim()
             );
-            console.log('📚 Batch eligibility check:', {
-              studentBatch: batch,
-              jobTargetBatches: jobTargetBatches,
-              batchMatch: batchMatch
-            });
           }
           
-          // Student must match ALL specified target criteria from Firestore
-          const isEligible = centerMatch && schoolMatch && batchMatch;
-          
-          console.log('🔍 Final eligibility result:', {
-            jobId: job.id,
-            jobTitle: job.jobTitle || job.title,
-            centerMatch,
-            schoolMatch,
-            batchMatch,
-            isEligible,
-            studentProfile: { batch, center, school }
-          });
-          
-          return isEligible;
+          // Job is eligible only if ALL three criteria match
+          return centerMatch && schoolMatch && batchMatch;
         });
         
-        console.log('✅ Job filtering completed:', {
-          totalJobsFromFirestore: jobsData.length,
-          eligibleJobsForStudent: filteredJobs.length,
-          studentProfile: { batch, center, school }
-        });
-        
-        setJobs(filteredJobs);
+        setJobs(targetedJobs);
       } else {
-        console.log('📭 No jobs found in Firestore');
-        setJobs([]);
+        setJobs(postedJobs);
       }
+      
+    } catch (error) {
+      console.error('Error loading jobs:', error);
+      setJobs([]);
+    } finally {
       setLoadingJobs(false);
-    }, { 
-      limitTo: 100, // Increased limit for better coverage
-      orderBy: 'createdAt',
-      orderDirection: 'desc'
-    });
-
-    return unsubscribe;
-  }, [batch, center, school]); // Re-filter when student profile changes
+    }
+  }, [school, center, batch, profileComplete, user?.uid]); // Re-load when profile changes
 
   // UPDATED: Load profile data function without defaults
   const loadProfile = useCallback(async (forceRefresh = false) => {
@@ -271,15 +257,12 @@ export default function StudentDashboard() {
     }
     
     try {
-      console.log('📖 Loading student profile from backend...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📖 Loading student profile from backend...');
+      }
       const profileData = await getStudentProfile(user.uid);
       
       if (profileData) {
-        console.log('✅ Profile loaded:', {
-          batch: profileData.batch,
-          center: profileData.center,
-          school: profileData.school
-        });
         
         // Update all profile states - REMOVED DEFAULT VALUES
         setFullName(profileData.fullName || '');
@@ -314,7 +297,9 @@ export default function StudentDashboard() {
           });
         }
       } else {
-        console.log('⚠️ No profile data found - new user?');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ No profile data found - new user?');
+        }
         // Keep empty states for new users
       }
       
@@ -345,7 +330,6 @@ export default function StudentDashboard() {
     
     setLoadingApplications(true);
     const unsubscribe = subscribeStudentApplications(user.uid, (applicationsData) => {
-      console.log('📋 Applications updated:', applicationsData?.length || 0);
       setApplications(applicationsData || []);
       setLoadingApplications(false);
     });
@@ -362,17 +346,21 @@ export default function StudentDashboard() {
     try {
       setApplying(prev => ({ ...prev, [job.id]: true }));
       
-      console.log('📝 Applying to job:', {
-        jobId: job.id,
-        jobTitle: job.jobTitle,
-        companyId: job.companyId,
-        companyName: job.company?.name
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📝 Applying to job:', {
+          jobId: job.id,
+          jobTitle: job.jobTitle,
+          companyId: job.companyId,
+          companyName: job.company?.name
+        });
+      }
       
       const companyId = job.companyId || job.company?.id || null;
       await applyToJob(user.uid, job.id, companyId);
       
-      console.log('✅ Application submitted successfully');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Application submitted successfully');
+      }
       
     } catch (error) {
       console.error('❌ Error applying to job:', error);
@@ -396,6 +384,7 @@ export default function StudentDashboard() {
     setIsJobModalOpen(false);
     setSelectedJob(null);
   };
+
 
   // Handle URL parameters to set active tab
   useEffect(() => {
@@ -444,27 +433,26 @@ export default function StudentDashboard() {
     }
   }, [user?.uid, dataLoaded, loadSkillsData]);
 
-  // UPDATED: Maintain real-time subscriptions only when profile is complete
+  // UPDATED: Load data once when profile is complete
   useEffect(() => {
-    if (user?.uid && batch && center && school) { // Only load jobs when profile is complete
-      console.log('🚀 Starting real-time subscriptions with complete profile');
+    if (user?.uid && profileComplete) {
+      // Load jobs once when profile is complete
+      loadJobsData();
       
-      const unsubscribeJobs = loadJobsData();
+      // Start applications subscription
       const unsubscribeApplications = loadApplicationsData();
       
       return () => {
-        if (unsubscribeJobs) unsubscribeJobs();
         if (unsubscribeApplications) unsubscribeApplications();
       };
     } else if (user?.uid) {
-      console.log('⏳ Waiting for complete profile before loading jobs');
       // Start applications subscription even without complete profile
       const unsubscribeApplications = loadApplicationsData();
       return () => {
         if (unsubscribeApplications) unsubscribeApplications();
       };
     }
-  }, [user?.uid, batch, center, school, loadJobsData, loadApplicationsData]);
+  }, [user?.uid, profileComplete, loadJobsData, loadApplicationsData]);
 
   // Validation helper functions
   const validateEmail = (email) => {
@@ -515,6 +503,11 @@ export default function StudentDashboard() {
     } else if (!validatePhone(phone.trim())) {
       errors.push('Please enter a valid phone number');
       missingFields.push({ field: 'phone', section: 'basic' });
+    }
+
+    if (!enrollmentId.trim()) {
+      errors.push('Enrollment ID is required');
+      missingFields.push({ field: 'enrollmentId', section: 'basic' });
     }
 
     if (!school.trim()) {
@@ -877,7 +870,7 @@ export default function StudentDashboard() {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return 'TBD';
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
         month: 'short',
@@ -887,6 +880,14 @@ export default function StudentDashboard() {
     } catch {
       return dateString;
     }
+  };
+
+  const formatSalary = (salary) => {
+    if (!salary) return 'Not specified';
+    if (typeof salary === 'number') {
+      return `₹${(salary / 100000).toFixed(0)} LPA`;
+    }
+    return salary;
   };
 
   const renderContent = () => {
@@ -933,15 +934,77 @@ export default function StudentDashboard() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Explore Job Opportunities</h2>
               
-              {loadingJobs ? (
+              {/* Profile completion check */}
+              {!profileComplete ? (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-400 p-6 rounded-lg mb-6">
+                  <div className="flex items-center mb-3">
+                    <AlertTriangle className="h-6 w-6 text-amber-600 mr-3" />
+                    <h3 className="text-lg font-semibold text-amber-800">Complete Your Profile to View Jobs</h3>
+                  </div>
+                  <p className="text-amber-700 mb-4">
+                    To see available job opportunities, please complete all required fields (marked with *) in your profile:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                    <div className={`flex items-center p-2 rounded text-sm ${fullName && fullName.trim() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {fullName && fullName.trim() ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Full Name: {fullName && fullName.trim() ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${email && email.trim() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {email && email.trim() ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Email: {email && email.trim() ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${phone && phone.trim() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {phone && phone.trim() ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Phone: {phone && phone.trim() ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${enrollmentId && enrollmentId.trim() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {enrollmentId && enrollmentId.trim() ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Enrollment ID: {enrollmentId && enrollmentId.trim() ? '✓' : 'Required'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${school ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {school ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      School: {school || 'Not selected'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${center ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {center ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Center: {center || 'Not selected'}
+                    </div>
+                    <div className={`flex items-center p-2 rounded text-sm ${batch ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {batch ? <CheckCircle className="h-4 w-4 mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                      Batch: {batch || 'Not selected'}
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-blue-800 text-sm">
+                      <strong>Note:</strong> All fields marked with a red asterisk (*) in the Edit Profile section are required to view and apply for jobs.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('editProfile')}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Complete Profile Now
+                  </button>
+                </div>
+              ) : loadingJobs ? (
                 <div className="flex justify-center items-center py-12">
                   <Loader className="h-8 w-8 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">Loading jobs...</span>
+                  <span className="ml-2 text-gray-600">Loading posted jobs...</span>
                 </div>
               ) : jobs.length === 0 ? (
                 <div className="text-center py-12">
-                  <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No jobs available at the moment.</p>
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-8">
+                    <Briefcase className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Jobs Available</h3>
+                    <p className="text-gray-600 mb-4">
+                      No jobs are currently posted for your profile ({school} | {center} | {batch}).
+                    </p>
+                    <div className="text-sm text-gray-500">
+                      <p>• Jobs may be targeted to specific schools, centers, or batches</p>
+                      <p>• Check back later for new opportunities</p>
+                      <p>• Contact admin if you believe this is an error</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -949,7 +1012,7 @@ export default function StudentDashboard() {
                   <div className="grid grid-cols-5 gap-4 mb-3 py-3 px-4 bg-gray-50 rounded-lg">
                     <div className="text-gray-700 font-semibold text-sm">Company</div>
                     <div className="text-gray-700 font-semibold text-sm">Job Title</div>
-                    <div className="text-gray-700 font-semibold text-sm">Location</div>
+                    <div className="text-gray-700 font-semibold text-sm">Drive Date</div>
                     <div className="text-gray-700 font-semibold text-sm">Salary (CTC)</div>
                     <div></div>
                   </div>
@@ -977,13 +1040,13 @@ export default function StudentDashboard() {
 
                       <div className="flex items-center">
                         <span className="text-sm text-gray-600 truncate">
-                          {job.location}
+                          {formatDate(job.driveDate || job.applicationDeadline)}
                         </span>
                       </div>
 
                       <div className="flex items-center">
                         <span className="text-sm font-medium text-green-600">
-                          {job.salary ? `₹${(job.salary / 100000).toFixed(1)} LPA` : 'Not specified'}
+                          {formatSalary(job.salary || job.ctc)}
                         </span>
                       </div>
 
@@ -1386,12 +1449,19 @@ export default function StudentDashboard() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Enrollment ID <span className="text-red-500">*</span></label>
                     <input
+                      id="enrollmentId"
                       type="text"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter your enrollment ID"
                       value={enrollmentId}
-                      onChange={(e) => setEnrollmentId(e.target.value)}
+                      onChange={(e) => {
+                        setEnrollmentId(e.target.value);
+                        validateField('enrollmentId', e.target.value);
+                      }}
                     />
+                    {validationErrors.enrollmentId && (
+                      <p className="text-red-500 text-sm mt-1">{validationErrors.enrollmentId}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1467,7 +1537,7 @@ export default function StudentDashboard() {
                       }}
                     >
                       <option value="">Select Center</option>
-                      <option value="BANGLORE">Bangalore</option>
+                      <option value="BANGALORE">Bangalore</option>
                       <option value="NOIDA">Noida</option>
                       <option value="LUCKNOW">Lucknow</option>
                       <option value="PUNE">Pune</option>

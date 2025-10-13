@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ExternalLink, Edit2, Plus, Github, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import {
-  addProject,
-  deleteProject,
-  updateProject
+  addProjectArray,
+  deleteProjectArray,
+  updateProjectArray
 } from '../../../services/students';
 
 const ProjectsSection = () => {
@@ -28,18 +28,19 @@ const ProjectsSection = () => {
     if (!user?.uid) return;
 
     setLoading(true);
-    const q = query(
-      collection(db, 'projects'),
-      where('studentId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const projectsData = [];
-      querySnapshot.forEach((doc) => {
-        projectsData.push({ id: doc.id, ...doc.data() });
-      });
-      setProjects(projectsData);
+    const docRef = doc(db, 'students', user.uid);
+    
+    const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const projectsArray = data.projects || [];
+        
+        console.log('Projects data received:', projectsArray);
+        setProjects(projectsArray);
+      } else {
+        console.log('Student profile not found');
+        setProjects([]);
+      }
       setLoading(false);
     }, (error) => {
       console.error('Error in projects real-time listener:', error);
@@ -86,22 +87,20 @@ const ProjectsSection = () => {
       const projectData = {
         title: editedProject.title,
         description: editedProject.description,
-        liveUrl: editedProject.liveUrl ? normalizeUrl(editedProject.liveUrl) : '',
-        studentId: user.uid
+        liveUrl: editedProject.liveUrl ? normalizeUrl(editedProject.liveUrl) : ''
       };
 
       if (editingIndex !== null && editingIndex < projects.length) {
         // Update existing project
         const existingProject = projects[editingIndex];
-        await updateProject(existingProject.id, projectData);
+        await updateProjectArray(user.uid, existingProject.id, projectData);
         setSuccess('Project updated successfully!');
       } else {
         // Add new project
-        await addProject(projectData);
+        await addProjectArray(user.uid, projectData);
         setSuccess('Project added successfully!');
       }
 
-      // Projects will auto-reload via real-time listener
       setEditingIndex(null);
       setIsAddButtonActive(false);
       setTimeout(() => setSuccess(''), 3000);
@@ -123,8 +122,7 @@ const ProjectsSection = () => {
 
     try {
       setLoading(true);
-      await deleteProject(project.id);
-      // Projects will auto-reload via real-time listener
+      await deleteProjectArray(user.uid, project.id);
       setSuccess('Project deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
 

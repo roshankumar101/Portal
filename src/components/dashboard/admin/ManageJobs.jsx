@@ -60,7 +60,9 @@ export default function ManageJobs() {
         setBatchOptions(batchOptionsArray);
         setCenterOptions(centerOptionsArray);
         
-        console.log('✅ ManageJobs filter options loaded (predefined only)');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ ManageJobs filter options loaded (predefined only)');
+        }
         
       } finally {
         setLoadingFilters(false);
@@ -91,7 +93,9 @@ export default function ManageJobs() {
     setLoading(true);
     
     const unsubscribe = subscribeJobs((jobsList) => {
-      console.log('📡 Real-time update - Jobs received:', jobsList.length);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📡 Real-time update - Jobs received:', jobsList.length);
+      }
       setJobs(jobsList);
       
       // Load existing selections from database for posted jobs
@@ -300,7 +304,9 @@ export default function ManageJobs() {
       filteredJobs = jobs.filter(job => isJobPosted(job));
     }
     
-    console.log('🗂️ Filtered Jobs:', activeFilter, filteredJobs.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🗂️ Filtered Jobs:', activeFilter, filteredJobs.length);
+    }
     
     if (activeFilter === 'unposted') {
       // Sort unposted by creation time (newest first)
@@ -378,9 +384,13 @@ export default function ManageJobs() {
         postedBy: 'admin',
       };
       
-      console.log('🚀 Posting job to database:', jobId, postData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 Posting job to database:', jobId, postData);
+      }
       await postJob(jobId, postData);
-      console.log('✅ Job posted successfully:', jobId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Job posted successfully:', jobId);
+      }
       
     } catch (err) {
       console.error('❌ Failed to post job:', err);
@@ -446,7 +456,9 @@ export default function ManageJobs() {
     
     try {
       await deleteJob(jobId);
-      console.log('🗑️ Job deleted successfully:', jobId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🗑️ Job deleted successfully:', jobId);
+      }
     } catch (e) {
       console.error('❌ Failed to delete job:', e);
       alert('Failed to delete job: ' + (e?.message || 'Unknown error'));

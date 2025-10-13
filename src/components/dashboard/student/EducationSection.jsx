@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit3, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import {
-  addEducationalBackground,
-  updateEducationalBackground,
-  deleteEducationalBackground
+  addEducationArray,
+  updateEducationArray,
+  deleteEducationArray
 } from '../../../services/students';
 
 const EducationSection = () => {
   const { user } = useAuth();
   const [educationEntries, setEducationEntries] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [isAddButtonActive, setIsAddButtonActive] = useState(false);
   const [currentEdu, setCurrentEdu] = useState({
@@ -36,38 +36,18 @@ const EducationSection = () => {
     console.log('Setting up education listener for user:', user.uid);
     setLoading(true);
     
-    const q = query(
-      collection(db, 'educational_background'),
-      where('studentId', '==', user.uid)
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      console.log('Education query snapshot received, size:', querySnapshot.size);
-      const educationData = [];
-      querySnapshot.forEach((doc) => {
-        const docData = doc.data();
-        console.log('Education doc:', doc.id, docData);
+    const docRef = doc(db, 'students', user.uid);
+    const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const education = data.education || [];
         
-        // Normalize the institute field to handle both 'institute' and 'instituteName'
-        const normalizedData = {
-          ...docData,
-          institute: docData.institute || docData.instituteName || '',
-          // Ensure other fields have default values
-          city: docData.city || '',
-          state: docData.state || '',
-          branch: docData.branch || '',
-          yop: docData.yop || docData.endYear || '',
-          scoreType: docData.scoreType || 'CGPA',
-          score: docData.score || docData.percentage || ''
-        };
-        
-        console.log('Institute value:', normalizedData.institute, 'Type:', typeof normalizedData.institute);
-        console.log('Institute trimmed:', normalizedData.institute?.trim?.());
-        educationData.push({ id: doc.id, ...normalizedData });
-      });
-      console.log('Final education data before filtering:', educationData);
-      console.log('Education entries that will be displayed:', educationData.filter(edu => edu.institute && edu.institute.trim()));
-      setEducationEntries(educationData);
+        console.log('Education data received:', education);
+        setEducationEntries(education);
+      } else {
+        console.log('Student profile not found');
+        setEducationEntries([]);
+      }
       setLoading(false);
     }, (error) => {
       console.error('Error in education real-time listener:', error);
@@ -82,7 +62,7 @@ const EducationSection = () => {
   }, [user?.uid]);
 
   const handleAddClick = () => {
-    if (showForm && editingIndex === null) {
+    if (showForm && !editingId) {
       // Cancel adding
       setShowForm(false);
       setIsAddButtonActive(false);
@@ -97,7 +77,7 @@ const EducationSection = () => {
         scoreType: 'CGPA',
         score: ''
       });
-      setEditingIndex(null);
+      setEditingId(null);
       setShowForm(true);
       setIsAddButtonActive(true);
     }
@@ -106,46 +86,42 @@ const EducationSection = () => {
   const toggleEditMode = () => {
     setEditMode(!editMode);
     setShowForm(false);
-    setEditingIndex(null);
+    setEditingId(null);
     setIsAddButtonActive(false);
   };
 
-  const handleEditClick = (index) => {
-    const edu = educationEntries[index];
+  const handleEditClick = (education) => {
     setCurrentEdu({
-      institute: edu.institute || edu.instituteName || '',
-      city: edu.city || '',
-      state: edu.state || '',
-      branch: edu.branch || '',
-      yop: edu.yop || edu.endYear || '',
-      scoreType: edu.scoreType || 'CGPA',
-      score: edu.score || edu.percentage || ''
+      institute: education.institute || '',
+      city: education.city || '',
+      state: education.state || '',
+      branch: education.branch || '',
+      yop: education.yop || '',
+      scoreType: education.scoreType || 'CGPA',
+      score: education.score || ''
     });
-    setEditingIndex(index);
+    setEditingId(education.id);
     setShowForm(true);
   };
 
-  const handleDeleteClick = async (index) => {
-    const edu = educationEntries[index];
-    console.log('Delete clicked for index:', index, 'Education:', edu);
-    console.log('Total entries before delete:', educationEntries.length);
+  const handleDeleteClick = async (education) => {
+    console.log('Delete clicked for education:', education);
     
-    const instituteName = edu.institute || edu.instituteName || 'this education record';
+    const instituteName = education.institute || 'this education record';
     if (!window.confirm(`Are you sure you want to delete ${instituteName}?`)) return;
     
     try {
       setLoading(true);
-      console.log('Deleting education with ID:', edu.id);
-      await deleteEducationalBackground(edu.id);
-      console.log('Delete operation completed for ID:', edu.id);
+      console.log('Deleting education with ID:', education.id);
+      await deleteEducationArray(user.uid, education.id);
+      console.log('Delete operation completed for ID:', education.id);
       
-      // Real-time listener will automatically update the data
       setSuccess('Education record deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
       
-      if (editingIndex === index) {
+      if (editingId === education.id) {
         setShowForm(false);
-        setEditingIndex(null);
+        setEditingId(null);
       }
     } catch (error) {
       console.error('Error deleting education:', error);
@@ -170,24 +146,30 @@ const EducationSection = () => {
       setError('');
       
       const eduData = {
-        ...currentEdu,
-        studentId: user.uid
+        institute: currentEdu.institute,
+        city: currentEdu.city,
+        state: currentEdu.state,
+        branch: currentEdu.branch,
+        yop: currentEdu.yop,
+        scoreType: currentEdu.scoreType,
+        score: currentEdu.score
       };
       
       console.log('Saving education data:', eduData);
       
-      if (editingIndex !== null) {
+      if (editingId) {
         // Update existing education
-        const existingEdu = educationEntries[editingIndex];
-        await updateEducationalBackground(existingEdu.id, eduData);
+        await updateEducationArray(user.uid, editingId, eduData);
+        setSuccess('Education updated successfully!');
       } else {
         // Add new education
-        await addEducationalBackground(eduData);
+        await addEducationArray(user.uid, eduData);
+        setSuccess('Education added successfully!');
       }
       
-      // Real-time listener will automatically update the data
+      // Reset form
       setShowForm(false);
-      setEditingIndex(null);
+      setEditingId(null);
       setIsAddButtonActive(false);
       setCurrentEdu({
         institute: '',
@@ -199,7 +181,6 @@ const EducationSection = () => {
         score: ''
       });
       
-      setSuccess(editingIndex !== null ? 'Education updated successfully!' : 'Education added successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error saving education:', error);
@@ -215,7 +196,7 @@ const EducationSection = () => {
 
   const cancelEdit = () => {
     setShowForm(false);
-    setEditingIndex(null);
+    setEditingId(null);
     setIsAddButtonActive(false);
   };
 
@@ -266,7 +247,7 @@ const EducationSection = () => {
         )}
 
         {/* Education Table Format */}
-        {console.log('Rendering education entries:', educationEntries) || educationEntries.filter(edu => edu.institute && edu.institute.trim()).length > 0 && (
+        {educationEntries.length > 0 && (
           <div className="mb-3">
             <div className="space-y-2">
               {/* Column Headers */}
@@ -278,23 +259,16 @@ const EducationSection = () => {
               </div>
 
             {/* Education Rows */}
-            {educationEntries.filter(edu => {
-              const hasInstitute = edu.institute && edu.institute.trim();
-              console.log('Filtering education entry:', edu.id, 'Institute:', edu.institute, 'Will display:', hasInstitute);
-              return hasInstitute;
-            }).map((education, index) => (
+            {educationEntries.map((education, index) => (
               <div
-                key={index}
+                key={education.id}
                 className={`grid grid-cols-4 gap-4 p-4 rounded-xl relative
                   bg-gradient-to-r 
                   ${index % 2 !== 0 ? 'from-gray-50 to-gray-100' : 'from-[#f0f8fa] to-[#e6f3f8]'}
                   hover:shadow-md transition ${
                     editMode ? 'cursor-pointer' : ''
                   }`}
-                onClick={editMode ? () => {
-                  const originalIndex = educationEntries.findIndex(edu => edu.id === education.id);
-                  handleEditClick(originalIndex);
-                } : undefined}
+                onClick={editMode ? () => handleEditClick(education) : undefined}
               >
                 {/* Institute with Location */}
                 <div className="flex flex-col">
@@ -326,8 +300,7 @@ const EducationSection = () => {
                       aria-label={`Edit education ${index + 1}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        const originalIndex = educationEntries.findIndex(edu => edu.id === education.id);
-                        handleEditClick(originalIndex);
+                        handleEditClick(education);
                       }}
                       disabled={loading}
                     >
@@ -340,8 +313,7 @@ const EducationSection = () => {
                       aria-label={`Delete education ${index + 1}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        const originalIndex = educationEntries.findIndex(edu => edu.id === education.id);
-                        handleDeleteClick(originalIndex);
+                        handleDeleteClick(education);
                       }}
                       disabled={loading}
                     >
@@ -444,7 +416,7 @@ const EducationSection = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-600">Entry {educationEntries.length + 1} of 4</p>
+              <p className="text-xs text-gray-600">Entry {educationEntries.length + (editingId ? 0 : 1)} of 4</p>
               <div className="flex space-x-2">
                 <button
                   onClick={saveEducation}
@@ -468,7 +440,7 @@ const EducationSection = () => {
           <p className="text-sm text-gray-600">You have added the maximum of 4 education records.</p>
         )}
 
-        {educationEntries.filter(edu => edu.institute && edu.institute.trim()).length === 0 && !loading && !showForm && (
+        {educationEntries.length === 0 && !loading && !showForm && (
           <div className="mb-3 mt-1">
             <div className="space-y-2">
               {/* Column Headers */}

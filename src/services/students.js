@@ -11,9 +11,16 @@ import {
   where, 
   orderBy, 
   limit,
-  serverTimestamp
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove
 } from 'firebase/firestore';
 import { db } from '../firebase';
+
+// Generate unique ID for array items
+const generateUniqueId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
 
 // Get student profile
 export const getStudentProfile = async (studentId) => {
@@ -22,7 +29,21 @@ export const getStudentProfile = async (studentId) => {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
+      const data = docSnap.data();
+      return { 
+        id: docSnap.id, 
+        ...data,
+        // Ensure arrays exist with default empty arrays
+        education: data.education || [],
+        skills: data.skills || [],
+        projects: data.projects || [],
+        achievements: data.achievements || [],
+        certifications: data.certifications || [],
+        // Ensure job tracking arrays exist
+        availableJobs: data.availableJobs || [],
+        appliedJobs: data.appliedJobs || [],
+        viewedJobs: data.viewedJobs || []
+      };
     } else {
       return null;
     }
@@ -87,6 +108,16 @@ export const createStudentProfile = async (studentId, profileData) => {
       uid: studentId,
       ...normalizedData,
       stats: { applied: 0, shortlisted: 0, interviewed: 0, offers: 0 },
+      // Initialize arrays for array-based storage
+      education: [],
+      skills: [],
+      projects: [],
+      achievements: [],
+      certifications: [],
+      // Initialize job tracking arrays
+      availableJobs: [],
+      appliedJobs: [],
+      viewedJobs: [],
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -612,6 +643,479 @@ export const updateStudentStatus = async (studentId, status, blockDetails = null
     return true;
   } catch (error) {
     console.error('Error updating student status:', error);
+    throw error;
+  }
+};
+
+// ============================================================================
+// ARRAY-BASED STORAGE METHODS (New Implementation)
+// ============================================================================
+
+// EDUCATION ARRAY METHODS
+export const addEducationArray = async (studentId, educationData) => {
+  try {
+    const docRef = doc(db, 'students', studentId);
+    const newEducation = {
+      id: generateUniqueId(),
+      ...educationData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await updateDoc(docRef, {
+      education: arrayUnion(newEducation),
+      updatedAt: new Date()
+    });
+    
+    return newEducation.id;
+  } catch (error) {
+    console.error('Error adding education:', error);
+    throw error;
+  }
+};
+
+export const updateEducationArray = async (studentId, educationId, educationData) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const education = profile.education.find(edu => edu.id === educationId);
+    
+    if (!education) {
+      throw new Error('Education entry not found');
+    }
+    
+    const updatedEducation = {
+      ...education,
+      ...educationData,
+      id: educationId,
+      updatedAt: new Date()
+    };
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      education: arrayRemove(education)
+    });
+    
+    await updateDoc(docRef, {
+      education: arrayUnion(updatedEducation),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating education:', error);
+    throw error;
+  }
+};
+
+export const deleteEducationArray = async (studentId, educationId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const education = profile.education.find(edu => edu.id === educationId);
+    
+    if (!education) {
+      throw new Error('Education entry not found');
+    }
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      education: arrayRemove(education),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting education:', error);
+    throw error;
+  }
+};
+
+// SKILLS ARRAY METHODS
+export const addOrUpdateSkillArray = async (studentId, skillData) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const existingSkill = profile.skills.find(skill => 
+      skill.skillName.toLowerCase() === skillData.skillName.toLowerCase()
+    );
+    
+    const docRef = doc(db, 'students', studentId);
+    
+    if (existingSkill) {
+      const updatedSkill = {
+        ...existingSkill,
+        rating: skillData.rating,
+        updatedAt: new Date()
+      };
+      
+      await updateDoc(docRef, {
+        skills: arrayRemove(existingSkill)
+      });
+      
+      await updateDoc(docRef, {
+        skills: arrayUnion(updatedSkill),
+        updatedAt: new Date()
+      });
+      
+      return existingSkill.id;
+    } else {
+      const newSkill = {
+        id: generateUniqueId(),
+        ...skillData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await updateDoc(docRef, {
+        skills: arrayUnion(newSkill),
+        updatedAt: new Date()
+      });
+      
+      return newSkill.id;
+    }
+  } catch (error) {
+    console.error('Error adding/updating skill:', error);
+    throw error;
+  }
+};
+
+export const deleteSkillArray = async (studentId, skillId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const skill = profile.skills.find(s => s.id === skillId);
+    
+    if (!skill) {
+      throw new Error('Skill not found');
+    }
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      skills: arrayRemove(skill),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting skill:', error);
+    throw error;
+  }
+};
+
+// PROJECTS ARRAY METHODS
+export const addProjectArray = async (studentId, projectData) => {
+  try {
+    const docRef = doc(db, 'students', studentId);
+    const newProject = {
+      id: generateUniqueId(),
+      ...projectData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await updateDoc(docRef, {
+      projects: arrayUnion(newProject),
+      updatedAt: new Date()
+    });
+    
+    return newProject.id;
+  } catch (error) {
+    console.error('Error adding project:', error);
+    throw error;
+  }
+};
+
+export const updateProjectArray = async (studentId, projectId, projectData) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const project = profile.projects.find(p => p.id === projectId);
+    
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    
+    const updatedProject = {
+      ...project,
+      ...projectData,
+      id: projectId,
+      updatedAt: new Date()
+    };
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      projects: arrayRemove(project)
+    });
+    
+    await updateDoc(docRef, {
+      projects: arrayUnion(updatedProject),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating project:', error);
+    throw error;
+  }
+};
+
+export const deleteProjectArray = async (studentId, projectId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const project = profile.projects.find(p => p.id === projectId);
+    
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      projects: arrayRemove(project),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    throw error;
+  }
+};
+
+// ACHIEVEMENTS ARRAY METHODS
+export const addAchievementArray = async (studentId, achievementData) => {
+  try {
+    const docRef = doc(db, 'students', studentId);
+    const arrayName = achievementData.hasCertificate ? 'certifications' : 'achievements';
+    
+    const newAchievement = {
+      id: generateUniqueId(),
+      ...achievementData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    await updateDoc(docRef, {
+      [arrayName]: arrayUnion(newAchievement),
+      updatedAt: new Date()
+    });
+    
+    return newAchievement.id;
+  } catch (error) {
+    console.error('Error adding achievement:', error);
+    throw error;
+  }
+};
+
+export const updateAchievementArray = async (studentId, achievementId, achievementData) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    
+    let achievement = profile.achievements.find(a => a.id === achievementId);
+    let arrayName = 'achievements';
+    
+    if (!achievement) {
+      achievement = profile.certifications.find(c => c.id === achievementId);
+      arrayName = 'certifications';
+    }
+    
+    if (!achievement) {
+      throw new Error('Achievement not found');
+    }
+    
+    const updatedAchievement = {
+      ...achievement,
+      ...achievementData,
+      id: achievementId,
+      updatedAt: new Date()
+    };
+    
+    const newArrayName = achievementData.hasCertificate ? 'certifications' : 'achievements';
+    
+    const docRef = doc(db, 'students', studentId);
+    
+    await updateDoc(docRef, {
+      [arrayName]: arrayRemove(achievement)
+    });
+    
+    await updateDoc(docRef, {
+      [newArrayName]: arrayUnion(updatedAchievement),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating achievement:', error);
+    throw error;
+  }
+};
+
+export const deleteAchievementArray = async (studentId, achievementId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    
+    let achievement = profile.achievements.find(a => a.id === achievementId);
+    let arrayName = 'achievements';
+    
+    if (!achievement) {
+      achievement = profile.certifications.find(c => c.id === achievementId);
+      arrayName = 'certifications';
+    }
+    
+    if (!achievement) {
+      throw new Error('Achievement not found');
+    }
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      [arrayName]: arrayRemove(achievement),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting achievement:', error);
+    throw error;
+  }
+};
+
+// ============================================================================
+// JOB TRACKING ARRAY METHODS (New Implementation)
+// ============================================================================
+
+// Add job to student's available jobs list
+export const addAvailableJob = async (studentId, jobData) => {
+  try {
+    const docRef = doc(db, 'students', studentId);
+    const jobEntry = {
+      jobId: jobData.id,
+      title: jobData.title || jobData.jobTitle,
+      company: jobData.company || jobData.companyName,
+      postedAt: new Date(),
+      isNew: true,
+      viewed: false
+    };
+    
+    await updateDoc(docRef, {
+      availableJobs: arrayUnion(jobEntry),
+      updatedAt: new Date()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error adding available job:', error);
+    throw error;
+  }
+};
+
+// Add job to multiple students (bulk operation)
+export const addJobToMultipleStudents = async (studentIds, jobData) => {
+  try {
+    const promises = studentIds.map(studentId => addAvailableJob(studentId, jobData));
+    await Promise.all(promises);
+    console.log(`Job ${jobData.id} added to ${studentIds.length} students`);
+    return true;
+  } catch (error) {
+    console.error('Error adding job to multiple students:', error);
+    throw error;
+  }
+};
+
+// Mark job as viewed
+export const markJobAsViewed = async (studentId, jobId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const jobIndex = profile.availableJobs.findIndex(job => job.jobId === jobId);
+    
+    if (jobIndex !== -1) {
+      const job = profile.availableJobs[jobIndex];
+      const updatedJob = { ...job, viewed: true, isNew: false, viewedAt: new Date() };
+      
+      const docRef = doc(db, 'students', studentId);
+      await updateDoc(docRef, {
+        availableJobs: arrayRemove(job)
+      });
+      
+      await updateDoc(docRef, {
+        availableJobs: arrayUnion(updatedJob),
+        viewedJobs: arrayUnion({
+          jobId: jobId,
+          viewedAt: new Date()
+        }),
+        updatedAt: new Date()
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error marking job as viewed:', error);
+    throw error;
+  }
+};
+
+// Add job to applied jobs
+export const addAppliedJob = async (studentId, jobId, applicationData = {}) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const availableJob = profile.availableJobs.find(job => job.jobId === jobId);
+    
+    const appliedJobEntry = {
+      jobId: jobId,
+      title: availableJob?.title || 'Unknown Job',
+      company: availableJob?.company || 'Unknown Company',
+      appliedAt: new Date(),
+      status: 'applied',
+      ...applicationData
+    };
+    
+    const docRef = doc(db, 'students', studentId);
+    await updateDoc(docRef, {
+      appliedJobs: arrayUnion(appliedJobEntry),
+      updatedAt: new Date()
+    });
+    
+    // Also mark as viewed if not already
+    await markJobAsViewed(studentId, jobId);
+    
+    return true;
+  } catch (error) {
+    console.error('Error adding applied job:', error);
+    throw error;
+  }
+};
+
+// Remove job from available jobs (e.g., when job expires or is no longer relevant)
+export const removeAvailableJob = async (studentId, jobId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    const job = profile.availableJobs.find(job => job.jobId === jobId);
+    
+    if (job) {
+      const docRef = doc(db, 'students', studentId);
+      await updateDoc(docRef, {
+        availableJobs: arrayRemove(job),
+        updatedAt: new Date()
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error removing available job:', error);
+    throw error;
+  }
+};
+
+// Get student's job statistics
+export const getStudentJobStats = async (studentId) => {
+  try {
+    const profile = await getStudentProfile(studentId);
+    
+    const stats = {
+      availableJobs: profile.availableJobs.length,
+      newJobs: profile.availableJobs.filter(job => job.isNew).length,
+      viewedJobs: profile.viewedJobs.length,
+      appliedJobs: profile.appliedJobs.length,
+      totalJobsReceived: profile.availableJobs.length + profile.appliedJobs.length
+    };
+    
+    return stats;
+  } catch (error) {
+    console.error('Error getting student job stats:', error);
     throw error;
   }
 };

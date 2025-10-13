@@ -190,21 +190,21 @@ export default function CreateJob({ onCreated }) {
       const { parseJobDescription } = await import('../../../services/jdParser');
       const parseResult = await parseJobDescription(file);
       
-      console.log('📊 JD parsing result:', parseResult);
+      console.log('JD parsing result:', parseResult);
 
       if (parseResult.success && parseResult.data) {
         setParseResult(parseResult);
         populateFormFromParsedData(parseResult.data);
         setCreationMethod('manual');
-        console.log('✅ JD parsing completed successfully');
+        console.log('JD parsing completed successfully');
       } else {
         setUploadError(parseResult.error || 'Failed to parse the document. Please try manual entry.');
-        console.error('❌ JD parsing failed:', parseResult.error);
+        console.error('JD parsing failed:', parseResult.error);
       }
     } catch (err) {
       const errorMessage = err.message || 'An error occurred during parsing. Please try again.';
       setUploadError(errorMessage);
-      console.error('❌ JD parsing error:', err);
+      console.error('JD parsing error:', err);
     } finally {
       setIsUploading(false);
     }
@@ -218,12 +218,12 @@ export default function CreateJob({ onCreated }) {
 
   // Handle Excel bulk processing
   const handleExcelBulkUpload = async (results) => {
-    console.log('📊 Excel processing results:', results);
+    console.log('Excel processing results:', results);
     
     const { totalJobs, successfulJobs, failedJobs } = results;
     
     if (successfulJobs.length > 0) {
-      const successMessage = `✅ Successfully created ${successfulJobs.length} job${successfulJobs.length > 1 ? 's' : ''} from Excel file!`;
+      const successMessage = `Successfully created ${successfulJobs.length} job${successfulJobs.length > 1 ? 's' : ''} from Excel file!`;
       const failureMessage = failedJobs.length > 0 ? `\n⚠️ ${failedJobs.length} job${failedJobs.length > 1 ? 's' : ''} failed to process.` : '';
       
       alert(successMessage + failureMessage);
@@ -697,7 +697,7 @@ export default function CreateJob({ onCreated }) {
       responsibilities: form.responsibilities,
       spocs: form.spocs,
       driveDate: form.driveDateISO || toISOFromDDMMYYYY(form.driveDateText) || null,
-      driveVenues: form.driveVenues,
+      driveVenues: form.driveVenues, // Store original venue names for display purposes
       qualification: form.qualification,
       specialization: form.specialization,
       yop: form.yop,

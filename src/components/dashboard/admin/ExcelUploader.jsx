@@ -294,10 +294,14 @@ const ExcelUploader = ({ onJobSelected }) => {
 
   // Process Excel data with sanitization
   const processExcelData = (rawData) => {
-    console.log('DEBUG: Processing Excel data with sanitization:', rawData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Processing Excel data with sanitization:', rawData);
+    }
     
     if (!rawData || rawData.length === 0) {
-      console.log('DEBUG: No raw data provided');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No raw data provided');
+      }
       return null;
     }
 
@@ -306,9 +310,13 @@ const ExcelUploader = ({ onJobSelected }) => {
 
     // Handle both array format and object format
     if (Array.isArray(rawData[0])) {
-      console.log('DEBUG: Using array format');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using array format');
+      }
       if (rawData.length < 2) {
-        console.log('DEBUG: Not enough rows in array format');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Not enough rows in array format');
+        }
         return null;
       }
       
@@ -320,7 +328,9 @@ const ExcelUploader = ({ onJobSelected }) => {
       
       dataRow = rawData[1];
     } else {
-      console.log('DEBUG: Using object format');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using object format');
+      }
       const firstRow = rawData[0];
       headers = Object.keys(firstRow).map(header => ({
         original: header,
@@ -330,11 +340,15 @@ const ExcelUploader = ({ onJobSelected }) => {
       dataRow = rawData[0];
     }
 
-    console.log('DEBUG: Mapped headers:', headers);
-    console.log('DEBUG: Data row:', dataRow);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Mapped headers:', headers);
+      console.log('Data row:', dataRow);
+    }
 
     if (!dataRow) {
-      console.log('DEBUG: No data row found');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No data row found');
+      }
       return null;
     }
 
@@ -360,24 +374,34 @@ const ExcelUploader = ({ onJobSelected }) => {
         // Apply field-specific sanitization
         if (mapped === 'salary' || mapped === 'stipend') {
           processedValue = sanitizeSalaryStipend(processedValue);
-          console.log(`DEBUG: Sanitized ${mapped}:`, value, '->', processedValue);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Sanitized ${mapped}:`, value, '->', processedValue);
+          }
         }
         else if (mapped === 'duration') {
           processedValue = sanitizeDuration(processedValue);
-          console.log('DEBUG: Sanitized duration:', value, '->', processedValue);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Sanitized duration:', value, '->', processedValue);
+          }
         }
         else if (mapped === 'openings' || mapped === 'gapYears') {
           processedValue = sanitizeNumericField(processedValue);
-          console.log('DEBUG: Sanitized numeric:', value, '->', processedValue);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Sanitized numeric:', value, '->', processedValue);
+          }
         }
         else if (mapped === 'minCgpa') {
           processedValue = sanitizeCGPA(processedValue);
-          console.log('DEBUG: Sanitized CGPA:', value, '->', processedValue);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Sanitized CGPA:', value, '->', processedValue);
+          }
         }
         else if (mapped === 'skills') {
           // Handle skills as comma-separated values
           job[mapped] = processedValue.split(',').map(skill => skill.trim()).filter(Boolean);
-          console.log('DEBUG: Processed skills:', value, '->', job[mapped]);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Processed skills:', value, '->', job[mapped]);
+          }
           return; // Skip the regular assignment below
         }
         
@@ -388,11 +412,15 @@ const ExcelUploader = ({ onJobSelected }) => {
       }
     });
 
-    console.log('DEBUG: Final processed job with sanitization:', job);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Final processed job with sanitization:', job);
+    }
 
     // Check if job has essential data
     if (!job.jobTitle && !job.company) {
-      console.log('DEBUG: Job missing essential data (jobTitle or company)');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Job missing essential data (jobTitle or company)');
+      }
       return null;
     }
 
@@ -402,43 +430,57 @@ const ExcelUploader = ({ onJobSelected }) => {
   // Read Excel file
   const readExcelFile = (file) => {
     return new Promise((resolve, reject) => {
-      console.log('DEBUG: Reading Excel file...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Reading Excel file...');
+      }
       const reader = new FileReader();
       
       reader.onload = (e) => {
         try {
-          console.log('DEBUG: FileReader loaded, processing...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('FileReader loaded, processing...');
+          }
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
-          console.log('DEBUG: Workbook loaded, sheets:', workbook.SheetNames);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Workbook loaded, sheets:', workbook.SheetNames);
+          }
           
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          console.log('DEBUG: Using sheet:', firstSheetName);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Using sheet:', firstSheetName);
+          }
           
           // Try both formats
           let jsonData;
           try {
             // First try as array format (preserves header row structure)
             jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            console.log('DEBUG: Array format data:', jsonData);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Array format data:', jsonData);
+            }
           } catch {
             // Fallback to object format
             jsonData = XLSX.utils.sheet_to_json(worksheet);
-            console.log('DEBUG: Object format data:', jsonData);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Object format data:', jsonData);
+            }
           }
           
           const processedJob = processExcelData(jsonData);
-          console.log('DEBUG: Processed job:', processedJob);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Processed job:', processedJob);
+          }
           resolve(processedJob);
         } catch (error) {
-          console.error('DEBUG: Error in readExcelFile:', error);
+          console.error('Error in readExcelFile:', error);
           reject(error);
         }
       };
       
       reader.onerror = (error) => {
-        console.error('DEBUG: FileReader error:', error);
+        console.error('FileReader error:', error);
         reject(error);
       };
       
@@ -448,10 +490,14 @@ const ExcelUploader = ({ onJobSelected }) => {
 
   // Process file upload
   const processFile = useCallback(async (file) => {
-    console.log('DEBUG: File received:', file?.name, file?.type, file?.size);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('File received:', file?.name, file?.type, file?.size);
+    }
     
     if (!file) {
-      console.log('DEBUG: No file provided');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No file provided');
+      }
       return;
     }
     
@@ -466,40 +512,54 @@ const ExcelUploader = ({ onJobSelected }) => {
     const hasValidType = validTypes.includes(file.type);
     const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
     
-    console.log('DEBUG: File validation:', { hasValidType, hasValidExtension, fileType: file.type });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('File validation:', { hasValidType, hasValidExtension, fileType: file.type });
+    }
     
     if (!hasValidType && !hasValidExtension) {
-      console.log('DEBUG: File validation failed');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('File validation failed');
+      }
       setUploadError('Please upload a valid Excel file (.xlsx or .xls)');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      console.log('DEBUG: File too large');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('File too large');
+      }
       setUploadError('File size must be less than 10MB');
       return;
     }
     
     setIsUploading(true);
     setUploadError('');
-    console.log('DEBUG: Starting file processing...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Starting file processing...');
+    }
     
     try {
       const job = await readExcelFile(file);
       
       if (job) {
-        console.log('DEBUG: Job extracted successfully:', job);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Job extracted successfully:', job);
+        }
         setJobData(job);
       } else {
-        console.log('DEBUG: No valid job data found');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('No valid job data found');
+        }
         setUploadError('No valid job data found in the Excel file. Please ensure the file has proper headers and at least one data row.');
       }
     } catch (error) {
-      console.error('DEBUG: Excel processing error:', error);
+      console.error('Excel processing error:', error);
       setUploadError(`Failed to process Excel file: ${error.message || 'Please check the file format and try again.'}`);
     } finally {
       setIsUploading(false);
-      console.log('DEBUG: Processing completed');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Processing completed');
+      }
     }
   }, []);
 
@@ -715,7 +775,9 @@ const ExcelUploader = ({ onJobSelected }) => {
         <div className="flex justify-end">
           <button
             onClick={() => {
-              console.log('DEBUG: Sending job to form:', jobData);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Sending job to form:', jobData);
+              }
               onJobSelected?.(jobData);
             }}
             className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"

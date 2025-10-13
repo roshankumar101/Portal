@@ -144,8 +144,8 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                 <div></div>
               </div>
 
-              {/* Job Listings */}
-              {displayJobs.slice(0, 3).map((job) => {
+              {/* Job Listings - Latest 5 jobs */}
+              {displayJobs.slice(0, 5).map((job) => {
                 const companyName = job.company || job.companyName || 'Unknown Company';
 
                 return (
@@ -209,7 +209,7 @@ export default function JobPostingsSection({ jobs, onApply, hasApplied, applying
                 );
               })}
 
-              {displayJobs.length > 3 && (
+              {displayJobs.length > 5 && (
                 <div className="flex justify-end pt-1">
                   <button 
                     onClick={() => onExploreMore && onExploreMore()}

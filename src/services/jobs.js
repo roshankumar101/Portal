@@ -188,7 +188,7 @@ export async function addAnotherPositionDraft(jobData) {
   }
 }
 
-// MODIFIED: Enhanced postJob function for your ManageJobs component
+// MODIFIED: Enhanced postJob function with student job tracking
 export async function postJob(jobId, postData = {}) {
   try {
     console.log('🚀 Posting job in database:', jobId, postData);
@@ -204,7 +204,7 @@ export async function postJob(jobId, postData = {}) {
       postedAt: serverTimestamp(),
       postedBy: postData.postedBy || 'admin',
       
-      // School, batch, and center targeting (NEW for your use case)
+      // School, batch, and center targeting
       targetSchools: postData.selectedSchools || [],
       targetBatches: postData.selectedBatches || [],
       targetCenters: postData.selectedCenters || [],
@@ -215,16 +215,28 @@ export async function postJob(jobId, postData = {}) {
     
     console.log('✅ Job posted successfully in database:', jobId);
     
-    // Get the complete job data for email notifications
+    // Get the complete job data
     const jobDoc = await getDoc(doc(db, JOBS_COLL, jobId));
     if (jobDoc.exists()) {
       const jobData = { id: jobDoc.id, ...jobDoc.data() };
       
-      // Import and trigger email notifications (dynamic import to avoid circular dependencies)
+      // Add job to relevant students' available jobs arrays
+      try {
+        await addJobToRelevantStudents(jobData, {
+          targetSchools: postData.selectedSchools || [],
+          targetBatches: postData.selectedBatches || [],
+          targetCenters: postData.selectedCenters || []
+        });
+        console.log('✅ Job added to relevant students');
+      } catch (studentError) {
+        console.error('❌ Error adding job to students:', studentError);
+        // Don't fail the job posting if student update fails
+      }
+      
+      // Send email notifications (if available)
       try {
         const { sendJobPostingNotifications } = await import('./emailNotifications.js');
         
-        // Send email notifications in the background (don't await to avoid blocking the UI)
         sendJobPostingNotifications(
           jobData,
           postData.selectedCenters || [],
@@ -234,12 +246,10 @@ export async function postJob(jobId, postData = {}) {
           console.log('📧 Email notification result:', emailResult);
         }).catch(emailError => {
           console.error('📧 Email notification error:', emailError);
-          // Don't throw error - email failure shouldn't fail job posting
         });
         
       } catch (emailServiceError) {
         console.warn('⚠️ Email service not available:', emailServiceError);
-        // Continue without email notifications if service is not available
       }
     }
     
@@ -256,7 +266,7 @@ export function subscribeJobs(onChange, opts = {}) {
   try {
     let constraints = [];
     
-    // Add filters first, then ordering and limit
+    // Add filters first
     if (opts.status) {
       constraints.push(where('status', '==', opts.status));
     }
@@ -264,8 +274,10 @@ export function subscribeJobs(onChange, opts = {}) {
       constraints.push(where('recruiterId', '==', opts.recruiterId));
     }
     
-    // Add ordering and limit last
-    constraints.push(orderBy('createdAt', 'desc'));
+    // Only add ordering if no filters are present (to avoid composite index requirement)
+    if (!opts.status && !opts.recruiterId) {
+      constraints.push(orderBy('createdAt', 'desc'));
+    }
     constraints.push(limit(opts.limitTo || 50));
     
     const q = query(collection(db, JOBS_COLL), ...constraints);
@@ -318,7 +330,10 @@ export async function fetchJobs(opts = {}) {
       constraints.push(where('recruiterId', '==', opts.recruiterId));
     }
     
-    constraints.push(orderBy('createdAt', 'desc'));
+    // Only add ordering if no filters are present (to avoid composite index requirement)
+    if (!opts.status && !opts.recruiterId) {
+      constraints.push(orderBy('createdAt', 'desc'));
+    }
     constraints.push(limit(opts.limitTo || 50));
     
     const q = query(collection(db, JOBS_COLL), ...constraints);
@@ -445,12 +460,11 @@ export async function unpostJob(jobId) {
   }
 }
 
-// NEW: Get only posted jobs
-export function subscribePostedJobs(onChange, opts = {}) {
+// OPTIMIZED: One-time fetch for posted jobs to prevent listener overflow
+export async function fetchPostedJobs(opts = {}) {
   try {
     let constraints = [
       where('status', '==', JOB_STATUS.POSTED),
-      orderBy('postedAt', 'desc'),
       limit(opts.limitTo || 50)
     ];
     
@@ -459,19 +473,35 @@ export function subscribePostedJobs(onChange, opts = {}) {
     }
     
     const q = query(collection(db, JOBS_COLL), ...constraints);
+    const snapshot = await getDocs(q);
     
-    return onSnapshot(q, async (snapshot) => {
-      const jobs = [];
-      for (const docSnap of snapshot.docs) {
-        const jobData = { id: docSnap.id, ...docSnap.data() };
-        jobs.push(jobData);
-      }
-      onChange(jobs);
-    });
+    const jobs = [];
+    for (const docSnap of snapshot.docs) {
+      const jobData = { id: docSnap.id, ...docSnap.data() };
+      jobs.push(jobData);
+    }
+    
+    return jobs;
+    
   } catch (error) {
-    console.error('Error subscribing to posted jobs:', error);
-    return () => {};
+    console.error('Error fetching posted jobs:', error);
+    return [];
   }
+}
+
+// LEGACY: Keep subscription function for backwards compatibility but with better cleanup
+export function subscribePostedJobs(onChange, opts = {}) {
+  // For student dashboard, use one-time fetch instead of subscription
+  fetchPostedJobs(opts)
+    .then(jobs => onChange(jobs))
+    .catch(error => {
+      console.error('Error in subscribePostedJobs:', error);
+      if (opts.onError) opts.onError(error);
+      else onChange([]);
+    });
+  
+  // Return empty unsubscribe function since no listener is created
+  return () => {};
 }
 
 // NEW: Get only unposted jobs
@@ -479,7 +509,6 @@ export function subscribeUnpostedJobs(onChange, opts = {}) {
   try {
     let constraints = [
       where('status', 'in', [JOB_STATUS.DRAFT, JOB_STATUS.IN_REVIEW, JOB_STATUS.ACTIVE]),
-      orderBy('createdAt', 'desc'),
       limit(opts.limitTo || 50)
     ];
     
@@ -500,5 +529,128 @@ export function subscribeUnpostedJobs(onChange, opts = {}) {
   } catch (error) {
     console.error('Error subscribing to unposted jobs:', error);
     return () => {};
+  }
+}
+
+// Helper function to add job to relevant students (OPTIMIZED)
+export async function addJobToRelevantStudents(jobData, targeting) {
+  try {
+    console.log(`🎯 Starting job distribution for job ${jobData.id}:`, {
+      title: jobData.title || jobData.jobTitle,
+      company: jobData.company || jobData.companyName,
+      targeting: targeting
+    });
+    
+    // Import student service methods dynamically to avoid circular dependencies
+    const { getAllStudents, addJobToMultipleStudents } = await import('./students.js');
+    
+    // Get all students
+    const allStudents = await getAllStudents();
+    console.log(`📊 Total students in database: ${allStudents.length}`);
+    
+    // Start with all students and filter step by step
+    let relevantStudents = allStudents;
+    
+    // SCHOOL FILTERING (optimized for "ALL" case)
+    if (targeting.targetSchools && targeting.targetSchools.length > 0) {
+      if (!targeting.targetSchools.includes('ALL')) {
+        const beforeCount = relevantStudents.length;
+        relevantStudents = relevantStudents.filter(student => 
+          student.school && targeting.targetSchools.includes(student.school.trim())
+        );
+        console.log(`🏫 School filter: ${beforeCount} → ${relevantStudents.length} students (${targeting.targetSchools.join(', ')})`);
+      } else {
+        console.log(`🏫 School filter: ALL schools (${relevantStudents.length} students)`);
+      }
+    }
+    
+    // BATCH FILTERING (optimized for "ALL" case)
+    if (targeting.targetBatches && targeting.targetBatches.length > 0) {
+      if (!targeting.targetBatches.includes('ALL')) {
+        const beforeCount = relevantStudents.length;
+        relevantStudents = relevantStudents.filter(student => 
+          student.batch && targeting.targetBatches.includes(student.batch.trim())
+        );
+        console.log(`🎓 Batch filter: ${beforeCount} → ${relevantStudents.length} students (${targeting.targetBatches.join(', ')})`);
+      } else {
+        console.log(`🎓 Batch filter: ALL batches (${relevantStudents.length} students)`);
+      }
+    }
+    
+    // CENTER FILTERING (optimized for "ALL" case)
+    if (targeting.targetCenters && targeting.targetCenters.length > 0) {
+      if (!targeting.targetCenters.includes('ALL')) {
+        const beforeCount = relevantStudents.length;
+        relevantStudents = relevantStudents.filter(student => 
+          student.center && targeting.targetCenters.includes(student.center.trim())
+        );
+        console.log(`🏢 Center filter: ${beforeCount} → ${relevantStudents.length} students (${targeting.targetCenters.join(', ')})`);
+      } else {
+        console.log(`🏢 Center filter: ALL centers (${relevantStudents.length} students)`);
+      }
+    }
+    
+    // Filter out students without required fields
+    const validStudents = relevantStudents.filter(student => {
+      const hasRequiredFields = student.uid && (student.fullName || student.name);
+      if (!hasRequiredFields) {
+        console.warn(`⚠️ Skipping student with missing required fields:`, {
+          uid: student.uid,
+          name: student.fullName || student.name
+        });
+      }
+      return hasRequiredFields;
+    });
+    
+    console.log(`✅ Final student count after filtering: ${validStudents.length}`);
+    
+    // Extract student IDs
+    const studentIds = validStudents.map(student => student.uid || student.id).filter(Boolean);
+    
+    if (studentIds.length > 0) {
+      // Show sample of students who will receive the job
+      const sampleStudents = validStudents.slice(0, 3).map(s => `${s.fullName || s.name} (${s.school}-${s.batch}-${s.center})`);
+      console.log(`👥 Sample students receiving job:`, sampleStudents);
+      if (validStudents.length > 3) {
+        console.log(`   ... and ${validStudents.length - 3} more students`);
+      }
+      
+      // Add job to all relevant students
+      await addJobToMultipleStudents(studentIds, jobData);
+      console.log(`✅ Job ${jobData.id} successfully distributed to ${studentIds.length} students`);
+    } else {
+      console.warn(`⚠️ No students match the targeting criteria for job ${jobData.id}`);
+      console.log('🔍 Targeting criteria was:', {
+        schools: targeting.targetSchools,
+        batches: targeting.targetBatches,
+        centers: targeting.targetCenters
+      });
+    }
+    
+    // Return detailed results for admin dashboard
+    const result = {
+      success: true,
+      studentsCount: studentIds.length,
+      targeting: targeting,
+      students: validStudents.map(s => ({ 
+        uid: s.uid,
+        name: s.fullName || s.name, 
+        school: s.school, 
+        batch: s.batch, 
+        center: s.center 
+      })),
+      distribution: {
+        totalStudentsInDB: allStudents.length,
+        studentsMatchingCriteria: validStudents.length,
+        jobsDistributed: studentIds.length
+      }
+    };
+    
+    console.log(`📈 Job distribution summary:`, result.distribution);
+    return result;
+    
+  } catch (error) {
+    console.error(`❌ Error adding job to relevant students:`, error);
+    throw error;
   }
 }

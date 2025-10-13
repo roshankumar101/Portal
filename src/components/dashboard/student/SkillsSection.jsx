@@ -6,11 +6,11 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faDatabase, faTrash, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../../hooks/useAuth';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import {
-  addOrUpdateSkill,
-  deleteSkill
+  addOrUpdateSkillArray,
+  deleteSkillArray
 } from '../../../services/students';
 
 function getPointOnQuadraticBezier(t, p0, p1, p2) {
@@ -61,25 +61,19 @@ const SkillsSection = () => {
     if (!user?.uid) return;
 
     setLoading(true);
-    const q = query(
-      collection(db, 'skills'),
-      where('studentId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      console.log('Skills query snapshot received, size:', querySnapshot.size);
-      const skillsData = [];
-      querySnapshot.forEach((doc) => {
-        const docData = doc.data();
-        console.log('Skills doc:', doc.id, docData);
-        skillsData.push({ id: doc.id, ...docData });
-      });
-      
-      console.log('Skills data before icon mapping:', skillsData);
-      
-      console.log('Final skills data:', skillsData);
-      setSkills(skillsData);
+    const docRef = doc(db, 'students', user.uid);
+    
+    const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const skillsArray = data.skills || [];
+        
+        console.log('Skills data received:', skillsArray);
+        setSkills(skillsArray);
+      } else {
+        console.log('Student profile not found');
+        setSkills([]);
+      }
       setLoading(false);
     }, (error) => {
       console.error('Error in skills real-time listener:', error);
@@ -127,8 +121,7 @@ const SkillsSection = () => {
     
     try {
       setLoading(true);
-      await deleteSkill(skill.id);
-      // Real-time listener will automatically update the data
+      await deleteSkillArray(user.uid, skill.id);
       setSuccess('Skill deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
       
@@ -164,25 +157,17 @@ const SkillsSection = () => {
       
       const skillData = {
         skillName: currentSkill.skillName,
-        rating: currentSkill.rating,
-        studentId: user.uid
+        rating: currentSkill.rating
       };
       
-      if (editingIndex !== null) {
-        // Update existing skill
-        const existingSkill = skills[editingIndex];
-        await addOrUpdateSkill({ ...skillData, id: existingSkill.id });
-      } else {
-        // Add new skill
-        await addOrUpdateSkill(skillData);
-      }
-      // Real-time listener will automatically update the data
+      await addOrUpdateSkillArray(user.uid, skillData);
+      
       setShowForm(false);
       setEditingIndex(null);
       setCurrentSkill({ skillName: '', rating: 1 });
       setIsAddButtonActive(false);
       
-      setSuccess(editingIndex !== null ? 'Skill updated successfully!' : 'Skill added successfully!');
+      setSuccess('Skill saved successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error saving skill:', error);

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Award, Eye, Edit2, Plus, Trash2, Save, X } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { getStudentAchievements, addAchievement, updateAchievement, deleteAchievement } from '../../../services/students';
-import { onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
+import { addAchievementArray, updateAchievementArray, deleteAchievementArray } from '../../../services/students';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
 const Achievements = () => {
@@ -26,18 +26,23 @@ const Achievements = () => {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const q = query(
-      collection(db, 'achievements'),
-      where('studentId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const achievementsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAchievements(achievementsData);
+    const docRef = doc(db, 'students', user.uid);
+    
+    const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const achievementsArray = data.achievements || [];
+        const certificationsArray = data.certifications || [];
+        
+        // Combine both arrays for display
+        const allAchievements = [...achievementsArray, ...certificationsArray];
+        
+        console.log('Achievements data received:', allAchievements);
+        setAchievements(allAchievements);
+      } else {
+        console.log('Student profile not found');
+        setAchievements([]);
+      }
     }, (error) => {
       console.error('Error fetching achievements:', error);
       setError('Failed to load achievements');
@@ -117,21 +122,19 @@ const Achievements = () => {
         title: editedAchievement.title,
         description: editedAchievement.description,
         hasCertificate: editedAchievement.hasCertificate,
-        certificateUrl: editedAchievement.certificateUrl ? normalizeUrl(editedAchievement.certificateUrl) : '',
-        studentId: user.uid
+        certificateUrl: editedAchievement.certificateUrl ? normalizeUrl(editedAchievement.certificateUrl) : ''
       };
 
       if (editingId === 'new') {
         // Add new achievement
-        await addAchievement(achievementData);
+        await addAchievementArray(user.uid, achievementData);
         setSuccess('Achievement added successfully!');
       } else {
         // Update existing achievement
-        await updateAchievement(editingId, achievementData);
+        await updateAchievementArray(user.uid, editingId, achievementData);
         setSuccess('Achievement updated successfully!');
       }
       
-      // Achievements will auto-reload via real-time listener
       setEditingId(null);
       setIsAwardAddButtonActive(false);
       setIsCertAddButtonActive(false);
@@ -163,7 +166,7 @@ const Achievements = () => {
     try {
       setLoading(true);
       setError('');
-      await deleteAchievement(id);
+      await deleteAchievementArray(user.uid, id);
       setSuccess('Achievement deleted successfully!');
       
       if (editingId === id) {

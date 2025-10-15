@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ImEye } from 'react-icons/im';
 import { MdBlock  } from 'react-icons/md';
 import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUserEdit, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
-import { Loader } from 'lucide-react';
+import { Loader, Download, Upload } from 'lucide-react';
 import { getAllStudents, updateStudentStatus, updateStudentProfile, getEducationalBackground, getStudentSkills, updateEducationalBackground } from '../../../services/students';
 import { useAuth } from '../../../hooks/useAuth';
 import { onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, where } from 'firebase/firestore';
@@ -492,6 +492,73 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
       </div>
     </div>
   );
+};
+
+const exportFilteredData = () => {
+  try {
+    // Get current filtered students
+    const dataToExport = filteredStudents;
+    
+    if (dataToExport.length === 0) {
+      alert('No data to export with current filters');
+      return;
+    }
+
+    // Define CSV headers
+    const headers = [
+      'Full Name',
+      'Email', 
+      'Enrollment ID',
+      'Center',
+      'School',
+      'CGPA',
+      'Phone',
+      'Batch',
+      'Status',
+      'Highest Education',
+      'Institution',
+      'Top Skills'
+    ];
+
+    // Convert to CSV rows
+    const csvRows = dataToExport.map(student => [
+      student.fullName || '',
+      student.email || '',
+      student.enrollmentId || '',
+      student.center || '',
+      student.school || '',
+      student.cgpa || '',
+      student.phone || '',
+      student.batch || '',
+      student.status || '',
+      student.highestEducation || '',
+      student.institution || '',
+      student.topSkills?.join(', ') || ''
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...csvRows.map(row => row.map(field => `"${field}"`).join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `students_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log(`Exported ${dataToExport.length} students`);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Failed to export data');
+  }
 };
 
 const BlockStudentModal = ({ isOpen, onClose, student, onConfirm }) => {
@@ -1059,6 +1126,29 @@ export default function StudentDirectory() {
           </div>
         </div>
 
+        <div className="flex items-center gap-4">
+          <button
+  onClick={() => anyImportModalOpen(true)}
+  className="flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+>
+  <Upload className="text-sm" />
+  Import
+</button>
+  <button
+    onClick={exportFilteredData}
+    className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+  >
+    <Download className="text-sm" />
+    Export CSV
+  </button>
+ 
+  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+    {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} found
+  </span>
+</div>
+
+
+
         {/* Search Bar */}
         <div className="relative mb-6">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1171,107 +1261,127 @@ export default function StudentDirectory() {
           </div>
         )}
 
-        {/* Student Table */}
-        <div className="overflow-x-auto rounded-lg shadow">
-          <table className="w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Name</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Email</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Enrollment ID</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Center</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">School</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">CGPA</th>
-                <th className="p-4 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                <th className="p-4 text-center text-sm font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {displayedStudents.length > 0 ? (
-                displayedStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="p-4 text-gray-800 font-medium">{student.fullName}</td>
-                    <td className="p-4 text-gray-600">{student.email}</td>
-                    <td className="p-4 text-gray-600 font-mono text-sm">{student.enrollmentId}</td>
-                    <td className="p-4 text-gray-600">{student.center}</td>
-                    <td className="p-4 text-gray-600">{student.school}</td>
-                    <td className="p-4 text-gray-600 font-medium">{student.cgpa}</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(student.status)}`}>
-                        {student.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-center space-x-3">
-                        <div className="relative group">
-                          <button 
-                            onClick={() => handleViewDetails(student)}
-                            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                          >
-                            <ImEye className="text-lg" />
-                          </button>
-                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            View Details
-                          </span>
+        {/* Student Table (horizontally scrollable with controls) */}
+        <div className="relative rounded-lg shadow">
+          <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20">
+            <button
+              onClick={() => document.getElementById('students-table-scroll')?.scrollBy({ left: -360, behavior: 'smooth' })}
+              className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
+              aria-label="Scroll students left"
+            >
+              <FaChevronLeft className="text-gray-600" />
+            </button>
+          </div>
+          <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20">
+            <button
+              onClick={() => document.getElementById('students-table-scroll')?.scrollBy({ left: 360, behavior: 'smooth' })}
+              className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
+              aria-label="Scroll students right"
+            >
+              <FaChevronRight className="text-gray-600" />
+            </button>
+          </div>
+          <div id="students-table-scroll" className="overflow-x-auto rounded-lg">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Email</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Enrollment ID</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Center</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">School</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">CGPA</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="p-3 text-center font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {displayedStudents.length > 0 ? (
+                  displayedStudents.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50 transition-colors duration-150">
+                      <td className="p-3 text-gray-800 font-medium">{student.fullName}</td>
+                      <td className="p-3 text-gray-600 truncate max-w-[220px]">{student.email}</td>
+                      <td className="p-3 text-gray-600 font-mono text-xs">{student.enrollmentId}</td>
+                      <td className="p-3 text-gray-600">{student.center}</td>
+                      <td className="p-3 text-gray-600">{student.school}</td>
+                      <td className="p-3 text-gray-600 font-medium">{student.cgpa}</td>
+                      <td className="p-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(student.status)}`}>
+                          {student.status}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-center space-x-3">
+                          <div className="relative group">
+                            <button 
+                              onClick={() => handleViewDetails(student)}
+                              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            >
+                              <ImEye className="text-lg" />
+                            </button>
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                              View Details
+                            </span>
+                          </div>
+                          <div className="relative group">
+                            <button 
+                              onClick={() => handleEditStudent(student)}
+                              disabled={!canModifyStudents() || operationLoading}
+                              className={`p-2 rounded-lg transition-colors ${
+                                operationLoading
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : canModifyStudents() 
+                                  ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-xl" />}
+                            </button>
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                              {canModifyStudents() ? 'Edit Student' : 'Admin access required'}
+                            </span>
+                          </div>
+                          <div className="relative group">
+                            <button
+                              onClick={() => handleBlockClick(student)}
+                              disabled={!canModifyStudents() || operationLoading}
+                              className={`p-2 rounded-lg transition-colors ${
+                                operationLoading
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : canModifyStudents() 
+                                  ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-xl" />}
+                            </button>
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                              {canModifyStudents() 
+                                ? `${student.status === 'Blocked' ? 'Unblock' : 'Block'} Student`
+                                : 'Admin access required'
+                              }
+                            </span>
+                          </div>
                         </div>
-                        <div className="relative group">
-                          <button 
-                            onClick={() => handleEditStudent(student)}
-                            disabled={!canModifyStudents() || operationLoading}
-                            className={`p-2 rounded-lg transition-colors ${
-                              operationLoading
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : canModifyStudents() 
-                                ? 'bg-green-50 text-green-600 hover:bg-green-100' 
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-xl" />}
-                          </button>
-                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            {canModifyStudents() ? 'Edit Student' : 'Admin access required'}
-                          </span>
-                        </div>
-                        <div className="relative group">
-                          <button
-                            onClick={() => handleBlockClick(student)}
-                            disabled={!canModifyStudents() || operationLoading}
-                            className={`p-2 rounded-lg transition-colors ${
-                              operationLoading
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : canModifyStudents() 
-                                ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-xl" />}
-                          </button>
-                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            {canModifyStudents() 
-                              ? `${student.status === 'Blocked' ? 'Unblock' : 'Block'} Student`
-                              : 'Admin access required'
-                            }
-                          </span>
-                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="p-8 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-lg font-medium text-gray-500">No students found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="p-8 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center">
-                      <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-lg font-medium text-gray-500">No students found</p>
-                      <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Pagination Controls */}

@@ -590,185 +590,205 @@ export default function RecruiterDirectory() {
           </div>
         )}
 
-        {/* Recruiter Table */}
+        {/* Recruiter Table (horizontally scrollable with controls) */}
         {!loading && !error && (
-          <div className="overflow-x-auto rounded-lg shadow">
-            <table className="w-full">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th 
-                    className="p-3 text-left text-gray-700 font-medium cursor-pointer"
-                    onClick={() => requestSort('companyName')}
-                  >
-                    <div className={`flex items-center ${getHeaderClass('companyName')}`}>
-                      Company Name
-                      {sortConfig.key === 'companyName' && (
-                        sortConfig.direction === 'ascending' ? 
-                        <FaChevronUp className="ml-1 text-xs" /> : 
-                        <FaChevronDown className="ml-1 text-xs" />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="p-3 text-left text-gray-700 font-medium cursor-pointer"
-                    onClick={() => requestSort('recruiterName')}
-                  >
-                    <div className={`flex items-center ${getHeaderClass('recruiterName')}`}>
-                      Recruiter Name
-                      {sortConfig.key === 'recruiterName' && (
-                        sortConfig.direction === 'ascending' ? 
-                        <FaChevronUp className="ml-1 text-xs" /> : 
-                        <FaChevronDown className="ml-1 text-xs" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="p-3 text-left text-gray-700 font-medium">Email</th>
-                  <th 
-                    className="p-3 text-left text-gray-700 font-medium cursor-pointer"
-                    onClick={() => requestSort('location')}
-                  >
-                    <div className={`flex items-center ${getHeaderClass('location')}`}>
-                      Location
-                      {sortConfig.key === 'location' && (
-                        sortConfig.direction === 'ascending' ? 
-                        <FaChevronUp className="ml-1 text-xs" /> : 
-                        <FaChevronDown className="ml-1 text-xs" />
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="p-3 text-left text-gray-700 font-medium cursor-pointer"
-                    onClick={() => requestSort('lastJobPostedAt')}
-                  >
-                    <div className={`flex items-center ${getHeaderClass('lastJobPostedAt')}`}>
-                      Last Job Posted
-                      {sortConfig.key === 'lastJobPostedAt' && (
-                        sortConfig.direction === 'ascending' ? 
-                        <FaChevronUp className="ml-1 text-xs" /> : 
-                        <FaChevronDown className="ml-1 text-xs" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="p-3 text-left text-gray-700 font-medium">Status</th>
-                  <th className="p-3 text-center text-gray-700 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {paginatedRecruiters.map((recruiter) => (
-                  <React.Fragment key={recruiter.id}>
-                    <tr className="hover:bg-gray-50 transition-colors duration-150">
-                      <td className="p-4 text-gray-800 text-sm font-medium">{recruiter.companyName}</td>
-                      <td className="p-4 text-gray-800 text-sm">{recruiter.recruiterName}</td>
-                      <td className="p-4 text-gray-800 text-sm">{recruiter.email}</td>
-                      <td className="p-4 text-gray-800 text-sm">{recruiter.location}</td>
-                      <td className="p-4 text-gray-800 text-sm text-center">{recruiter.lastJobPostedAt}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          recruiter.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : recruiter.status === 'Blocked' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {recruiter.status}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-center space-x-4">
-                          <div className="relative group">
-                            <ImMail 
-                              className={`text-lg transition-colors ${
-                                user?.role === 'admin' 
-                                  ? 'text-blue-500 cursor-pointer hover:text-blue-700' 
-                                  : 'text-gray-400 cursor-not-allowed'
-                              }`}
-                              onClick={() => {
-                                if (user?.role === 'admin') {
-                                  openMailModal(recruiter.email);
-                                } else {
-                                  toast.showError('Only admin users can send emails');
-                                }
-                              }}
-                            />
-                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              {user?.role === 'admin' ? 'Send Mail' : 'Admin only'}
-                            </span>
-                          </div>
-                          <div className="relative group">
-                            <FaEye 
-                              className="text-purple-500 cursor-pointer text-lg hover:text-purple-700 transition-colors" 
-                              onClick={() => {
-                                console.log('Eye icon clicked, recruiter:', recruiter);
-                                setJobDescriptionModal({ isOpen: true, recruiter });
-                              }}
-                            />
-                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              View Job Descriptions
-                            </span>
-                          </div>
-                          <div className="relative group">
-                            {operationLoading[`block_${recruiter.id}`] ? (
-                              <FaSpinner className="animate-spin text-gray-500 text-xl" />
-                            ) : (
-                              <MdBlock 
-                                className={`text-xl transition-colors ${
+          <div className="relative rounded-lg shadow">
+            <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20">
+              <button
+                onClick={() => document.getElementById('recruiters-table-scroll')?.scrollBy({ left: -360, behavior: 'smooth' })}
+                className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
+                aria-label="Scroll recruiters left"
+              >
+                <FaChevronLeft className="text-gray-600" />
+              </button>
+            </div>
+            <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20">
+              <button
+                onClick={() => document.getElementById('recruiters-table-scroll')?.scrollBy({ left: 360, behavior: 'smooth' })}
+                className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
+                aria-label="Scroll recruiters right"
+              >
+                <FaChevronRight className="text-gray-600" />
+              </button>
+            </div>
+            <div id="recruiters-table-scroll" className="overflow-x-auto rounded-lg">
+              <table className="w-full min-w-[900px] text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th 
+                      className="p-3 text-left text-gray-700 font-medium cursor-pointer"
+                      onClick={() => requestSort('companyName')}
+                    >
+                      <div className={`flex items-center ${getHeaderClass('companyName')}`}>
+                        Company Name
+                        {sortConfig.key === 'companyName' && (
+                          sortConfig.direction === 'ascending' ? 
+                          <FaChevronUp className="ml-1 text-xs" /> : 
+                          <FaChevronDown className="ml-1 text-xs" />
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="p-3 text-left text-gray-700 font-medium cursor-pointer"
+                      onClick={() => requestSort('recruiterName')}
+                    >
+                      <div className={`flex items-center ${getHeaderClass('recruiterName')}`}>
+                        Recruiter Name
+                        {sortConfig.key === 'recruiterName' && (
+                          sortConfig.direction === 'ascending' ? 
+                          <FaChevronUp className="ml-1 text-xs" /> : 
+                          <FaChevronDown className="ml-1 text-xs" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-left text-gray-700 font-medium">Email</th>
+                    <th 
+                      className="p-3 text-left text-gray-700 font-medium cursor-pointer"
+                      onClick={() => requestSort('location')}
+                    >
+                      <div className={`flex items-center ${getHeaderClass('location')}`}>
+                        Location
+                        {sortConfig.key === 'location' && (
+                          sortConfig.direction === 'ascending' ? 
+                          <FaChevronUp className="ml-1 text-xs" /> : 
+                          <FaChevronDown className="ml-1 text-xs" />
+                        )}
+                      </div>
+                    </th>
+                    <th 
+                      className="p-3 text-left text-gray-700 font-medium cursor-pointer"
+                      onClick={() => requestSort('lastJobPostedAt')}
+                    >
+                      <div className={`flex items-center ${getHeaderClass('lastJobPostedAt')}`}>
+                        Last Job Posted
+                        {sortConfig.key === 'lastJobPostedAt' && (
+                          sortConfig.direction === 'ascending' ? 
+                          <FaChevronUp className="ml-1 text-xs" /> : 
+                          <FaChevronDown className="ml-1 text-xs" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-3 text-left text-gray-700 font-medium">Status</th>
+                    <th className="p-3 text-center text-gray-700 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {paginatedRecruiters.map((recruiter) => (
+                    <React.Fragment key={recruiter.id}>
+                      <tr className="hover:bg-gray-50 transition-colors duration-150">
+                        <td className="p-3 text-gray-800 text-sm font-medium">{recruiter.companyName}</td>
+                        <td className="p-3 text-gray-800 text-sm">{recruiter.recruiterName}</td>
+                        <td className="p-3 text-gray-800 text-sm">{recruiter.email}</td>
+                        <td className="p-3 text-gray-800 text-sm">{recruiter.location}</td>
+                        <td className="p-3 text-gray-800 text-sm text-center">{recruiter.lastJobPostedAt}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            recruiter.status === 'Active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : recruiter.status === 'Blocked' 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {recruiter.status}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center space-x-4">
+                            <div className="relative group">
+                              <ImMail 
+                                className={`text-lg transition-colors ${
                                   user?.role === 'admin' 
-                                    ? 'text-red-500 cursor-pointer hover:text-red-700' 
+                                    ? 'text-blue-500 cursor-pointer hover:text-blue-700' 
                                     : 'text-gray-400 cursor-not-allowed'
                                 }`}
                                 onClick={() => {
                                   if (user?.role === 'admin') {
-                                    setBlockModal({ 
-                                      isOpen: true, 
-                                      recruiter, 
-                                      isUnblocking: recruiter.status === 'Blocked' 
-                                    });
+                                    openMailModal(recruiter.email);
                                   } else {
-                                    toast.showError('Only admin users can block/unblock recruiters');
+                                    toast.showError('Only admin users can send emails');
                                   }
                                 }}
                               />
-                            )}
-                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              {user?.role === 'admin' 
-                                ? (recruiter.status === 'Active' ? 'Block' : 'Unblock')
-                                : 'Admin only'
-                              }
-                            </span>
-                          </div>
-                          <div className="relative group flex justify-center">
-                            <button
-                              onClick={() => toggleExpand(recruiter.id)}
-                              className="flex items-center justify-center p-2"
-                              aria-label={expandedRecruiter === recruiter.id ? 'Hide History' : 'View History'}
-                            >
-                              <TbHistoryToggle 
-                                className={`text-yellow-600 text-xl transition-transform duration-300 ${expandedRecruiter === recruiter.id ? 'rotate-180' : ''}`} 
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                {user?.role === 'admin' ? 'Send Mail' : 'Admin only'}
+                              </span>
+                            </div>
+                            <div className="relative group">
+                              <FaEye 
+                                className="text-purple-500 cursor-pointer text-lg hover:text-purple-700 transition-colors" 
+                                onClick={() => {
+                                  console.log('Eye icon clicked, recruiter:', recruiter);
+                                  setJobDescriptionModal({ isOpen: true, recruiter });
+                                }}
                               />
-                            </button>
-                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-lg z-10 whitespace-nowrap">
-                              {expandedRecruiter === recruiter.id ? 'Hide History' : 'View History'}
-                              <svg className="absolute text-gray-900 h-2 left-1/2 -translate-x-1/2 top-full" x="0px" y="0px" viewBox="0 0 255 255">
-                                <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
-                              </svg>
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                    {expandedRecruiter === recruiter.id && (
-                      <tr>
-                        <td colSpan="7" className="p-4 bg-gradient-to-b from-gray-50 to-gray-100">
-                          <div className="bg-white rounded-xl shadow-inner p-5 border border-gray-200">
-                            <RecruiterHistory recruiter={recruiter} />
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                View Job Descriptions
+                              </span>
+                            </div>
+                            <div className="relative group">
+                              {operationLoading[`block_${recruiter.id}`] ? (
+                                <FaSpinner className="animate-spin text-gray-500 text-xl" />
+                              ) : (
+                                <MdBlock 
+                                  className={`text-xl transition-colors ${
+                                    user?.role === 'admin' 
+                                      ? 'text-red-500 cursor-pointer hover:text-red-700' 
+                                      : 'text-gray-400 cursor-not-allowed'
+                                  }`}
+                                  onClick={() => {
+                                    if (user?.role === 'admin') {
+                                      setBlockModal({ 
+                                        isOpen: true, 
+                                        recruiter, 
+                                        isUnblocking: recruiter.status === 'Blocked' 
+                                      });
+                                    } else {
+                                      toast.showError('Only admin users can block/unblock recruiters');
+                                    }
+                                  }}
+                                />
+                              )}
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                {user?.role === 'admin' 
+                                  ? (recruiter.status === 'Active' ? 'Block' : 'Unblock')
+                                  : 'Admin only'
+                                }
+                              </span>
+                            </div>
+                            <div className="relative group flex justify-center">
+                              <button
+                                onClick={() => toggleExpand(recruiter.id)}
+                                className="flex items-center justify-center p-2"
+                                aria-label={expandedRecruiter === recruiter.id ? 'Hide History' : 'View History'}
+                              >
+                                <TbHistoryToggle 
+                                  className={`text-yellow-600 text-xl transition-transform duration-300 ${expandedRecruiter === recruiter.id ? 'rotate-180' : ''}`} 
+                                />
+                              </button>
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-lg z-10 whitespace-nowrap">
+                                {expandedRecruiter === recruiter.id ? 'Hide History' : 'View History'}
+                                <svg className="absolute text-gray-900 h-2 left-1/2 -translate-x-1/2 top-full" x="0px" y="0px" viewBox="0 0 255 255">
+                                  <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
+                                </svg>
+                              </span>
+                            </div>
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                      {expandedRecruiter === recruiter.id && (
+                        <tr>
+                          <td colSpan="7" className="p-4 bg-gradient-to-b from-gray-50 to-gray-100">
+                            <div className="bg-white rounded-xl shadow-inner p-5 border border-gray-200">
+                              <RecruiterHistory recruiter={recruiter} />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
         

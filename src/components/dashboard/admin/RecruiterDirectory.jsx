@@ -266,7 +266,7 @@ export default function RecruiterDirectory() {
       console.error('Error fetching recruiter summary:', error);
       // Fallback to basic data
       const fallbackSummary = {
-        jobsPerCenter: { 'Lucknow': 0, 'Pune': 0, 'Bangalore': 0, 'Delhi': 0 },
+        jobsPerCenter: { 'Lucknow': 0, 'Pune': 0, 'Bangalore': 0, 'Noida': 0 , 'Indore': 0, 'Patna': 0},
         jobsPerSchool: { 'SOT': 0, 'SOH': 0, 'SOM': 0 },
         totalJobs: 0,
         activeJobs: 0,
@@ -593,30 +593,12 @@ export default function RecruiterDirectory() {
         {/* Recruiter Table (horizontally scrollable with controls) */}
         {!loading && !error && (
           <div className="relative rounded-lg shadow">
-            <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20">
-              <button
-                onClick={() => document.getElementById('recruiters-table-scroll')?.scrollBy({ left: -360, behavior: 'smooth' })}
-                className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
-                aria-label="Scroll recruiters left"
-              >
-                <FaChevronLeft className="text-gray-600" />
-              </button>
-            </div>
-            <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20">
-              <button
-                onClick={() => document.getElementById('recruiters-table-scroll')?.scrollBy({ left: 360, behavior: 'smooth' })}
-                className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
-                aria-label="Scroll recruiters right"
-              >
-                <FaChevronRight className="text-gray-600" />
-              </button>
-            </div>
             <div id="recruiters-table-scroll" className="overflow-x-auto rounded-lg">
               <table className="w-full min-w-[900px] text-sm">
                 <thead className="bg-gray-100">
                   <tr>
                     <th 
-                      className="p-3 text-left text-gray-700 font-medium cursor-pointer"
+                      className="p-3 text-left text-gray-800 font-medium cursor-pointer"
                       onClick={() => requestSort('companyName')}
                     >
                       <div className={`flex items-center ${getHeaderClass('companyName')}`}>
@@ -676,11 +658,11 @@ export default function RecruiterDirectory() {
                   {paginatedRecruiters.map((recruiter) => (
                     <React.Fragment key={recruiter.id}>
                       <tr className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="p-3 text-gray-800 text-sm font-medium">{recruiter.companyName}</td>
+                        <td className="p-3 text-gray-800 text-sm font-bold">{recruiter.companyName}</td>
                         <td className="p-3 text-gray-800 text-sm">{recruiter.recruiterName}</td>
                         <td className="p-3 text-gray-800 text-sm">{recruiter.email}</td>
                         <td className="p-3 text-gray-800 text-sm">{recruiter.location}</td>
-                        <td className="p-3 text-gray-800 text-sm text-center">{recruiter.lastJobPostedAt}</td>
+                        <td className="p-3 text-gray-800 text-sm">{recruiter.lastJobPostedAt}</td>
                         <td className="p-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             recruiter.status === 'Active' 

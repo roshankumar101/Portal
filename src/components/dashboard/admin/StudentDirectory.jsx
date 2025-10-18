@@ -161,7 +161,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                   <p className="text-gray-800">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       studentData.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      studentData.status === 'Blocked' ? 'bg-red-100 text-red-800' :
+                      studentData.status === 'Blocked' ? 'bg-red-200 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
                       {studentData.status || 'Active'}
@@ -415,13 +415,12 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
                 }`}
               >
                 <option value="">Select Center</option>
-                <option value="Bangalore">Bangalore</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Pune">Pune</option>
-                <option value="Hyderabad">Hyderabad</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Lucknow">Lucknow</option>
+                <option value="Bangalore">BANGALORE</option>
+                <option value="Noida">NOIDA</option>
+                <option value="Pune">PUNE</option>
+                <option value="Lucknow">LUCKNOW</option>
+                <option value="Patna">PATNA</option>
+                <option value="Indore">INDORE</option>
               </select>
               {errors.center && <p className="text-red-500 text-sm mt-1">{errors.center}</p>}
             </div>
@@ -439,11 +438,9 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
                 }`}
               >
                 <option value="">Select School</option>
-                <option value="School of Technology">School of Technology</option>
-                <option value="School of Management">School of Management</option>
-                <option value="School of Humanities">School of Humanities</option>
-                <option value="School of Design">School of Design</option>
-                <option value="School of Law">School of Law</option>
+                <option value="SOT">School of Technology</option>
+                <option value="SOM">School of Management</option>
+                <option value="SOH">School of HEALTHCARE</option>
               </select>
               {errors.school && <p className="text-red-500 text-sm mt-1">{errors.school}</p>}
             </div>
@@ -929,7 +926,7 @@ export default function StudentDirectory() {
       case 'Inactive':
         return 'bg-yellow-100 text-yellow-800';
       case 'Blocked':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-200 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -1263,24 +1260,7 @@ export default function StudentDirectory() {
 
         {/* Student Table (horizontally scrollable with controls) */}
         <div className="relative rounded-lg shadow">
-          <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-20">
-            <button
-              onClick={() => document.getElementById('students-table-scroll')?.scrollBy({ left: -360, behavior: 'smooth' })}
-              className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
-              aria-label="Scroll students left"
-            >
-              <FaChevronLeft className="text-gray-600" />
-            </button>
-          </div>
-          <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-20">
-            <button
-              onClick={() => document.getElementById('students-table-scroll')?.scrollBy({ left: 360, behavior: 'smooth' })}
-              className="bg-white p-2 rounded-full shadow-sm hover:shadow-md border border-gray-200"
-              aria-label="Scroll students right"
-            >
-              <FaChevronRight className="text-gray-600" />
-            </button>
-          </div>
+          
           <div id="students-table-scroll" className="overflow-x-auto rounded-lg">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-gray-100">
@@ -1300,9 +1280,9 @@ export default function StudentDirectory() {
                   displayedStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-gray-50 transition-colors duration-150">
                       <td className="p-3 text-gray-800 font-medium">{student.fullName}</td>
-                      <td className="p-3 text-gray-600 truncate max-w-[220px]">{student.email}</td>
+                      <td className="p-3 text-gray-600 truncate max-w-[190px]">{student.email}</td>
                       <td className="p-3 text-gray-600 font-mono text-xs">{student.enrollmentId}</td>
-                      <td className="p-3 text-gray-600">{student.center}</td>
+                      <td className="p-3 text-gray-600 truncate max-w-[90px]">{student.center}</td>
                       <td className="p-3 text-gray-600">{student.school}</td>
                       <td className="p-3 text-gray-600 font-medium">{student.cgpa}</td>
                       <td className="p-3">
@@ -1317,7 +1297,7 @@ export default function StudentDirectory() {
                               onClick={() => handleViewDetails(student)}
                               className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                             >
-                              <ImEye className="text-lg" />
+                              <ImEye className="text-md" />
                             </button>
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                               View Details
@@ -1335,7 +1315,7 @@ export default function StudentDirectory() {
                                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                               }`}
                             >
-                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-xl" />}
+                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-md" />}
                             </button>
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                               {canModifyStudents() ? 'Edit Student' : 'Admin access required'}
@@ -1353,7 +1333,7 @@ export default function StudentDirectory() {
                                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                               }`}
                             >
-                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-xl" />}
+                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-md" />}
                             </button>
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                               {canModifyStudents() 

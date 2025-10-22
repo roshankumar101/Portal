@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ImEye } from 'react-icons/im';
-import { MdBlock  } from 'react-icons/md';
+import { MdBlock } from 'react-icons/md';
 import { FaSearch, FaFilter, FaChevronLeft, FaChevronRight, FaTimes, FaUserEdit, FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
 import { Loader, Download, Upload } from 'lucide-react';
 import { getAllStudents, updateStudentStatus, updateStudentProfile, getEducationalBackground, getStudentSkills, updateEducationalBackground } from '../../../services/students';
@@ -13,30 +13,30 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
   const [detailedStudent, setDetailedStudent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Fetch detailed student data when modal opens
   useEffect(() => {
     if (isOpen && student?.id) {
       fetchDetailedStudentData();
     }
   }, [isOpen, student?.id]);
-  
+
   const fetchDetailedStudentData = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [educationData, skillsData] = await Promise.all([
         getEducationalBackground(student.id),
         getStudentSkills(student.id)
       ]);
-      
+
       setDetailedStudent({
         ...student,
         education: educationData.sort((a, b) => new Date(b.endYear || '9999') - new Date(a.endYear || '9999')),
         skills: skillsData.sort((a, b) => (b.rating || 0) - (a.rating || 0))
       });
-      
+
     } catch (err) {
       console.error('Error fetching detailed student data:', err);
       setError('Failed to load student details');
@@ -71,7 +71,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
               <span className="text-gray-600">Loading student details...</span>
             </div>
           )}
-          
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
               <p className="text-red-600">{error}</p>
@@ -83,7 +83,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
               </button>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information */}
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -159,11 +159,10 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
                   <p className="text-gray-800">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      studentData.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      studentData.status === 'Blocked' ? 'bg-red-200 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${studentData.status === 'Active' ? 'bg-green-100 text-green-800' :
+                        studentData.status === 'Blocked' ? 'bg-red-200 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {studentData.status || 'Active'}
                     </span>
                   </p>
@@ -211,7 +210,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Educational Background */}
             <div className="bg-gray-50 p-4 rounded-lg md:col-span-2">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -247,7 +246,7 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                 <p className="text-gray-500 text-sm">No educational background information available</p>
               )}
             </div>
-            
+
             {/* Skills */}
             <div className="bg-gray-50 p-4 rounded-lg md:col-span-2">
               <h3 className="text-lg font-semibold mb-4">Skills & Expertise</h3>
@@ -260,11 +259,10 @@ const StudentDetailsModal = ({ isOpen, onClose, student }) => {
                         <span className="text-sm text-gray-600 mr-2">Rating:</span>
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <span 
-                              key={star} 
-                              className={`text-sm ${
-                                star <= (skill.rating || 0) ? 'text-yellow-500' : 'text-gray-300'
-                              }`}
+                            <span
+                              key={star}
+                              className={`text-sm ${star <= (skill.rating || 0) ? 'text-yellow-500' : 'text-gray-300'
+                                }`}
                             >
                               ★
                             </span>
@@ -321,15 +319,15 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.center.trim()) {
       newErrors.center = 'Center is required';
     }
-    
+
     if (!formData.school.trim()) {
       newErrors.school = 'School is required';
     }
-    
+
     if (!formData.cgpa.trim()) {
       newErrors.cgpa = 'CGPA is required';
     } else {
@@ -338,14 +336,14 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
         newErrors.cgpa = 'CGPA must be between 0 and 10';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -364,7 +362,7 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -410,9 +408,8 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
                 name="center"
                 value={formData.center}
                 onChange={handleChange}
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.center ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.center ? 'border-red-500' : 'border-gray-300'
+                  }`}
               >
                 <option value="">Select Center</option>
                 <option value="Bangalore">BANGALORE</option>
@@ -433,9 +430,8 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
                 name="school"
                 value={formData.school}
                 onChange={handleChange}
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.school ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.school ? 'border-red-500' : 'border-gray-300'
+                  }`}
               >
                 <option value="">Select School</option>
                 <option value="SOT">School of Technology</option>
@@ -458,9 +454,8 @@ const EditStudentModal = ({ isOpen, onClose, student, onSave }) => {
                 max="10"
                 step="0.01"
                 placeholder="Enter CGPA (0-10)"
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.cgpa ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.cgpa ? 'border-red-500' : 'border-gray-300'
+                  }`}
               />
               {errors.cgpa && <p className="text-red-500 text-sm mt-1">{errors.cgpa}</p>}
             </div>
@@ -495,7 +490,7 @@ const exportFilteredData = () => {
   try {
     // Get current filtered students
     const dataToExport = filteredStudents;
-    
+
     if (dataToExport.length === 0) {
       alert('No data to export with current filters');
       return;
@@ -504,7 +499,7 @@ const exportFilteredData = () => {
     // Define CSV headers
     const headers = [
       'Full Name',
-      'Email', 
+      'Email',
       'Enrollment ID',
       'Center',
       'School',
@@ -551,7 +546,7 @@ const exportFilteredData = () => {
     document.body.removeChild(link);
 
     console.log(`Exported ${dataToExport.length} students`);
-    
+
   } catch (error) {
     console.error('Export error:', error);
     alert('Failed to export data');
@@ -742,7 +737,7 @@ export default function StudentDirectory() {
   // Set up real-time students subscription
   useEffect(() => {
     setupStudentSubscription();
-    
+
     // Cleanup subscription on unmount
     return () => {
       if (unsubscribe) {
@@ -755,7 +750,7 @@ export default function StudentDirectory() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Create real-time subscription to students collection
       // Note: For full filtering, we use client-side filtering due to Firestore compound query limitations
       // This provides the best balance of performance and functionality
@@ -763,23 +758,23 @@ export default function StudentDirectory() {
         collection(db, 'students'),
         orderBy('createdAt', 'desc')
       );
-      
+
       const unsubscribeFn = onSnapshot(
         studentsQuery,
         async (snapshot) => {
           console.log('📡 Real-time update - Students received:', snapshot.docs.length);
-          
+
           const studentsData = await Promise.all(
             snapshot.docs.map(async (doc) => {
               const studentData = doc.data();
-              
+
               // Fetch additional data for each student
               try {
                 const [educationData, skillsData] = await Promise.all([
                   getEducationalBackground(doc.id).catch(() => []),
                   getStudentSkills(doc.id).catch(() => [])
                 ]);
-                
+
                 // Get highest education level
                 const highestEducation = educationData
                   .filter(ed => ed.degree)
@@ -787,13 +782,13 @@ export default function StudentDirectory() {
                     const order = { 'Masters': 3, 'Bachelors': 2, 'Diploma': 1 };
                     return (order[b.degree] || 0) - (order[a.degree] || 0);
                   })[0];
-                
+
                 // Get top 3 skills
                 const topSkills = skillsData
                   .sort((a, b) => (b.rating || 0) - (a.rating || 0))
                   .slice(0, 3)
                   .map(skill => skill.skillName);
-                  
+
                 return {
                   id: doc.id,
                   uid: studentData.uid,
@@ -844,7 +839,7 @@ export default function StudentDirectory() {
               }
             })
           );
-          
+
           setStudents(studentsData);
           setLoading(false);
         },
@@ -854,16 +849,16 @@ export default function StudentDirectory() {
           setLoading(false);
         }
       );
-      
+
       setUnsubscribe(() => unsubscribeFn);
-      
+
     } catch (err) {
       console.error('Error setting up students subscription:', err);
       setError('Failed to load students data');
       setLoading(false);
     }
   };
-  
+
   const refreshStudents = () => {
     setupStudentSubscription();
   };
@@ -952,18 +947,18 @@ export default function StudentDirectory() {
       alert('Only administrators can edit student information.');
       throw new Error('Permission denied');
     }
-    
+
     try {
       setOperationLoading(true);
       // Update student profile
       await updateStudentProfile(studentId, updatedData);
-      
+
       // If educational background fields are being updated, handle them separately
       if (updatedData.school || updatedData.cgpa || updatedData.center) {
         try {
           // Get existing education records
           const existingEducation = await getEducationalBackground(studentId);
-          
+
           // Update or create current education record
           if (existingEducation.length > 0) {
             // Update the most recent education record
@@ -979,10 +974,10 @@ export default function StudentDirectory() {
           // Don't fail the main update if education update fails
         }
       }
-      
+
       console.log('Student updated successfully');
       alert('Student information updated successfully!');
-      
+
     } catch (error) {
       console.error('Error updating student:', error);
       setError('Failed to update student');
@@ -1003,16 +998,16 @@ export default function StudentDirectory() {
       alert('Only administrators can block/unblock students.');
       return;
     }
-    
+
     if (operationLoading) {
       return; // Prevent multiple operations
     }
-    
+
     try {
       setOperationLoading(true);
       const newStatus = selectedStudent.status === 'Blocked' ? 'Active' : 'Blocked';
       const isBlocking = newStatus === 'Blocked';
-      
+
       // Enhanced block details with admin info
       const enhancedBlockDetails = isBlocking ? {
         ...blockDetails,
@@ -1020,10 +1015,10 @@ export default function StudentDirectory() {
         blockedByName: user.displayName || user.email || 'Admin',
         blockedAt: new Date()
       } : null;
-      
+
       // Update student status
       await updateStudentStatus(selectedStudent.id, newStatus, enhancedBlockDetails);
-      
+
       // Create notification entry for audit trail
       try {
         const notificationData = {
@@ -1047,18 +1042,18 @@ export default function StudentDirectory() {
           date: new Date().toISOString().split('T')[0],
           time: new Date().toTimeString().split(' ')[0]
         };
-        
+
         await addDoc(collection(db, 'notifications'), notificationData);
         console.log('Notification created for student status change');
-        
+
       } catch (notificationError) {
         console.warn('Failed to create notification:', notificationError);
         // Don't fail the operation if notification fails
       }
-      
+
       console.log(`Student ${isBlocking ? 'blocked' : 'unblocked'} successfully`);
       alert(`Student has been ${isBlocking ? 'blocked' : 'unblocked'} successfully.`);
-      
+
     } catch (error) {
       console.error('Error updating student status:', error);
       setError('Failed to update student status');
@@ -1125,24 +1120,24 @@ export default function StudentDirectory() {
 
         <div className="flex items-center gap-4">
           <button
-  onClick={() => anyImportModalOpen(true)}
-  className="flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
->
-  <Upload className="text-sm" />
-  Import
-</button>
-  <button
-    onClick={exportFilteredData}
-    className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
-  >
-    <Download className="text-sm" />
-    Export CSV
-  </button>
- 
-  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-    {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} found
-  </span>
-</div>
+            onClick={() => anyImportModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+          >
+            <Upload className="text-sm" />
+            Import
+          </button>
+          <button
+            onClick={exportFilteredData}
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+          >
+            <Download className="text-sm" />
+            Export CSV
+          </button>
+
+          <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            {filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} found
+          </span>
+        </div>
 
 
 
@@ -1260,14 +1255,14 @@ export default function StudentDirectory() {
 
         {/* Student Table (horizontally scrollable with controls) */}
         <div className="relative rounded-lg shadow">
-          
+
           <div id="students-table-scroll" className="overflow-x-auto rounded-lg">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Name</th>
                   <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Email</th>
-                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Enrollment ID</th>
+                  <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">EnRoll ID</th>
                   <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">Center</th>
                   <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">School</th>
                   <th className="p-3 text-left font-medium text-gray-700 uppercase tracking-wider">CGPA</th>
@@ -1293,7 +1288,7 @@ export default function StudentDirectory() {
                       <td className="p-3">
                         <div className="flex items-center justify-center space-x-3">
                           <div className="relative group">
-                            <button 
+                            <button
                               onClick={() => handleViewDetails(student)}
                               className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                             >
@@ -1304,16 +1299,15 @@ export default function StudentDirectory() {
                             </span>
                           </div>
                           <div className="relative group">
-                            <button 
+                            <button
                               onClick={() => handleEditStudent(student)}
                               disabled={!canModifyStudents() || operationLoading}
-                              className={`p-2 rounded-lg transition-colors ${
-                                operationLoading
+                              className={`p-2 rounded-lg transition-colors ${operationLoading
                                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : canModifyStudents() 
-                                  ? 'bg-green-50 text-green-600 hover:bg-green-100' 
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              }`}
+                                  : canModifyStudents()
+                                    ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
                             >
                               {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <FaUserEdit className="text-md" />}
                             </button>
@@ -1325,18 +1319,17 @@ export default function StudentDirectory() {
                             <button
                               onClick={() => handleBlockClick(student)}
                               disabled={!canModifyStudents() || operationLoading}
-                              className={`p-2 rounded-lg transition-colors ${
-                                operationLoading
+                              className={`p-2 rounded-lg transition-colors ${operationLoading
                                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : canModifyStudents() 
-                                  ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              }`}
+                                  : canModifyStudents()
+                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
                             >
-                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock  className="text-md" />}
+                              {operationLoading ? <Loader className="h-5 w-5 animate-spin" /> : <MdBlock className="text-md" />}
                             </button>
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                              {canModifyStudents() 
+                              {canModifyStudents()
                                 ? `${student.status === 'Blocked' ? 'Unblock' : 'Block'} Student`
                                 : 'Admin access required'
                               }
@@ -1379,7 +1372,7 @@ export default function StudentDirectory() {
                 <FaChevronLeft className="mr-1 text-xs" />
                 Previous
               </button>
-              
+
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
@@ -1392,7 +1385,7 @@ export default function StudentDirectory() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -1403,11 +1396,11 @@ export default function StudentDirectory() {
                     </button>
                   );
                 })}
-                
+
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <span className="px-2 py-1 text-gray-500">...</span>
                 )}
-                
+
                 {totalPages > 5 && currentPage < totalPages - 2 && (
                   <button
                     onClick={() => setCurrentPage(totalPages)}
@@ -1417,7 +1410,7 @@ export default function StudentDirectory() {
                   </button>
                 )}
               </div>
-              
+
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
